@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: tmatsudate/sheave:latest
+    branches:
+      only:
+        - v0.x
+    steps:
+      - checkout
+      - restore_cache:
+          key: cache-sheave
+      - run:
+          name: Running Test
+          command: rustup run stable cargo test
+      - save_cache:
+          key: cache-sheave
+          paths:
+            - "~/.cargo"
+            - "./target"
