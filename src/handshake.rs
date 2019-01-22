@@ -134,26 +134,26 @@ unsafe impl Sync for DigestOffsetError {}
 unsafe impl Send for DigestOffsetError {}
 
 #[derive(Debug)]
-pub struct RTMPStateError {
+pub struct RtmpStateError {
     description: String,
     source: Option<&'static Error>
 }
 
-impl RTMPStateError {
+impl RtmpStateError {
     pub fn new(description: String, source: Option<&'static Error>) -> Self {
-        RTMPStateError { description, source }
+        RtmpStateError { description, source }
     }
 }
 
-impl Display for RTMPStateError {
+impl Display for RtmpStateError {
     fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        writeln!(f, "RTMPStateError: description {}, source {:?}", self.description, self.source)
+        writeln!(f, "RtmpStateError: description {}, source {:?}", self.description, self.source)
     }
 }
 
-impl Error for RTMPStateError {}
-unsafe impl Send for RTMPStateError {}
-unsafe impl Sync for RTMPStateError {}
+impl Error for RtmpStateError {}
+unsafe impl Send for RtmpStateError {}
+unsafe impl Sync for RtmpStateError {}
 
 #[derive(Debug)]
 struct SignatureDoesNotMatchError {
@@ -185,7 +185,7 @@ pub enum Algorithm {
 
 #[repr(u8)]
 #[derive(Debug)]
-pub enum RTMPState {
+pub enum RtmpState {
     Connect,
     Handshake,
     Connected,
@@ -195,30 +195,30 @@ pub enum RTMPState {
 }
 
 #[derive(Debug)]
-pub struct RTMPHandshake {
+pub struct RtmpHandshake {
     s1: Vec<u8>,
     start_time: Duration,
-    state: RTMPState,
+    state: RtmpState,
     digest_pos_server: usize,
     fp9_handshake: bool
 }
 
-impl RTMPHandshake {
+impl RtmpHandshake {
     pub fn new(start_time: Duration) -> Self {
-        RTMPHandshake {
+        RtmpHandshake {
             s1: Vec::new(),
             start_time,
-            state: RTMPState::Connect,
+            state: RtmpState::Connect,
             digest_pos_server: usize::default(),
             fp9_handshake: true
         }
     }
 
-    pub fn set_rtmp_state(&mut self, state: RTMPState) {
+    pub fn set_rtmp_state(&mut self, state: RtmpState) {
         self.state = state;
     }
 
-    pub fn get_rtmp_state(&self) -> &RTMPState {
+    pub fn get_rtmp_state(&self) -> &RtmpState {
         &self.state
     }
 
@@ -254,7 +254,7 @@ impl RTMPHandshake {
         }
 
         trace!("Incoming C0 connection type: {}", c1[0]);
-        self.set_rtmp_state(RTMPState::Handshake);
+        self.set_rtmp_state(RtmpState::Handshake);
         c1.remove(0);
 
         if log_enabled!(LogLevel::Trace) {
