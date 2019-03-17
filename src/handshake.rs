@@ -1,12 +1,4 @@
 use std::{
-    error::{
-        Error
-    },
-    fmt::{
-        Display,
-        Formatter,
-        Result as FormatResult
-    },
     io::{
         Error as IOError,
         ErrorKind,
@@ -43,12 +35,18 @@ use crypto::{
         Sha256
     }
 };
+use self::errors::{
+    ChunkLengthError,
+    DigestVerificationError,
+    SignatureDoesNotMatchError,
+    DigestOffsetError 
+}
 
-pub const VERSION_CHUNK_SIZE: usize = 1;
-pub const HANDSHAKE_CHUNK_SIZE: usize = 1536;
+const VERSION_CHUNK_SIZE: usize = 1;
+const HANDSHAKE_CHUNK_SIZE: usize = 1536;
 const RTMP_VERSION: u8 = 3;
-pub const DIGEST_LEN: usize = 32;
-pub const GENUINE_FMS_KEY: &[u8] = &[
+const DIGEST_LEN: usize = 32;
+const GENUINE_FMS_KEY: &[u8] = &[
     0x47, 0x65, 0x6e, 0x75, 0x69, 0x6e, 0x65, 0x20, 0x41, 0x64,
     0x6f, 0x62, 0x65, 0x20, 0x46, 0x6c, 0x61, 0x73, 0x68, 0x20,
     0x4d, 0x65, 0x64, 0x69, 0x61, 0x20, 0x53, 0x65, 0x72, 0x76,
@@ -57,7 +55,7 @@ pub const GENUINE_FMS_KEY: &[u8] = &[
     0x7e, 0x57, 0x6e, 0xec, 0x5d, 0x2d, 0x29, 0x80, 0x6f, 0xab,
     0x93, 0xb8, 0xe6, 0x36, 0xcf, 0xeb, 0x31, 0xae
 ];
-pub const GENUINE_FP_KEY: &[u8] = &[
+const GENUINE_FP_KEY: &[u8] = &[
     0x47, 0x65, 0x6e, 0x75, 0x69, 0x6e, 0x65, 0x20, 0x41, 0x64,
     0x6f, 0x62, 0x65, 0x20, 0x46, 0x6c, 0x61, 0x73, 0x68, 0x20,
     0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x20, 0x30, 0x30, 0x31,
@@ -68,124 +66,14 @@ pub const GENUINE_FP_KEY: &[u8] = &[
 ];
 
 #[derive(Debug)]
-struct ChunkLengthError {
-    description: String,
-    source: Option<&'static Error>
-}
-
-impl ChunkLengthError {
-    pub fn new(description: String, source: Option<&'static Error>) -> Self {
-        ChunkLengthError { description, source }
-    }
-}
-
-impl Display for ChunkLengthError {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        writeln!(f, "ChunkLengthError: description {}, source {:?}", self.description, self.source)
-    }
-}
-
-impl Error for ChunkLengthError {}
-unsafe impl Send for ChunkLengthError {}
-unsafe impl Sync for ChunkLengthError {}
-
-#[derive(Debug)]
-struct DigestVerificationError {
-    description: String,
-    source: Option<&'static Error>
-}
-
-impl DigestVerificationError {
-    fn new(description: String, source: Option<&'static Error>) -> Self {
-        DigestVerificationError { description, source }
-    }
-}
-
-impl Display for DigestVerificationError {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        writeln!(f, "DigestVerificationError: description {}, source {:?}", self.description, self.source)
-    }
-}
-
-impl Error for DigestVerificationError {}
-unsafe impl Send for DigestVerificationError {}
-unsafe impl Sync for DigestVerificationError {}
-
-#[derive(Debug)]
-struct DigestOffsetError {
-    description: String,
-    source: Option<&'static Error>
-}
-
-impl DigestOffsetError {
-    fn new(description: String, source: Option<&'static Error>) -> Self {
-        DigestOffsetError { description, source }
-    }
-}
-
-impl Display for DigestOffsetError {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        writeln!(f, "DigestOffsetError: description {}, source {:?}", self.description, self.source)
-    }
-}
-
-impl Error for DigestOffsetError {}
-unsafe impl Sync for DigestOffsetError {}
-unsafe impl Send for DigestOffsetError {}
-
-#[derive(Debug)]
-pub struct RtmpStateError {
-    description: String,
-    source: Option<&'static Error>
-}
-
-impl RtmpStateError {
-    pub fn new(description: String, source: Option<&'static Error>) -> Self {
-        RtmpStateError { description, source }
-    }
-}
-
-impl Display for RtmpStateError {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        writeln!(f, "RtmpStateError: description {}, source {:?}", self.description, self.source)
-    }
-}
-
-impl Error for RtmpStateError {}
-unsafe impl Send for RtmpStateError {}
-unsafe impl Sync for RtmpStateError {}
-
-#[derive(Debug)]
-struct SignatureDoesNotMatchError {
-    description: String,
-    source: Option<&'static Error>
-}
-
-impl SignatureDoesNotMatchError {
-    fn new(description: String, source: Option<&'static Error>) -> Self {
-        SignatureDoesNotMatchError { description, source }
-    }
-}
-
-impl Display for SignatureDoesNotMatchError {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult {
-        writeln!(f, "SignatureDoesNotMatchError: description {}, source: {:?}", self.description, self.source)
-    }
-}
-
-impl Error for SignatureDoesNotMatchError {}
-unsafe impl Send for SignatureDoesNotMatchError {}
-unsafe impl Sync for SignatureDoesNotMatchError {}
-
-#[derive(Debug)]
-pub enum Algorithm {
+pub(self) enum Algorithm {
     DigestOffset1,
     DigestOffset2
 }
 
 #[repr(u8)]
 #[derive(Debug)]
-pub enum RtmpState {
+pub(crate) enum RtmpState {
     Connect,
     Handshake,
     Connected,
@@ -195,7 +83,7 @@ pub enum RtmpState {
 }
 
 #[derive(Debug)]
-pub struct RtmpHandshake {
+pub(crate) struct RtmpHandshake {
     s1: Vec<u8>,
     start_time: Duration,
     state: RtmpState,
@@ -204,7 +92,7 @@ pub struct RtmpHandshake {
 }
 
 impl RtmpHandshake {
-    pub fn new(start_time: Duration) -> Self {
+    pub(crate) fn new(start_time: Duration) -> Self {
         RtmpHandshake {
             s1: Vec::new(),
             start_time,
@@ -214,11 +102,11 @@ impl RtmpHandshake {
         }
     }
 
-    pub fn set_rtmp_state(&mut self, state: RtmpState) {
+    pub(crate) fn set_rtmp_state(&mut self, state: RtmpState) {
         self.state = state;
     }
 
-    pub fn get_rtmp_state(&self) -> &RtmpState {
+    pub(crate) fn get_rtmp_state(&self) -> &RtmpState {
         &self.state
     }
 
@@ -242,7 +130,7 @@ impl RtmpHandshake {
         stream.write_all(chunk.as_slice())
     }
 
-    pub fn decode_client_request1(&mut self, stream: &mut TcpStream) -> IOResult<()> {
+    pub(crate) fn decode_client_request1(&mut self, stream: &mut TcpStream) -> IOResult<()> {
         let mut c1: Vec<u8> = Vec::new();
         let mut chunk: [u8; VERSION_CHUNK_SIZE + HANDSHAKE_CHUNK_SIZE] = [0; VERSION_CHUNK_SIZE + HANDSHAKE_CHUNK_SIZE];
 
@@ -342,7 +230,7 @@ impl RtmpHandshake {
         stream.write(s0s1s2.as_slice()).map(|_| ())
     }
 
-    pub fn decode_client_request2(&mut self, stream: &mut TcpStream) -> IOResult<()> {
+    pub(crate) fn decode_client_request2(&mut self, stream: &mut TcpStream) -> IOResult<()> {
         let mut c2: Vec<u8> = Vec::new();
         let mut chunk: [u8; HANDSHAKE_CHUNK_SIZE] = [0; HANDSHAKE_CHUNK_SIZE];
 
@@ -449,14 +337,14 @@ fn get_digest_offset2(handshake_bytes: &[u8]) -> IOResult<usize> {
     Ok(ret)
 }
 
-pub fn get_digest_offset(algorithm: Algorithm, handshake_bytes: &[u8]) -> IOResult<usize> {
+pub(self) fn get_digest_offset(algorithm: Algorithm, handshake_bytes: &[u8]) -> IOResult<usize> {
     match algorithm {
         Algorithm::DigestOffset2 => get_digest_offset2(handshake_bytes),
         _ => get_digest_offset1(handshake_bytes)
     }
 }
 
-pub fn calculate_hmac_sha256(message: &[u8], key: &[u8]) -> MacResult {
+pub(self) fn calculate_hmac_sha256(message: &[u8], key: &[u8]) -> MacResult {
     if log_enabled!(LogLevel::Trace) {
         trace!("calculate_hmac_sha256 - message_len: {}", message.len());
         trace!("calculate_hmac_sha256 - message: {:x?}", message);
@@ -469,7 +357,7 @@ pub fn calculate_hmac_sha256(message: &[u8], key: &[u8]) -> MacResult {
     hmac.result()
 }
 
-pub fn calculate_digest(digest_pos: usize, handshake_message: &[u8], key: &[u8]) -> MacResult {
+pub(self) fn calculate_digest(digest_pos: usize, handshake_message: &[u8], key: &[u8]) -> MacResult {
     if log_enabled!(LogLevel::Trace) {
         trace!("calculate_digest - digest_pos: {} key_len: {}", digest_pos, key.len());
     }
