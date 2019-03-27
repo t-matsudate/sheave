@@ -1,9 +1,8 @@
 [package]
-
 name = "sheave"
 authors = ["Tsuyoshi Matsudate <t.matsudate@gmail.com>"]
 license = "MIT"
-version = "0.0.1"
+version = "0.1.0"
 description = "A streaming server implementation for Rust."
 repository = "https://github.com/t-matsudate/sheave"
 documentation = ""
