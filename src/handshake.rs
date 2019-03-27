@@ -32,12 +32,12 @@ use crypto::{
         Sha256
     }
 };
-use self::errors::{
+use crate::errors::{
     ChunkLengthError,
     DigestVerificationError,
     SignatureDoesNotMatchError,
-    DigestOffsetError 
-}
+    DigestOffsetError
+};
 
 const VERSION_CHUNK_SIZE: usize = 1;
 const HANDSHAKE_CHUNK_SIZE: usize = 1536;
@@ -118,7 +118,6 @@ impl RtmpHandshake {
         let up_time_bytes = u32::to_be_bytes(self.get_up_time().unwrap().as_secs() as u32);
         let zeroes: [u8; 1532] = [0; 1532]; // HANDSHAKE_CHUNK_SIZE + 1(range of version) - 5(range of both which are version and timestamp)
 
-        up_time_bytes.reverse();
         chunk.push(RTMP_VERSION);
         chunk.extend_from_slice(&up_time_bytes);
         chunk.extend_from_slice(&zeroes);
@@ -287,7 +286,6 @@ fn create_handshake_bytes(up_time: Duration) -> Vec<u8> {
     let version: [u8; 4] = [5, 0, 15, 0];
     let mut handshake_bytes: Vec<u8> = Vec::new();
 
-    up_time_bytes.reverse();
     handshake_bytes.extend_from_slice(&up_time_bytes);
     handshake_bytes.extend_from_slice(&version);
 
@@ -389,7 +387,6 @@ fn calculate_swf_verification(handshake_message: &[u8], swf_hash: &[u8], swf_siz
     let swf_size_bytes = u32::to_be_bytes(swf_size as u32);
     let mut swf_verification_bytes: Vec<u8> = Vec::new();
 
-    swf_size_bytes.reverse();
     swf_verification_bytes.push(1);
     swf_verification_bytes.push(1);
     swf_verification_bytes.extend_from_slice(&swf_size_bytes);

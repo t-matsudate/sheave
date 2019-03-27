@@ -7,7 +7,7 @@ use std::{
         Formatter,
         Result as FormatResult
     }
-}
+};
 
 #[derive(Debug)]
 pub(crate) struct ChunkLengthError {
