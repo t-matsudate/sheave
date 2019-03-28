@@ -30,7 +30,7 @@ impl From<u8> for MessageFormat {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum BasicHeader {
     OneByte {
         message_format: MessageFormat,
@@ -90,7 +90,7 @@ impl From<u8> for MessageType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum MessageHeader {
     New {
         message_type: MessageType,
@@ -285,7 +285,7 @@ impl AmfData {
 pub(crate) struct Argument;
 
 #[repr(u16)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum AudioCodec {
     None = 0x0001,
     Adpcm,
@@ -327,7 +327,7 @@ impl From<u16> for AudioCodec {
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum VideoCodec {
     Unused = 0x01,
     Jpeg,
@@ -360,7 +360,7 @@ impl From<u8> for VideoCodec {
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum VideoFunction {
     ClientSeek = 0x01
 }
@@ -377,7 +377,7 @@ impl From<u8> for VideoFunction {
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum ObjectEncoding {
     Amf0,
     Amf3 = 0x03
@@ -553,6 +553,22 @@ impl Chunk {
             chunk_data
         }
     }
+
+    pub(crate) fn basic_header(&self) -> BasicHeader {
+        self.basic_header
+    }
+
+    pub(crate) fn extended_timestamp(&self) -> Option<Duration> {
+        self.extended_timestamp
+    }
+
+    pub(crate) fn message_header(&self) -> MessageHeader {
+        self.message_header
+    }
+
+    pub(crate) fn chunk_data(&self) -> &Option<ChunkData> {
+        &self.chunk_data
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -592,11 +608,16 @@ impl ByteBuffer {
     pub(crate) fn bytes(&mut self) -> &Vec<u8> {
         &self.bytes
     }
+
+    pub(crate) fn bytes_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.bytes
+    }
 }
 
 pub(crate) trait GetByteBuffer {
     fn get_u8(&mut self) -> Option<u8>;
     fn get_u16_be(&mut self) -> Option<u16>;
+    fn get_u16_le(&mut self) -> Option<u16>;
     fn get_u24_be(&mut self) -> Option<u32>;
     fn get_u32_be(&mut self) -> Option<u32>;
     fn get_u32_le(&mut self) -> Option<u32>;
@@ -604,4 +625,15 @@ pub(crate) trait GetByteBuffer {
     fn get_sliced_bytes(&mut self, len: usize) -> Option<Vec<u8>>;
     fn peek_byte(&mut self) -> Option<u8>;
     fn peek_bytes(&mut self, len: usize) -> Option<Vec<u8>>;
+}
+
+pub(crate) trait PutByteBuffer {
+    fn put_u8(&mut self, byte: u8);
+    fn put_u16_be(&mut self, byte: u16);
+    fn put_u16_le(&mut self, byte: u16);
+    fn put_u24_be(&mut self, byte: u32);
+    fn put_u32_be(&mut self, byte: u32);
+    fn put_u32_le(&mut self, byte: u32);
+    fn put_f64(&mut self, byte: f64);
+    fn put_bytes(&mut self, bytes: Vec<u8>);
 }
