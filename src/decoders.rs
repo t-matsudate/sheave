@@ -26,8 +26,8 @@ const U24_MAX: usize = 0x0000000000ffffff;
 
 pub(self) trait RtmpDecoder: GetByteBuffer {
     fn decode_basic_header(&mut self) -> Option<BasicHeader>;
-    fn decode_message_header(&mut self, basic_header: &BasicHeader) -> Option<MessageHeader>;
-    fn decode_extended_timestamp(&mut self, message_header: &MessageHeader) -> Option<Duration>;
+    fn decode_message_header(&mut self, basic_header: BasicHeader) -> Option<MessageHeader>;
+    fn decode_extended_timestamp(&mut self, message_header: MessageHeader) -> Option<Duration>;
     fn decode_amf_number(&mut self) -> Option<AmfData>;
     fn decode_amf_boolean(&mut self) -> Option<AmfData>;
     fn decode_amf_string(&mut self) -> Option<AmfData>;
@@ -68,6 +68,24 @@ impl GetByteBuffer for ByteBuffer {
 
         self.offset_to(2);
         Some(u16::from_be_bytes(bytes))
+    }
+
+    fn get_u16_le(&mut self) -> Option<u16> {
+        let offset = self.offset();
+
+        if offset + 1 >= self.len() {
+            return None;
+        }
+
+        let mut bytes: [u8; 2] = [0; 2];
+        let s = &self.bytes()[offset..(offset + 2)];
+
+        for i in 0..bytes.len() {
+            bytes[i] = s[i];
+        }
+
+        self.offset_to(2);
+        Some(u16::from_le_bytes(bytes))
     }
 
     fn get_u24_be(&mut self) -> Option<u32> {
@@ -139,7 +157,7 @@ impl GetByteBuffer for ByteBuffer {
         }
 
         self.offset_to(8);
-        Some(f64::from_bits(u64::from_ne_bytes(bytes)))
+        Some(f64::from_bits(u64::from_be_bytes(bytes)))
     }
 
     fn get_sliced_bytes(&mut self, len: usize) -> Option<Vec<u8>> {
@@ -188,11 +206,11 @@ impl RtmpDecoder for ByteBuffer {
                 match basic_header_type {
                     0 => TwoBytes {
                         message_format,
-                        channel_id: self.get_u8().unwrap()
+                        channel_id: self.get_u8().unwrap() + 64
                     },
                     1 => ThreeBytes {
                         message_format,
-                        channel_id: self.get_u16_be().unwrap()
+                        channel_id: self.get_u16_le().unwrap() + 64
                     },
                     _ => OneByte {
                         message_format,
