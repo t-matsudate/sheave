@@ -22,12 +22,11 @@ use crate::{
     messages::*
 };
 
-const U24_MAX: usize = 0x0000000000ffffff;
-
 pub(self) trait RtmpDecoder: GetByteBuffer {
     fn decode_basic_header(&mut self) -> Option<BasicHeader>;
     fn decode_message_header(&mut self, basic_header: BasicHeader) -> Option<MessageHeader>;
     fn decode_extended_timestamp(&mut self, message_header: MessageHeader) -> Option<Duration>;
+    fn decode_server_bandwidth(&mut self) -> Option<ChunkData>;
     fn decode_amf_number(&mut self) -> Option<AmfData>;
     fn decode_amf_boolean(&mut self) -> Option<AmfData>;
     fn decode_amf_string(&mut self) -> Option<AmfData>;
@@ -263,6 +262,12 @@ impl RtmpDecoder for ByteBuffer {
         )
     }
 
+    fn decode_server_bandwidth(&mut self) -> Option<ChunkData> {
+        self.get_u32_be().map(
+            |size| ChnukData::ServerBandwidth(size as usize)
+        )
+    }
+
     fn decode_amf_number(&mut self) -> Option<AmfData> {
         self.get_f64().map(
             |number| AmfData::Number(number)
@@ -342,8 +347,7 @@ impl RtmpDecoder for ByteBuffer {
                             use crate::messages::{
                                 ChunkData::Invoke,
                                 InvokeCommand::*,
-                                NetConnectionCommand::*,
-                                CommandObject
+                                NetConnectionCommand::*
                             };
 
                             if command == "connect" {
@@ -364,7 +368,12 @@ impl RtmpDecoder for ByteBuffer {
                                 })))
                             } else {
                                 info!("Unknown invoke command: {}", command);
-                                None
+
+                                let len = self.len();
+
+                                self.get_sliced_bytes(len - offset).map(
+                                    |bytes| Invoke(Unknown(bytes))
+                                )
                             }
                         }
                     )
@@ -414,18 +423,16 @@ pub(crate) fn decode_chunk(stream: &mut TcpStream) -> IOResult<Chunk> {
 
     let mut buffer = ByteBuffer::new(v);
 
-    buffer
-        .decode_basic_header()
-        .and_then(
-            |basic_header| buffer.decode_message_header(&basic_header).map(
-                |message_header| {
-                    let extended_timestamp = buffer.decode_extended_timestamp(&message_header);
-                    let chunk_data = buffer.decode_chunk_data(&message_header);
+    buffer.decode_basic_header().and_then(
+        |basic_header| buffer.decode_message_header(&basic_header).map(
+            |message_header| {
+                let extended_timestamp = buffer.decode_extended_timestamp(&message_header);
+                let chunk_data = buffer.decode_chunk_data(&message_header);
 
-                    Chunk::new(basic_header, message_header, extended_timestamp, chunk_data)
+                Chunk::new(basic_header, message_header, extended_timestamp, chunk_data)
                 }
             )
-        ).ok_or(
-            IOError::new(ErrorKind::InvalidInput, ChunkLengthError::new("The chunk is incomplete.".to_string(), None))
-        )
+    ).ok_or(
+        IOError::new(ErrorKind::InvalidInput, ChunkLengthError::new("The chunk is incomplete.".to_string(), None))
+    )
 }
