@@ -7,6 +7,8 @@ use std::{
     }
 };
 
+pub(crate) const U24_MAX: usize = 0x0000000000ffffff;
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum MessageFormat {
@@ -75,6 +77,7 @@ impl BasicHeader {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum MessageType {
+    ServerBandwidth = 0x05,
     Invoke = 0x14,
     Unknown
 }
@@ -84,6 +87,7 @@ impl From<u8> for MessageType {
         use MessageType::*;
 
         match message_type_id {
+            0x05 => ServerBandwidth
             0x14 => Invoke,
             _ => Unknown
         }
@@ -170,6 +174,20 @@ impl MessageHeader {
             | &TimerChange {
                 timestamp
             } => Some(timestamp),
+            _ => None
+        }
+    }
+
+    pub(crate) fn get_channel_id(&self) -> Option<u32> {
+        use MessageHeader::*;
+
+        match self {
+            &New {
+                message_type: _,
+                message_len: _,
+                channel_id,
+                timestamp: _,
+            } => Some(channel_id),
             _ => None
         }
     }
@@ -527,11 +545,13 @@ pub(crate) enum NetConnectionCommand {
 
 #[derive(Debug)]
 pub(crate) enum InvokeCommand {
-    NetConnection(NetConnectionCommand)
+    NetConnection(NetConnectionCommand),
+    Unknown(Vec<u8>)
 }
 
 #[derive(Debug)]
 pub(crate) enum ChunkData {
+    ServerBandwidth(usize)
     Invoke(InvokeCommand),
     Unknown(Vec<u8>)
 }
