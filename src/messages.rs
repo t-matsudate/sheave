@@ -630,12 +630,38 @@ pub(crate) enum NetConnectionCommand {
         transaction_id: u64,
         properties: HashMap<String, AmfData>,
         information: HashMap<String, AmfData>
+    },
+    ReleaseStream {
+        transaction_id: u64,
+        play_path: String
+    },
+    ReleaseStreamResult {
+        result: NetConnectionResult,
+        transaction_id: u64
+    },
+    CreateStream {
+        transaction_id: u64
+    },
+    CreateStreamResult {
+        result: NetConnectionResult,
+        message_id: u32,
+        transaction_id: u64
     }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum FcPublishCommand {
+    FcPublish {
+        transaction_id: u64,
+        play_path: String
+    },
+    OnFcPublish
 }
 
 #[derive(Debug, Clone)]
 pub(crate) enum InvokeCommand {
     NetConnection(NetConnectionCommand),
+    FcPublish(FcPublishCommand),
     Unknown(Vec<u8>)
 }
 
@@ -653,9 +679,46 @@ impl InvokeCommand {
         }
     }
 
+    pub(crate) fn is_release_stream(&self) -> bool {
+        match self {
+            &InvokeCommand::NetConnection(
+                NetConnectionCommand::ReleaseStream {
+                    transaction_id: _,
+                    play_path: _
+                }
+            ) => true,
+            _ => false
+        }
+    }
+
+    pub(crate) fn is_create_stream(&self) -> bool {
+        match self {
+            &InvokeCommand::NetConnection(
+                NetConnectionCommand::CreateStream {
+                    transaction_id: _
+                }
+            ) => true,
+            _ => false
+        }
+    }
+
     pub(crate) fn net_connection(&self) -> Option<&NetConnectionCommand> {
         match self {
             &InvokeCommand::NetConnection(ref net_connection_command) => Some(net_connection_command),
+            _ => None
+        }
+    }
+
+    pub(crate) fn is_fc_publish(&self) -> bool {
+        match self {
+            &InvokeCommand::FcPublish(_) => true,
+            _ => false
+        }
+    }
+
+    pub(crate) fn fc_publish(&self) -> Option<&FcPublishCommand> {
+        match self {
+            &InvokeCommand::FcPublish(ref fc_publish_command) => Some(fc_publish_command),
             _ => None
         }
     }
