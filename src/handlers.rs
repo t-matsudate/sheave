@@ -43,12 +43,6 @@ pub(crate) enum RtmpState {
     Error = 0xff
 }
 
-impl Default for RtmpState {
-    fn default() -> Self {
-        RtmpState::TcpConnect
-    }
-}
-
 impl From<u8> for RtmpState {
     fn from(state: u8) -> Self {
         use RtmpState::*;
@@ -182,8 +176,6 @@ impl RtmpHandler {
         let server_bandwidth = Self::DEFAULT_BANDWIDTH;
         let client_bandwidth = Self::DEFAULT_BANDWIDTH;
         let transaction_id = u64::default();
-        let play_path = String::default();
-        let live = String::default();
         let handshake = RtmpHandshake::new(start_time);
         let command_object = CommandObject::default();
         let received_chunks = HashMap::default();
@@ -201,8 +193,6 @@ impl RtmpHandler {
             client_bandwidth,
             transaction_id,
             stream,
-            play_path,
-            live,
             handshake,
             command_object,
             received_chunks,
@@ -600,8 +590,6 @@ impl RtmpHandler {
         use crate::messages::{
             InvokeCommand::*,
             NetConnectionCommand::*,
-            FcPublishCommand as fc,
-            PublishCommand as p
         };
         use RtmpState::*;
 
