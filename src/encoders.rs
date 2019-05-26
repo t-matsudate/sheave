@@ -23,7 +23,11 @@ pub(crate) trait RtmpEncoder: PutByteBuffer {
     fn encode_amf_boolean(&mut self, boolean: bool);
     fn encode_amf_string(&mut self, string: String);
     fn encode_amf_object(&mut self, object: HashMap<String, AmfData>);
+    fn encode_amf_null(&mut self);
     fn encode_amf_data(&mut self, data: AmfData);
+    fn encode_invoke_net_connection(&mut self, net_connection: NetConnectionCommand);
+    fn encode_invoke_fc_publish(&mut self, fc_publish: FcPublishCommand);
+    fn encode_inboke_publish(&mut self, publish: PublishCommand);
     fn encode_invoke(&mut self, invoke: InvokeCommand);
     fn encode_unknown(&mut self, unknown: Vec<u8>);
     fn encode_chunk_data(&mut self, chunk_data: Option<ChunkData>);
@@ -180,6 +184,10 @@ impl RtmpEncoder for ByteBuffer {
         self.put_bytes(AmfData::OBJECT_END_SEQUENCE.to_vec());
     }
 
+    fn encode_amf_null(&mut self) {
+        self.put_u8(AmfDataType::Null as u8);
+    }
+
     fn encode_amf_data(&mut self, data: AmfData) {
         use crate::messages::AmfData::*;
 
@@ -187,6 +195,7 @@ impl RtmpEncoder for ByteBuffer {
             Number(number) => self.encode_amf_number(number),
             Boolean(boolean) => self.encode_amf_boolean(boolean),
             String(string) => self.encode_amf_string(string),
+            Null => self.encode_amf_null(),
             Object(object) => self.encode_amf_object(object),
             _ => ()
         }
@@ -215,6 +224,59 @@ impl RtmpEncoder for ByteBuffer {
                 self.encode_amf_number(transaction_id as f64);
                 self.encode_amf_object(properties);
                 self.encode_amf_object(information);
+            },
+            ReleaseStream {
+                transaction_id,
+                play_path
+            } => {
+                self.encode_amf_string("releaseStream".to_string());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+                self.encode_amf_string(play_path);
+            },
+            ReleaseStreamResult {
+                result,
+                transaction_id
+            } => {
+                self.encode_amf_string(result.into());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+            },
+            CreateStream {
+                transaction_id
+            } => {
+                self.encode_amf_string("createStream".to_string());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+            },
+            CreateStreamResult {
+                result,
+                message_id,
+                transaction_id
+            } => {
+                self.encode_amf_string(result.into());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+                self.encode_amf_number(message_id as u64 as f64);
+            }
+        }
+    }
+
+    fn encode_invoke_fc_publish(&mut self, fc_publish: FcPublishCommand) {
+        use crate::messages::FcPublishCommand::*;
+
+        match fc_publish {
+            FcPublish {
+                transaction_id,
+                play_path
+            } => {
+                self.encode_amf_string("FCPublish".to_string());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+                self.encode_amf_string(play_path);
+            },
+            OnFcPublish => {
+                self.encode_amf_string("onFCPublish".to_string());
             }
         }
     }
@@ -224,6 +286,7 @@ impl RtmpEncoder for ByteBuffer {
 
         match invoke {
             NetConnection(net_connection) => self.encode_invoke_net_connection(net_connection),
+            FcPublish(fc_publish) => self.encode_invoke_fc_publish(fc_publish),
             Unknown(bytes) => self.put_bytes(bytes)
         }
     }
