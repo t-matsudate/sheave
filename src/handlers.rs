@@ -37,6 +37,12 @@ pub(crate) enum RtmpState {
     HandshakeDone,
     ReceivedConnect,
     SentConnectResult,
+    ReceivedReleaseStream,
+    SentReleaseStreamResult,
+    ReceivedFcPublish,
+    SentOnFcPublish,
+    ReceivedCreateStream,
+    SentCreateStreamResult,
     Connected,
     Disconnecting,
     Disconnected,
@@ -53,9 +59,15 @@ impl From<u8> for RtmpState {
             0x02 => HandshakeDone,
             0x03 => ReceivedConnect,
             0x04 => SentConnectResult,
-            0x05 => Connected,
-            0x06 => Disconnecting,
-            0x07 => Disconnected,
+            0x05 => ReceivedReleaseStream,
+            0x06 => SentReleaseStreamResult,
+            0x07 => ReceivedFcPublish,
+            0x08 => SentOnFcPublish,
+            0x09 => ReceivedCreateStream,
+            0x0a => SentCreateStreamResult,
+            0x0b => Connected,
+            0x0c => Disconnecting,
+            0x0d => Disconnected,
             0xff => Error,
             _ => panic!("Undefined RTMP state!")
         }
@@ -154,6 +166,7 @@ pub(crate) struct RtmpHandler {
     server_bandwidth: u32,
     client_bandwidth: u32,
     transaction_id: u64,
+    play_path: String,
     stream: TcpStream,
     handshake: RtmpHandshake,
     command_object: CommandObject,
@@ -176,6 +189,7 @@ impl RtmpHandler {
         let server_bandwidth = Self::DEFAULT_BANDWIDTH;
         let client_bandwidth = Self::DEFAULT_BANDWIDTH;
         let transaction_id = u64::default();
+        let play_path = String::default();
         let handshake = RtmpHandshake::new(start_time);
         let command_object = CommandObject::default();
         let received_chunks = HashMap::default();
@@ -192,6 +206,7 @@ impl RtmpHandler {
             server_bandwidth,
             client_bandwidth,
             transaction_id,
+            play_path,
             stream,
             handshake,
             command_object,
@@ -604,11 +619,44 @@ impl RtmpHandler {
                     self.command_object = command_object;
                     self.state = ReceivedConnect;
                 },
+                ReleaseStream {
+                    transaction_id,
+                    play_path
+                } => {
+                    self.transaction_id = transaction_id;
+                    self.play_path = play_path;
+                    self.state = ReceivedReleaseStream;
+                },
+                CreateStream {
+                    transaction_id
+                } => {
+                    self.transaction_id = transaction_id;
+                    self.state = ReceivedCreateStream;
+                },
                 _ => return Err(
                     IOError::new(
                         ErrorKind::InvalidInput,
                         ChunkFormatError::new(
                             "_result response has been passed when receiving.".to_string(),
+                            None
+                        )
+                    )
+                )
+            },
+            FcPublish(fc_publish_command) => match fc_publish_command {
+                fc::FcPublish {
+                    transaction_id,
+                    play_path
+                } => {
+                    self.transaction_id = transaction_id;
+                    self.play_path = play_path;
+                    self.state = ReceivedFcPublish;
+                },
+                _ => return Err(
+                    IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkFormatError::new(
+                            "onFCPublish response has been passed when receiving.".to_string(),
                             None
                         )
                     )
@@ -678,6 +726,81 @@ impl RtmpHandler {
         )
     }
 
+    fn handle_release_stream(&mut self, transaction_id: u64) -> IOResult<()> {
+        let result = NetConnectionResult::Result;
+        let chunk_data = ChunkData::Invoke(
+            InvokeCommand::NetConnection(
+                NetConnectionCommand::ReleaseStreamResult {
+                    result,
+                    transaction_id
+                }
+            )
+        );
+        let mut buffer = ByteBuffer::new(Vec::new());
+
+        buffer.encode_chunk_data(Some(chunk_data.clone()));
+
+        let message_len = buffer.len() as u32;
+
+        self.send_chunk(
+            ChunkId::U8(Channel::System as u8),
+            MessageType::Invoke,
+            0,
+            message_len,
+            Duration::default(),
+            chunk_data
+        ).map(|_| self.state = RtmpState::SentReleaseStreamResult)
+    }
+
+    fn handle_fc_publish(&mut self) -> IOResult<()> {
+        let chunk_data = ChunkData::Invoke(
+            InvokeCommand::FcPublish(
+                FcPublishCommand::OnFcPublish
+            )
+        );
+        let mut buffer = ByteBuffer::new(Vec::new());
+
+        buffer.encode_chunk_data(Some(chunk_data.clone()));
+
+        let message_len = buffer.len() as u32;
+
+        self.send_chunk(
+            ChunkId::U8(Channel::System as u8),
+            MessageType::Invoke,
+            0,
+            message_len,
+            Duration::default(),
+            chunk_data
+        ).map(|_| self.state = RtmpState::SentOnFcPublish)
+    }
+
+    fn handle_create_stream(&mut self, transaction_id: u64, message_id: u32) -> IOResult<()> {
+        let result = NetConnectionResult::Result;
+        let chunk_data = ChunkData::Invoke(
+            InvokeCommand::NetConnection(
+                NetConnectionCommand::CreateStreamResult {
+                    result,
+                    message_id,
+                    transaction_id
+                }
+            )
+        );
+        let mut buffer = ByteBuffer::new(Vec::new());
+
+        buffer.encode_chunk_data(Some(chunk_data.clone()));
+
+        let message_len = buffer.len() as u32;
+
+        self.send_chunk(
+            ChunkId::U8(Channel::System as u8),
+            MessageType::Invoke,
+            0,
+            message_len,
+            Duration::default(),
+            chunk_data
+        ).map(|_| self.state = RtmpState::SentCreateStreamResult)
+    }
+
     fn receive_unknown(&mut self, bytes: Vec<u8>) -> IOResult<()> {
         Ok(println!("Unknown chunk data: {:x?}", bytes))
     }
@@ -726,6 +849,14 @@ impl RtmpHandler {
 
                                 if let ReceivedConnect = self.state {
                                     self.handle_connect(transaction_id)?;
+                                } else if let ReceivedReleaseStream = self.state {
+                                    self.handle_release_stream(transaction_id)?;
+                                } else if let ReceivedFcPublish = self.state {
+                                    self.handle_fc_publish()?;
+                                } else if let ReceivedCreateStream = self.state {
+                                    let message_id = self.message_id;
+
+                                    self.handle_create_stream(transaction_id, message_id)?;
                                 } else {
                                     unimplemented!("other commands")
                                 }
