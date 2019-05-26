@@ -4,3 +4,4 @@ mod messages;
 mod decoders;
 mod encoders;
 mod errors;
+mod handlers;
