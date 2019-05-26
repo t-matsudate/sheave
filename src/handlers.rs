@@ -874,7 +874,7 @@ impl RtmpHandler {
                                         None
                                     )
                                 )
-                            );
+                            )
                         }
                     }
                 }
