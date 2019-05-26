@@ -7,7 +7,7 @@ use std::{
     }
 };
 
-pub(crate) const U24_MAX: usize = 0x0000000000ffffff;
+pub(crate) const U24_MAX: u32 = 0x00ffffff;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
@@ -32,20 +32,22 @@ impl From<u8> for MessageFormat {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum BasicHeader {
-    OneByte {
-        message_format: MessageFormat,
-        channel_id: u8
-    },
-    TwoBytes {
-        message_format: MessageFormat,
-        channel_id: u8
-    },
-    ThreeBytes {
-        message_format: MessageFormat,
-        channel_id: u16
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub(crate) enum ChunkId {
+    U8(u8),
+    U16(u16)
+}
+
+impl Default for ChunkId {
+    fn default() -> Self {
+        ChunkId::U8(u8::default())
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct BasicHeader {
+    message_format: MessageFormat,
+    chunk_id: ChunkId
 }
 
 impl BasicHeader {
@@ -54,30 +56,27 @@ impl BasicHeader {
     pub(crate) const LEN_ONE_BYTE: usize = 1;
     pub(crate) const LEN_TWO_BYTES: usize = 2;
 
-    pub(crate) fn get_message_format(&self) -> MessageFormat {
-        use BasicHeader::*;
+    pub(crate) fn new(message_format: MessageFormat, chunk_id: ChunkId) -> Self {
+        BasicHeader { message_format, chunk_id }
+    }
 
-        match self {
-            &OneByte {
-                message_format,
-                channel_id: _
-            }
-            | &TwoBytes {
-                message_format,
-                channel_id: _
-            }
-            | &ThreeBytes {
-                message_format,
-                channel_id: _
-            } => message_format
-        }
+    pub(crate) fn get_message_format(&self) -> MessageFormat {
+        self.message_format
+    }
+
+    pub(crate) fn get_chunk_id(&self) -> ChunkId {
+        self.chunk_id
     }
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum MessageType {
-    ServerBandwidth = 0x05,
+    ChunkSize = 0x01,
+    BytesRead = 0x03,
+    Ping,
+    ServerBandwidth,
+    ClientBandwidth,
     Invoke = 0x14,
     Unknown
 }
@@ -87,7 +86,11 @@ impl From<u8> for MessageType {
         use MessageType::*;
 
         match message_type_id {
-            0x05 => ServerBandwidth
+            0x01 => ChunkSize,
+            0x03 => BytesRead,
+            0x04 => Ping,
+            0x05 => ServerBandwidth,
+            0x06 => ClientBandwidth,
             0x14 => Invoke,
             _ => Unknown
         }
@@ -98,13 +101,13 @@ impl From<u8> for MessageType {
 pub(crate) enum MessageHeader {
     New {
         message_type: MessageType,
-        channel_id: u32,
-        message_len: usize,
+        message_id: u32,
+        message_len: u32,
         timestamp: Duration,
     },
     SameSource {
         message_type: MessageType,
-        message_len: usize,
+        message_len: u32,
         timestamp: Duration,
     },
     TimerChange {
@@ -126,7 +129,7 @@ impl MessageHeader {
                 message_type,
                 message_len: _,
                 timestamp: _,
-                channel_id: _,
+                message_id: _,
             }
             | &SameSource {
                 message_type,
@@ -137,14 +140,14 @@ impl MessageHeader {
         }
     }
 
-    pub(crate) fn get_message_len(&self) -> Option<usize> {
+    pub(crate) fn get_message_len(&self) -> Option<u32> {
         use MessageHeader::*;
 
         match self {
             &New {
                 message_type: _,
                 message_len,
-                channel_id: _,
+                message_id: _,
                 timestamp: _,
             }
             | &SameSource {
@@ -156,6 +159,25 @@ impl MessageHeader {
         }
     }
 
+    pub(crate) fn set_message_len(&mut self, len: u32) -> Option<()> {
+        use MessageHeader::*;
+
+        match self {
+            &mut New {
+                message_type: _,
+                ref mut message_len,
+                message_id: _,
+                timestamp: _
+            } => Some(*message_len = len),
+            &mut SameSource {
+                message_type: _,
+                ref mut message_len,
+                timestamp: _
+            } => Some(*message_len = len),
+            _ => None
+        }
+    }
+
     pub(crate) fn get_timestamp(&self) -> Option<Duration> {
         use MessageHeader::*;
 
@@ -163,7 +185,7 @@ impl MessageHeader {
             &New {
                 message_type: _,
                 message_len: _,
-                channel_id: _,
+                message_id: _,
                 timestamp,
             }
             | &SameSource {
@@ -178,16 +200,16 @@ impl MessageHeader {
         }
     }
 
-    pub(crate) fn get_channel_id(&self) -> Option<u32> {
+    pub(crate) fn get_message_id(&self) -> Option<u32> {
         use MessageHeader::*;
 
         match self {
             &New {
                 message_type: _,
                 message_len: _,
-                channel_id,
+                message_id,
                 timestamp: _,
-            } => Some(channel_id),
+            } => Some(message_id),
             _ => None
         }
     }
@@ -245,7 +267,7 @@ impl From<u8> for AmfDataType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum AmfData {
     Number(f64),
     Boolean(bool),
@@ -299,7 +321,7 @@ impl AmfData {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Argument;
 
 #[repr(u16)]
@@ -413,7 +435,7 @@ impl From<u8> for ObjectEncoding {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct CommandObject {
     fpad: Option<bool>,
     object_encoding: Option<ObjectEncoding>,
@@ -534,29 +556,195 @@ impl From<HashMap<String, AmfData>> for CommandObject {
     }
 }
 
-#[derive(Debug)]
+impl From<CommandObject> for HashMap<String, AmfData> {
+    fn from(command_object: CommandObject) -> Self {
+        match command_object {
+            CommandObject {
+                fpad,
+                object_encoding,
+                video_function,
+                video_codec,
+                audio_codec,
+                app,
+                command_type,
+                flash_ver,
+                swf_url,
+                tc_url,
+                page_url
+            } => {
+                let mut m: HashMap<String, AmfData> = HashMap::new();
+
+                app.map(|app| m.insert("app".to_string(), AmfData::String(app)));
+                command_type.map(|command_type| m.insert("type".to_string(), AmfData::String(command_type)));
+                flash_ver.map(|flash_ver| m.insert("flashVer".to_string(), AmfData::String(flash_ver)));
+                swf_url.map(|swf_url| m.insert("swfUrl".to_string(), AmfData::String(swf_url)));
+                tc_url.map(|tc_url| m.insert("tcUrl".to_string(), AmfData::String(tc_url)));
+                fpad.map(|fpad| m.insert("fpad".to_string(), AmfData::Boolean(fpad)));
+                audio_codec.map(|audio_codec| m.insert("audioCodecs".to_string(), AmfData::Number(f64::from_bits(audio_codec as u16 as u64))));
+                video_codec.map(|video_codec| m.insert("videoCodecs".to_string(), AmfData::Number(f64::from_bits(video_codec as u8 as u64))));
+                video_function.map(|video_function| m.insert("videoFunction".to_string(), AmfData::Number(f64::from_bits(video_function as u8 as u64))));
+                page_url.map(|page_url| m.insert("pageUrl".to_string(), AmfData::String(page_url)));
+                object_encoding.map(|object_encoding| m.insert("objectEncoding".to_string(), AmfData::Number(f64::from_bits(object_encoding as u8 as u64))));
+                m
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum NetConnectionResult {
+    Result,
+    Error
+}
+
+impl From<String> for NetConnectionResult {
+    fn from(command: String) -> Self {
+        if command == "_result" {
+            NetConnectionResult::Result
+        } else if command == "_error" {
+            NetConnectionResult::Error
+        } else {
+            panic!("Undefined net connection result!")
+        }
+    }
+}
+
+impl From<NetConnectionResult> for String {
+    fn from(result: NetConnectionResult) -> Self {
+        match result {
+            NetConnectionResult::Result => "_result".to_string(),
+            NetConnectionResult::Error => "_error".to_string()
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub(crate) enum NetConnectionCommand {
     Connect {
         argument: Option<Argument>,
         transaction_id: u64,
         command_object: CommandObject
+    },
+    ConnectResult {
+        result: NetConnectionResult,
+        transaction_id: u64,
+        properties: HashMap<String, AmfData>,
+        information: HashMap<String, AmfData>
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum InvokeCommand {
     NetConnection(NetConnectionCommand),
     Unknown(Vec<u8>)
 }
 
-#[derive(Debug)]
+impl InvokeCommand {
+    pub(crate) fn is_connect(&self) -> bool {
+        match self {
+            &InvokeCommand::NetConnection(
+                NetConnectionCommand::Connect {
+                    argument: _,
+                    transaction_id: _,
+                    command_object: _
+                }
+            ) => true,
+            _ => false
+        }
+    }
+
+    pub(crate) fn net_connection(&self) -> Option<&NetConnectionCommand> {
+        match self {
+            &InvokeCommand::NetConnection(ref net_connection_command) => Some(net_connection_command),
+            _ => None
+        }
+    }
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum LimitType {
+    Hard,
+    Soft,
+    Dynamic
+}
+
+impl From<u8> for LimitType {
+    fn from(limit_type: u8) -> Self {
+        use LimitType::*;
+
+        match limit_type {
+            0 => Hard,
+            1 => Soft,
+            2 => Dynamic,
+            _ => panic!("Undefined limit type!")
+        }
+    }
+}
+
+impl Default for LimitType {
+    fn default() -> Self {
+        LimitType::Hard
+    }
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum PingType {
+    StreamBegin
+}
+
+impl From<u8> for PingType {
+    fn from(ping_type: u8) -> Self {
+        use PingType::*;
+
+        match ping_type {
+            0 => StreamBegin,
+            _ => panic!("Undefined ping type!")
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum PingData {
+    StreamBegin(u32)
+}
+
+#[derive(Debug, Clone)]
 pub(crate) enum ChunkData {
-    ServerBandwidth(usize)
+    ChunkSize(u32),
+    BytesRead(u32),
+    Ping(PingData),
+    ServerBandwidth(u32),
+    ClientBandwidth(u32, LimitType),
     Invoke(InvokeCommand),
     Unknown(Vec<u8>)
 }
 
-#[derive(Debug)]
+impl ChunkData {
+    pub(crate) fn chunk_size(&self) -> Option<u32> {
+        match self {
+            &ChunkData::ChunkSize(chunk_size) => Some(chunk_size),
+            _ => None
+        }
+    }
+
+    pub(crate) fn bytes_read(&self) -> Option<u32> {
+        match self {
+            &ChunkData::BytesRead(bytes_read) => Some(bytes_read),
+            _ => None
+        }
+    }
+
+    pub(crate) fn invoke(&self) -> Option<&InvokeCommand> {
+        match self {
+            &ChunkData::Invoke(ref invoke_command) => Some(invoke_command),
+            _ => None
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub(crate) struct Chunk {
     basic_header: BasicHeader,
     extended_timestamp: Option<Duration>,
@@ -565,7 +753,7 @@ pub(crate) struct Chunk {
 }
 
 impl Chunk {
-    pub(crate) fn new(basic_header: BasicHeader, message_header: MessageHeader, extended_timestamp: Option<Duration>, chunk_data: Option<ChunkData>) -> Self {
+    pub(crate) fn new(basic_header: BasicHeader, extended_timestamp: Option<Duration>, message_header: MessageHeader, chunk_data: Option<ChunkData>) -> Self {
         Chunk {
             basic_header,
             extended_timestamp,
@@ -574,42 +762,46 @@ impl Chunk {
         }
     }
 
-    pub(crate) fn basic_header(&self) -> BasicHeader {
+    pub(crate) fn get_basic_header(&self) -> BasicHeader {
         self.basic_header
     }
 
-    pub(crate) fn extended_timestamp(&self) -> Option<Duration> {
+    pub(crate) fn get_extended_timestamp(&self) -> Option<Duration> {
         self.extended_timestamp
     }
 
-    pub(crate) fn message_header(&self) -> MessageHeader {
+    pub(crate) fn get_message_header(&self) -> MessageHeader {
         self.message_header
     }
 
-    pub(crate) fn chunk_data(&self) -> &Option<ChunkData> {
+    pub(crate) fn get_chunk_data(&self) -> &Option<ChunkData> {
         &self.chunk_data
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default)]
 pub(crate) struct ByteBuffer {
     offset: usize,
     len: usize,
-    bytes: Vec<u8>,
+    bytes: Vec<u8>
 }
 
 impl ByteBuffer {
     pub(crate) fn new(bytes: Vec<u8>) -> Self {
-        let len = bytes.len();
-
         ByteBuffer {
-            offset: usize::default(),
-            len,
+            offset: 0,
+            len: bytes.len(),
             bytes
         }
     }
 
-    pub(crate) fn offset(&mut self) -> usize {
+    pub(crate) fn clear(&mut self) {
+        self.offset = 0;
+        self.len = 0;
+        self.bytes = Vec::new();
+    }
+
+    pub(crate) fn offset(&self) -> usize {
         self.offset
     }
 
@@ -617,7 +809,7 @@ impl ByteBuffer {
         self.offset += offset;
     }
 
-    pub(crate) fn len(&mut self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.len
     }
 
@@ -625,7 +817,7 @@ impl ByteBuffer {
         self.len += len;
     }
 
-    pub(crate) fn bytes(&mut self) -> &Vec<u8> {
+    pub(crate) fn bytes(&self) -> &Vec<u8> {
         &self.bytes
     }
 
@@ -643,8 +835,8 @@ pub(crate) trait GetByteBuffer {
     fn get_u32_le(&mut self) -> Option<u32>;
     fn get_f64(&mut self) -> Option<f64>;
     fn get_sliced_bytes(&mut self, len: usize) -> Option<Vec<u8>>;
-    fn peek_byte(&mut self) -> Option<u8>;
-    fn peek_bytes(&mut self, len: usize) -> Option<Vec<u8>>;
+    fn peek_byte(&self) -> Option<u8>;
+    fn peek_bytes(&self, len: usize) -> Option<Vec<u8>>;
 }
 
 pub(crate) trait PutByteBuffer {
