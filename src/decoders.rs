@@ -23,8 +23,12 @@ pub(crate) trait RtmpDecoder: GetByteBuffer {
     fn decode_amf_boolean(&mut self) -> Option<AmfData>;
     fn decode_amf_string(&mut self) -> Option<AmfData>;
     fn decode_amf_object(&mut self) -> Option<AmfData>;
+    fn decode_amf_null(&mut self) -> Option<AmfData>;
     fn decode_amf_data(&mut self) -> Option<AmfData>;
     fn decode_invoke_connect_result(&mut self) -> Option<ChunkData>;
+    fn decode_invoke_release_stream_result(&mut self) -> Option<ChunkData>;
+    fn decode_invoke_create_stream_result(&mut self) -> Option<ChunkData>;
+    fn decode_invoke_on_fc_publish(&mut self) -> Option<ChunkData>;
     fn decode_invoke(&mut self) -> Option<ChunkData>;
     fn decode_unknown(&mut self) -> Option<ChunkData>;
     fn decode_chunk_data(&mut self, message_type: MessageType) -> Option<ChunkData>;
@@ -322,6 +326,10 @@ impl RtmpDecoder for ByteBuffer {
         Some(AmfData::Object(object))
     }
 
+    fn decode_amf_null(&mut self) -> Option<AmfData> {
+        self.get_u8().map(|_| AmfData::Null) // AMF0's Null has only its type id.
+    }
+
     fn decode_amf_data(&mut self) -> Option<AmfData> {
         self.get_u8().and_then(
             |b| {
@@ -335,6 +343,7 @@ impl RtmpDecoder for ByteBuffer {
                     Boolean => self.decode_amf_boolean(),
                     AmfString => self.decode_amf_string(),
                     Object => self.decode_amf_object(),
+                    Null => self.decode_amf_null(),
                     _ => None
                 }
             }
@@ -376,6 +385,78 @@ impl RtmpDecoder for ByteBuffer {
         )
     }
 
+    fn decode_invoke_release_stream_result(&mut self) -> Option<ChunkData> {
+        self.decode_amf_data().and_then(
+            |s| s.string().and_then(
+                |command| self.decode_amf_data().and_then(
+                    |n| n.number().map(
+                        |transaction_id| {
+                            self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                            let result: NetConnectionResult = command.into();
+
+                            ChunkData::Invoke(
+                                InvokeCommand::NetConnection(
+                                    NetConnectionCommand::ReleaseStreamResult {
+                                        result,
+                                        transaction_id: transaction_id as u64
+                                    }
+                                )
+                            )
+                        }
+                    )
+                )
+            )
+        )
+    }
+
+    fn decode_invoke_create_stream_result(&mut self) -> Option<ChunkData> {
+        self.decode_amf_data().and_then(
+            |s| s.string().and_then(
+                |command| self.decode_amf_data().and_then(
+                    |n| n.number().map(
+                        |transaction_id| {
+                            self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                            let result: NetConnectionResult = command.into();
+                            let message_id = self.decode_amf_data().and_then(
+                                |n| n.number()
+                            ).unwrap();
+
+                            ChunkData::Invoke(
+                                InvokeCommand::NetConnection(
+                                    NetConnectionCommand::CreateStreamResult {
+                                        result,
+                                        transaction_id: transaction_id as u64,
+                                        message_id: message_id as u64 as u32
+                                    }
+                                )
+                            )
+                        }
+                    )
+                )
+            )
+        )
+    }
+
+    fn decode_invoke_on_fc_publish(&mut self) -> Option<ChunkData> {
+        self.decode_amf_data().and_then(
+            |s| s.string().and_then(
+                |command| if command == "onFCPublish" {
+                    Some(
+                        ChunkData::Invoke(
+                            InvokeCommand::FcPublish(
+                                FcPublishCommand::OnFcPublish
+                            )
+                        )
+                    )
+                } else {
+                    None
+                }
+            )
+        )
+    }
+
     fn decode_invoke(&mut self) -> Option<ChunkData> {
         self.decode_amf_data().and_then(
             |s| s.string().and_then(
@@ -385,7 +466,8 @@ impl RtmpDecoder for ByteBuffer {
                             use crate::messages::{
                                 ChunkData::Invoke,
                                 InvokeCommand::*,
-                                NetConnectionCommand::*
+                                NetConnectionCommand::*,
+                                FcPublishCommand::* as fc
                             };
 
                             if command == "connect" {
@@ -406,6 +488,52 @@ impl RtmpDecoder for ByteBuffer {
                                                 argument: None,
                                                 transaction_id: transaction_id as u64,
                                                 command_object
+                                            }
+                                        )
+                                    )
+                                )
+                            } else if command == "releaseStream" {
+                                self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                                let play_path = self.decode_amf_data().and_then(
+                                    |data| data.string()
+                                ).unwrap();
+
+                                Some(
+                                    Invoke(
+                                        NetConnection(
+                                            ReleaseStream {
+                                                transaction_id: transaction_id as u64,
+                                                play_path
+                                            }
+                                        )
+                                    )
+                                )
+                            } else if command == "createStream" {
+                                self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                                Some(
+                                    Invoke(
+                                        NetConnection(
+                                            CreateStream {
+                                                transaction_id: transaction_id as u64
+                                            }
+                                        )
+                                    )
+                                )
+                            } else if command == "FCPublish" {
+                                self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                                let play_path = self.decode_amf_data().and_then(
+                                    |data| data.string()
+                                ).unwrap();
+
+                                Some(
+                                    Invoke(
+                                        FcPublish(
+                                            fc::FcPublish {
+                                                transaction_id: transaction_id as u64,
+                                                play_path
                                             }
                                         )
                                     )
