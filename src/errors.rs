@@ -32,6 +32,28 @@ unsafe impl Send for ChunkLengthError {}
 unsafe impl Sync for ChunkLengthError {}
 
 #[derive(Debug)]
+pub(crate) struct ChunkFormatError {
+    description: String,
+    source: Option<&'static Error>
+}
+
+impl ChunkFormatError {
+    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+        ChunkFormatError { description, source }
+    }
+}
+
+impl Display for ChunkFormatError {
+    fn fmt(&self, f: &mut Formatter) -> FormatResult {
+        writeln!(f, "ChunkFormatError: description {}, source {:?}", self.description, self.source)
+    }
+}
+
+impl Error for ChunkFormatError {}
+unsafe impl Send for ChunkFormatError {}
+unsafe impl Sync for ChunkFormatError {}
+
+#[derive(Debug)]
 pub(crate) struct DigestVerificationError {
     description: String,
     source: Option<&'static Error>
