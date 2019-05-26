@@ -2,12 +2,7 @@ use std::{
     io::{
         Error as IOError,
         ErrorKind,
-        Read,
         Result as IOResult,
-        Write
-    },
-    net::{
-        TcpStream
     },
     time::{
         Duration,
@@ -39,8 +34,8 @@ use crate::errors::{
     DigestOffsetError
 };
 
-const VERSION_CHUNK_SIZE: usize = 1;
-const HANDSHAKE_CHUNK_SIZE: usize = 1536;
+pub(crate) const VERSION_CHUNK_SIZE: usize = 1;
+pub(crate) const HANDSHAKE_CHUNK_SIZE: usize = 1536;
 const RTMP_VERSION: u8 = 3;
 const DIGEST_LEN: usize = 32;
 const GENUINE_FMS_KEY: &[u8] = &[
@@ -68,91 +63,64 @@ pub(self) enum Algorithm {
     DigestOffset2
 }
 
-#[repr(u8)]
-#[derive(Debug)]
-pub(crate) enum RtmpState {
-    Connect,
-    Handshake,
-    Connected,
-    Error,
-    Disconnecting,
-    Disconnected
-}
-
 #[derive(Debug)]
 pub(crate) struct RtmpHandshake {
-    s1: Vec<u8>,
-    start_time: Duration,
-    state: RtmpState,
+    fp9_handshake: bool,
     digest_pos_server: usize,
-    fp9_handshake: bool
+    start_time: Duration,
+    s1: Vec<u8>,
+    s2: Vec<u8>
 }
 
 impl RtmpHandshake {
     pub(crate) fn new(start_time: Duration) -> Self {
         RtmpHandshake {
-            s1: Vec::new(),
-            start_time,
-            state: RtmpState::Connect,
+            fp9_handshake: true,
             digest_pos_server: usize::default(),
-            fp9_handshake: true
+            start_time,
+            s1: Vec::new(),
+            s2: Vec::new()
         }
-    }
-
-    pub(crate) fn set_rtmp_state(&mut self, state: RtmpState) {
-        self.state = state;
-    }
-
-    pub(crate) fn get_rtmp_state(&self) -> &RtmpState {
-        &self.state
     }
 
     fn get_up_time(&self) ->  Option<Duration> {
         SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().checked_sub(self.start_time)
     }
 
-    fn generate_unversioned_handshake(&mut self, c1: &[u8], stream: &mut TcpStream) -> IOResult<()> {
+    fn generate_unversioned_handshake(&mut self, mut c0c1: Vec<u8>) -> IOResult<()> {
         debug!("Using old style (un-versioned) handshake.");
 
         let mut chunk: Vec<u8> = Vec::new();
         let up_time_bytes = u32::to_be_bytes(self.get_up_time().unwrap().as_secs() as u32);
         let zeroes: [u8; 1532] = [0; 1532]; // HANDSHAKE_CHUNK_SIZE + 1(range of version) - 5(range of both which are version and timestamp)
 
-        chunk.push(RTMP_VERSION);
         chunk.extend_from_slice(&up_time_bytes);
         chunk.extend_from_slice(&zeroes);
-        chunk.extend_from_slice(c1);
-        self.s1 = chunk[1..].to_vec();
-        stream.write_all(chunk.as_slice())
+        chunk.append(&mut c0c1);
+        Ok(self.s1 = chunk)
     }
 
-    pub(crate) fn decode_client_request1(&mut self, stream: &mut TcpStream) -> IOResult<()> {
-        let mut c1: Vec<u8> = Vec::new();
-        let mut chunk: [u8; VERSION_CHUNK_SIZE + HANDSHAKE_CHUNK_SIZE] = [0; VERSION_CHUNK_SIZE + HANDSHAKE_CHUNK_SIZE];
+    pub(crate) fn decode_client_request1(&mut self, mut c0c1: Vec<u8>) -> IOResult<()> {
 
-        if stream.read(&mut chunk)? != VERSION_CHUNK_SIZE + HANDSHAKE_CHUNK_SIZE {
+        if c0c1.len() < VERSION_CHUNK_SIZE + HANDSHAKE_CHUNK_SIZE {
             return Err(IOError::new(ErrorKind::InvalidInput, ChunkLengthError::new("Requested RTMP chunk's size is not 1537 bytes!".to_string(), None)));
-        } else {
-            c1.extend_from_slice(&chunk);
-            debug!("decode_handshake_c0c1 - buffer: {:x?}", c1);
-        }
+        } 
 
-        trace!("Incoming C0 connection type: {}", c1[0]);
-        self.set_rtmp_state(RtmpState::Handshake);
-        c1.remove(0);
+        trace!("Incoming C0C1 connection type: {}", c0c1[0]);
+        c0c1.remove(0);
 
         if log_enabled!(LogLevel::Trace) {
-            trace!("decode_client_request1: {:x?}", c1);
+            trace!("decode_client_request1: {:x?}", c0c1);
         }
 
         if log_enabled!(LogLevel::Debug) {
-            debug!("Flash player version: {:x?}", &c1[4..8]);
+            debug!("Flash player version: {:x?}", &c0c1[4..8]);
         }
 
-        self.fp9_handshake = c1[4] != 0;
+        self.fp9_handshake = c0c1[4] != 0;
 
         if !self.fp9_handshake {
-            return self.generate_unversioned_handshake(c1.as_slice(), stream);
+            return self.generate_unversioned_handshake(c0c1);
         }
 
         let mut handshake_bytes = create_handshake_bytes(self.get_up_time().unwrap());
@@ -175,25 +143,25 @@ impl RtmpHandshake {
         debug!("Server digest: {:x?}", &self.s1[self.digest_pos_server..(self.digest_pos_server + DIGEST_LEN)]);
         trace!("Trying algorithm: {:?}", Algorithm::DigestOffset2);
 
-        let mut digest_pos_client = get_digest_offset(Algorithm::DigestOffset2, c1.as_slice()).unwrap();
+        let mut digest_pos_client = get_digest_offset(Algorithm::DigestOffset2, c0c1.as_slice()).unwrap();
 
         debug!("Client digest position offset: {}", digest_pos_client);
 
-        if !verify_digest(digest_pos_client, c1.as_slice(), &GENUINE_FP_KEY[..30]) {
+        if !verify_digest(digest_pos_client, c0c1.as_slice(), &GENUINE_FP_KEY[..30]) {
             trace!("Trying algorithm: {:?}", Algorithm::DigestOffset1);
-            digest_pos_client = get_digest_offset(Algorithm::DigestOffset1, c1.as_slice()).unwrap();
+            digest_pos_client = get_digest_offset(Algorithm::DigestOffset1, c0c1.as_slice()).unwrap();
             debug!("Client digest position offset: {}", digest_pos_client);
 
-            if !verify_digest(digest_pos_client, c1.as_slice(), &GENUINE_FP_KEY[..30]) {
-                warn!("Client digest verification failed.");
-                return Err(IOError::new(ErrorKind::InvalidInput, DigestVerificationError::new("Client digest verification failed.".to_string(), None)));
+            if !verify_digest(digest_pos_client, c0c1.as_slice(), &GENUINE_FP_KEY[..30]) {
+                error!("Client digest verification failed.");
+                return Err(IOError::new(ErrorKind::InvalidData, DigestVerificationError::new("Client digest verification failed.".to_string(), None)));
             }
         }
 
         let digest_start = digest_pos_client;
         let digest_end = digest_start + DIGEST_LEN;
 
-        debug!("Client digest: {:x?}", &c1[digest_start..digest_end]);
+        debug!("Client digest: {:x?}", &c0c1[digest_start..digest_end]);
 
         let swf_size = usize::default();
 
@@ -204,37 +172,34 @@ impl RtmpHandshake {
             debug!("Swf digest: {:x?}", swf_verification_bytes);
         }
 
-        let digest_resp = calculate_hmac_sha256(&c1[digest_start..digest_end], GENUINE_FMS_KEY);
+        let digest_resp = calculate_hmac_sha256(&c0c1[digest_start..digest_end], GENUINE_FMS_KEY);
         let signature_end = HANDSHAKE_CHUNK_SIZE - DIGEST_LEN;
-        let signature_response = calculate_hmac_sha256(&c1[..signature_end], digest_resp.code());
+        let signature_response = calculate_hmac_sha256(&c0c1[..signature_end], digest_resp.code());
 
         debug!("Digest response (key): {:x?}", digest_resp.code());
         debug!("Signature response: {:x?}", signature_response.code());
-        c1.truncate(c1.len() - DIGEST_LEN);
-        c1.extend_from_slice(signature_response.code());
+        c0c1.truncate(c0c1.len() - DIGEST_LEN);
+        c0c1.extend_from_slice(signature_response.code());
+        Ok(self.s2 = c0c1)
+    }
 
+    pub(crate) fn get_s0s1s2(&mut self) -> Vec<u8> {
         let mut s0s1s2: Vec<u8> = Vec::new();
 
         s0s1s2.push(RTMP_VERSION);
         s0s1s2.extend_from_slice(self.s1.as_slice());
-        s0s1s2.append(&mut c1);
+        s0s1s2.extend_from_slice(self.s2.as_slice());
 
         if log_enabled!(LogLevel::Trace) {
             trace!("S0+S1+S2 size: {}", s0s1s2.len());
         }
 
-        stream.write(s0s1s2.as_slice()).map(|_| ())
+        s0s1s2
     }
 
-    pub(crate) fn decode_client_request2(&mut self, stream: &mut TcpStream) -> IOResult<()> {
-        let mut c2: Vec<u8> = Vec::new();
-        let mut chunk: [u8; HANDSHAKE_CHUNK_SIZE] = [0; HANDSHAKE_CHUNK_SIZE];
-
-        if stream.read(&mut chunk)? != HANDSHAKE_CHUNK_SIZE {
+    pub(crate) fn decode_client_request2(&mut self, c2: Vec<u8>) -> IOResult<()> {
+        if c2.len() < HANDSHAKE_CHUNK_SIZE {
             return Err(IOError::new(ErrorKind::InvalidInput, ChunkLengthError::new("Requested RTMP chunk's size is not 1536 bytes!".to_string(), None)));
-        } else {
-            c2.extend_from_slice(&chunk);
-            debug!("decode_handshake_c2 - buffer: {:x?}", c2);
         }
 
         if log_enabled!(LogLevel::Debug) {
@@ -272,7 +237,7 @@ impl RtmpHandshake {
             }
         } else {
             if self.s1 != c2 {
-                info!("Client signature doesn't match!");
+                error!("Client signature doesn't match!");
                 return Err(IOError::new(ErrorKind::InvalidData, SignatureDoesNotMatchError::new("Client signature doesn't match!".to_string(), None)));
             }
         }
