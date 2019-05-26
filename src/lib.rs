@@ -2,4 +2,5 @@
 mod handshake;
 mod messages;
 mod decoders;
+mod encoders;
 mod errors;
