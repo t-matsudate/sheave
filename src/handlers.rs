@@ -43,6 +43,8 @@ pub(crate) enum RtmpState {
     SentOnFcPublish,
     ReceivedCreateStream,
     SentCreateStreamResult,
+    ReceivedPublish,
+    SentPublishOnStatus,
     Connected,
     Disconnecting,
     Disconnected,
@@ -65,12 +67,20 @@ impl From<u8> for RtmpState {
             0x08 => SentOnFcPublish,
             0x09 => ReceivedCreateStream,
             0x0a => SentCreateStreamResult,
-            0x0b => Connected,
-            0x0c => Disconnecting,
-            0x0d => Disconnected,
+            0x0b => ReceivedPublish,
+            0x0c => SentPublishOnStatus,
+            0x0d => Connected,
+            0x0e => Disconnecting,
+            0x0f => Disconnected,
             0xff => Error,
             _ => panic!("Undefined RTMP state!")
         }
+    }
+}
+
+impl Default for RtmpState {
+    fn default() -> Self {
+        RtmpState::TcpConnect
     }
 }
 
@@ -167,9 +177,11 @@ pub(crate) struct RtmpHandler {
     client_bandwidth: u32,
     transaction_id: u64,
     play_path: String,
+    play_type: PlayType,
     stream: TcpStream,
     handshake: RtmpHandshake,
     command_object: CommandObject,
+    info_object: InfoObject,
     received_chunks: HashMap<ChunkId, LastChunk>,
     sent_chunks: HashMap<ChunkId, LastChunk>
 }
@@ -190,8 +202,10 @@ impl RtmpHandler {
         let client_bandwidth = Self::DEFAULT_BANDWIDTH;
         let transaction_id = u64::default();
         let play_path = String::default();
+        let play_type = PlayType::default();
         let handshake = RtmpHandshake::new(start_time);
         let command_object = CommandObject::default();
+        let info_object = InfoObject::default();
         let received_chunks = HashMap::default();
         let sent_chunks = HashMap::default();
 
@@ -207,9 +221,11 @@ impl RtmpHandler {
             client_bandwidth,
             transaction_id,
             play_path,
+            play_type,
             stream,
             handshake,
             command_object,
+            info_object,
             received_chunks,
             sent_chunks
         }
@@ -551,10 +567,10 @@ impl RtmpHandler {
         self.send_chunk(
             ChunkId::U8(Channel::Network as u8),
             MessageType::Ping,
-            message_id,
+            0,
             6,
             Duration::default(),
-            ChunkData::Ping(PingData::StreamBegin(0))
+            ChunkData::Ping(PingData::StreamBegin(message_id))
         )
     }
 
@@ -605,6 +621,8 @@ impl RtmpHandler {
         use crate::messages::{
             InvokeCommand::*,
             NetConnectionCommand::*,
+            NetStreamCommand::*,
+            FcPublishCommand as fc,
         };
         use RtmpState::*;
 
@@ -638,6 +656,27 @@ impl RtmpHandler {
                         ErrorKind::InvalidInput,
                         ChunkFormatError::new(
                             "_result response has been passed when receiving.".to_string(),
+                            None
+                        )
+                    )
+                )
+            },
+            NetStream(net_stream_command) => match net_stream_command {
+                Publish {
+                    transaction_id,
+                    play_path,
+                    play_type
+                } => {
+                    self.transaction_id = transaction_id;
+                    self.play_path = play_path;
+                    self.play_type = play_type;
+                    self.state = ReceivedPublish;
+                },
+                _ => return Err(
+                    IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkFormatError::new(
+                            "onStatus response has been passed when receiving.".to_string(),
                             None
                         )
                     )
@@ -801,6 +840,51 @@ impl RtmpHandler {
         ).map(|_| self.state = RtmpState::SentCreateStreamResult)
     }
 
+    fn send_on_status(&mut self, status: Status, play_path: String) -> IOResult<()> {
+        let mut m: HashMap<String, AmfData> = HashMap::new();
+
+        m.insert("level".to_string(), AmfData::String("status".to_string()));
+        m.insert("code".to_string(), AmfData::String(status.into()));
+        m.insert("description".to_string(), AmfData::String(format!("{} is now published", play_path)));
+        m.insert("details".to_string(), AmfData::String(play_path));
+
+        let chunk_data = ChunkData::Invoke(
+            InvokeCommand::NetStream(
+                NetStreamCommand::OnStatus {
+                    transaction_id: 0,
+                    info_object: m.into()
+                }
+            )
+        );
+        let mut buffer = ByteBuffer::new(Vec::new());
+
+        buffer.encode_chunk_data(Some(chunk_data.clone()));
+
+        let message_len = buffer.len() as u32;
+
+        self.send_chunk(
+            ChunkId::U8(Channel::System as u8),
+            MessageType::Invoke,
+            0,
+            message_len,
+            Duration::default(),
+            chunk_data
+        )
+    }
+
+    fn handle_publish(&mut self) -> IOResult<()> {
+        self.send_ping(PingType::StreamBegin).and_then(
+            |_| {
+                let play_path = self.play_path.clone();
+
+                self.send_on_status(
+                    Status::NetStream(NetStreamStatus::Publish(PublishStatus::Start)),
+                    play_path
+                ).map(|_| self.state = RtmpState::SentPublishOnStatus)
+            }
+        )
+    }
+
     fn receive_unknown(&mut self, bytes: Vec<u8>) -> IOResult<()> {
         Ok(println!("Unknown chunk data: {:x?}", bytes))
     }
@@ -857,7 +941,11 @@ impl RtmpHandler {
                                     let message_id = self.message_id;
 
                                     self.handle_create_stream(transaction_id, message_id)?;
-                                } else {
+                                } else if let ReceivedPublish = self.state {
+                                    self.handle_publish()?;
+                                } else if let SentPublishOnStatus = self.state {
+                                    self.connected()?;
+                                }  else {
                                     unimplemented!("other commands")
                                 }
                             },
