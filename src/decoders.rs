@@ -29,6 +29,7 @@ pub(crate) trait RtmpDecoder: GetByteBuffer {
     fn decode_invoke_release_stream_result(&mut self) -> Option<ChunkData>;
     fn decode_invoke_create_stream_result(&mut self) -> Option<ChunkData>;
     fn decode_invoke_on_fc_publish(&mut self) -> Option<ChunkData>;
+    fn decode_invoke_on_status(&mut self) -> Option<ChunkData>;
     fn decode_invoke(&mut self) -> Option<ChunkData>;
     fn decode_unknown(&mut self) -> Option<ChunkData>;
     fn decode_chunk_data(&mut self, message_type: MessageType) -> Option<ChunkData>;
@@ -457,6 +458,39 @@ impl RtmpDecoder for ByteBuffer {
         )
     }
 
+    fn decode_invoke_on_status(&mut self) -> Option<ChunkData> {
+        self.decode_amf_data().and_then(
+            |s| s.string().and_then(
+                |command| self.decode_amf_data().and_then(
+                    |n| n.number().and_then(
+                        |transaction_id| if command != "onStatus" {
+                            None
+                        } else {
+                            self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                            let info_object: InfoObject = self.decode_amf_data().and_then(
+                                |data| data.object().map(
+                                    |info_object| info_object.into()
+                                )
+                            ).unwrap();
+
+                            Some(
+                                ChunkData::Invoke(
+                                    InvokeCommand::NetStream(
+                                        NetStreamCommand::OnStatus {
+                                            transaction_id: transaction_id as u64,
+                                            info_object: info_object
+                                        }
+                                    )
+                                )
+                            )
+                        }
+                    )
+                )
+            )
+        )
+    }
+
     fn decode_invoke(&mut self) -> Option<ChunkData> {
         self.decode_amf_data().and_then(
             |s| s.string().and_then(
@@ -467,7 +501,8 @@ impl RtmpDecoder for ByteBuffer {
                                 ChunkData::Invoke,
                                 InvokeCommand::*,
                                 NetConnectionCommand::*,
-                                FcPublishCommand::* as fc
+                                NetStreamCommand::*,
+                                FcPublishCommand as fc
                             };
 
                             if command == "connect" {
@@ -534,6 +569,29 @@ impl RtmpDecoder for ByteBuffer {
                                             fc::FcPublish {
                                                 transaction_id: transaction_id as u64,
                                                 play_path
+                                            }
+                                        )
+                                    )
+                                )
+                            } else if command == "publish" {
+                                self.decode_amf_null(); // AMF's Null. (this has only AMF's type id)
+
+                                let play_path = self.decode_amf_data().and_then(
+                                    |data| data.string()
+                                ).unwrap();
+                                let play_type: PlayType = self.decode_amf_data().and_then(
+                                    |data| data.string().map(
+                                        |play_type| play_type.into()
+                                    )
+                                ).unwrap();
+
+                                Some(
+                                    Invoke(
+                                        NetStream(
+                                            Publish {
+                                                transaction_id: transaction_id as u64,
+                                                play_path,
+                                                play_type
                                             }
                                         )
                                     )
