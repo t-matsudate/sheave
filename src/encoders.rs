@@ -26,6 +26,7 @@ pub(crate) trait RtmpEncoder: PutByteBuffer {
     fn encode_amf_null(&mut self);
     fn encode_amf_data(&mut self, data: AmfData);
     fn encode_invoke_net_connection(&mut self, net_connection: NetConnectionCommand);
+    fn encode_invoke_net_stream(&mut self, net_stream: NetStreamCommand);
     fn encode_invoke_fc_publish(&mut self, fc_publish: FcPublishCommand);
     fn encode_invoke(&mut self, invoke: InvokeCommand);
     fn encode_unknown(&mut self, unknown: Vec<u8>);
@@ -261,6 +262,33 @@ impl RtmpEncoder for ByteBuffer {
         }
     }
 
+    fn encode_invoke_net_stream(&mut self, net_stream: NetStreamCommand) {
+        use crate::messages::NetStreamCommand::*;
+
+        match net_stream {
+            Publish {
+                transaction_id,
+                play_path,
+                play_type
+            } => {
+                self.encode_amf_string("publish".to_string());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+                self.encode_amf_string(play_path);
+                self.encode_amf_string(play_type.into());
+            },
+            OnStatus {
+                transaction_id,
+                info_object
+            } => {
+                self.encode_amf_string("onStatus".to_string());
+                self.encode_amf_number(transaction_id as f64);
+                self.encode_amf_null();
+                self.encode_amf_object(info_object.into());
+            }
+        }
+    }
+
     fn encode_invoke_fc_publish(&mut self, fc_publish: FcPublishCommand) {
         use crate::messages::FcPublishCommand::*;
 
@@ -285,6 +313,7 @@ impl RtmpEncoder for ByteBuffer {
 
         match invoke {
             NetConnection(net_connection) => self.encode_invoke_net_connection(net_connection),
+            NetStream(net_stream) => self.encode_invoke_net_stream(net_stream),
             FcPublish(fc_publish) => self.encode_invoke_fc_publish(fc_publish),
             Unknown(bytes) => self.put_bytes(bytes)
         }
