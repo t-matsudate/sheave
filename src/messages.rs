@@ -618,6 +618,183 @@ impl From<NetConnectionResult> for String {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum PublishStatus {
+    Start
+}
+
+impl From<String> for PublishStatus {
+    fn from(publish_status: String) -> Self {
+        use PublishStatus::*;
+
+        if publish_status.starts_with("Start") {
+            Start
+        } else {
+            panic!("Undefined publish status!")
+        }
+    }
+}
+
+impl From<PublishStatus> for String {
+    fn from(publish_status: PublishStatus) -> Self {
+        use PublishStatus::*;
+
+        match publish_status {
+            Start => "Start".to_string()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum NetStreamStatus {
+    Publish(PublishStatus)
+}
+
+impl From<String> for NetStreamStatus {
+    fn from(net_stream_status: String) -> Self {
+        use NetStreamStatus::*;
+
+        if net_stream_status.starts_with("Publish") {
+            Publish(net_stream_status[(net_stream_status.find(".").unwrap() + 1)..].to_string().into())
+        } else {
+            panic!("Undefined NetStream status!")
+        }
+    }
+}
+
+impl From<NetStreamStatus> for String {
+    fn from(net_stream_status: NetStreamStatus) -> Self {
+        use NetStreamStatus::*;
+
+        match net_stream_status {
+            Publish(publish_status) => {
+                let ps: String = publish_status.into();
+
+                "Publish.".to_string() + ps.as_str()
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum Status {
+    NetStream(NetStreamStatus)
+}
+
+impl From<String> for Status {
+    fn from(status: String) -> Self {
+        use Status::*;
+
+        if status.starts_with("NetStream") {
+            NetStream(status[(status.find(".").unwrap() + 1)..].to_string().into())
+        } else {
+            panic!("Undefined status!")
+        }
+    }
+}
+
+impl From<Status> for String {
+    fn from(status: Status) -> Self {
+        use Status::*;
+
+        match status {
+            NetStream(net_stream_status) => {
+                let nss: String = net_stream_status.into();
+
+                "NetStream.".to_string() + nss.as_str()
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub(crate) struct InfoObject {
+    object_encoding: Option<ObjectEncoding>,
+    code: Option<Status>,
+    level: Option<String>,
+    details: Option<String>,
+    description: Option<String>
+}
+
+impl InfoObject {
+    pub(crate) fn new() -> Self {
+        InfoObject {
+            object_encoding: None,
+            code: None,
+            level: None,
+            details: None,
+            description: None
+        }
+    }
+
+    pub(self) fn set_object_encoding(&mut self, object_encoding: Option<f64>) {
+        self.object_encoding = object_encoding.map(|object_encoding| (object_encoding as u64 as u8).into());
+    }
+
+    pub(self) fn set_code(&mut self, code: Option<String>) {
+        self.code = code.map(|code| code.into());
+    }
+
+    pub(self) fn set_level(&mut self, level: Option<String>) {
+        self.level = level;
+    }
+
+    pub(self) fn set_details(&mut self, details: Option<String>) {
+        self.details = details;
+    }
+
+    pub(self) fn set_description(&mut self, description: Option<String>) {
+        self.description = description;
+    }
+}
+
+impl From<HashMap<String, AmfData>> for InfoObject {
+    fn from(m: HashMap<String, AmfData>) -> Self {
+        let mut info_object = InfoObject::new();
+
+        for (key, value) in m {
+            if key == "objectEncoding" {
+                info_object.set_object_encoding(value.number());
+            } else if key == "code" {
+                info_object.set_code(value.string());
+            } else if key == "level" {
+                info_object.set_level(value.string());
+            } else if key == "details" {
+                info_object.set_details(value.string());
+            } else if key == "description" {
+                info_object.set_description(value.string());
+            } else {
+                println!("Unknown info object: key {}, value {:?}", key, value);
+            }
+        }
+
+        info_object
+    }
+}
+
+impl From<InfoObject> for HashMap<String, AmfData> {
+    fn from(info_object: InfoObject) -> Self {
+        match info_object {
+            InfoObject {
+                object_encoding,
+                code,
+                level,
+                details,
+                description
+            } => {
+                let mut m: HashMap<String, AmfData> = HashMap::new();
+
+                object_encoding.map(|object_encoding| m.insert("objectEncoding".to_string(), AmfData::Number(object_encoding as u8 as u64 as f64)));
+                code.map(|code| m.insert("code".to_string(), AmfData::String(code.into())));
+                level.map(|level| m.insert("level".to_string(), AmfData::String(level)));
+                details.map(|details| m.insert("details".to_string(), AmfData::String(details)));
+                description.map(|description| m.insert("description".to_string(), AmfData::String(description)));
+                m
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) enum NetConnectionCommand {
     Connect {
@@ -658,9 +835,64 @@ pub(crate) enum FcPublishCommand {
     OnFcPublish
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum PlayType {
+    Live,
+    Record,
+    Append
+}
+
+impl From<String> for PlayType {
+    fn from(s: String) -> Self {
+        use PlayType::*;
+
+        if s == "live" {
+            Live
+        } else if s == "record" {
+            Record
+        } else if s == "append" {
+            Append
+        } else {
+            panic!("Undefined publishing type!")
+        }
+    }
+}
+
+impl From<PlayType> for String {
+    fn from(play_type: PlayType) -> Self {
+        use PlayType::*;
+
+        match play_type {
+            Live => "live".to_string(),
+            Record => "record".to_string(),
+            Append => "append".to_string()
+        }
+    }
+}
+
+impl Default for PlayType {
+    fn default() -> Self {
+        PlayType::Live
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum NetStreamCommand {
+    Publish {
+        transaction_id: u64,
+        play_path: String,
+        play_type: PlayType
+    },
+    OnStatus {
+        transaction_id: u64,
+        info_object: InfoObject
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) enum InvokeCommand {
     NetConnection(NetConnectionCommand),
+    NetStream(NetStreamCommand),
     FcPublish(FcPublishCommand),
     Unknown(Vec<u8>)
 }
@@ -719,6 +951,26 @@ impl InvokeCommand {
     pub(crate) fn fc_publish(&self) -> Option<&FcPublishCommand> {
         match self {
             &InvokeCommand::FcPublish(ref fc_publish_command) => Some(fc_publish_command),
+            _ => None
+        }
+    }
+
+    pub(crate) fn is_publish(&self) -> bool {
+        match self {
+            &InvokeCommand::NetStream(
+                NetStreamCommand::Publish {
+                    transaction_id: _,
+                    play_path: _,
+                    play_type: _
+                }
+            ) => true,
+            _ => false
+        }
+    }
+
+    pub(crate) fn net_stream(&self) -> Option<&NetStreamCommand> {
+        match self {
+            &InvokeCommand::NetStream(ref net_stream_command) => Some(net_stream_command),
             _ => None
         }
     }
