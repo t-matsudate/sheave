@@ -619,6 +619,64 @@ impl From<NetConnectionResult> for String {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub(crate) enum ConnectStatus {
+    Success
+}
+
+impl From<String> for ConnectStatus {
+    fn from(connect_status: String) -> Self {
+        use ConnectStatus::*;
+
+        if connect_status.starts_with("Success") {
+            Success
+        } else {
+            panic!("Undefined connect status!")
+        }
+    }
+}
+
+impl From<ConnectStatus> for String {
+    fn from(connect_status: ConnectStatus) -> Self {
+        use ConnectStatus::*;
+
+        match connect_status {
+            Success => "Success".to_string()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum NetConnectionStatus {
+    Connect(ConnectStatus)
+}
+
+impl From<String> for NetConnectionStatus {
+    fn from(net_connection_status: String) -> Self {
+        use NetConnectionStatus::*;
+
+        if net_connection_status.starts_with("Connect") {
+            Connect(net_connection_status[(net_connection_status.find(".").unwrap() + 1)..].to_string().into())
+        } else {
+            panic!("Undefined netconnection status!")
+        }
+    }
+}
+
+impl From<NetConnectionStatus> for String {
+    fn from(net_connection_status: NetConnectionStatus) -> Self {
+        use NetConnectionStatus::*;
+
+        match net_connection_status {
+            Connect(connect_status) => {
+                let cs: String = connect_status.into();
+
+                "Connect.".to_string() + cs.as_str()
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum PublishStatus {
     Start
 }
@@ -678,6 +736,7 @@ impl From<NetStreamStatus> for String {
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Status {
+    NetConnection(NetConnectionStatus),
     NetStream(NetStreamStatus)
 }
 
@@ -685,7 +744,9 @@ impl From<String> for Status {
     fn from(status: String) -> Self {
         use Status::*;
 
-        if status.starts_with("NetStream") {
+        if status.starts_with("NetConnection") {
+            NetConnection(status[(status.find(".").unwrap() + 1)..].to_string().into())
+        } else if status.starts_with("NetStream") {
             NetStream(status[(status.find(".").unwrap() + 1)..].to_string().into())
         } else {
             panic!("Undefined status!")
@@ -698,6 +759,11 @@ impl From<Status> for String {
         use Status::*;
 
         match status {
+            NetConnection(net_connection_status) => {
+                let ncs: String = net_connection_status.into();
+
+                "NetConnection.".to_string() + nss.as_str()
+            },
             NetStream(net_stream_status) => {
                 let nss: String = net_stream_status.into();
 
@@ -806,7 +872,7 @@ pub(crate) enum NetConnectionCommand {
         result: NetConnectionResult,
         transaction_id: u64,
         properties: HashMap<String, AmfData>,
-        information: HashMap<String, AmfData>
+        information: InfoObject
     },
     ReleaseStream {
         transaction_id: u64,
