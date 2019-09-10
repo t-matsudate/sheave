@@ -12,11 +12,11 @@ use std::{
 #[derive(Debug)]
 pub(crate) struct ChunkLengthError {
     description: String,
-    source: Option<&'static Error>
+    source: Option<&'static dyn Error>
 }
 
 impl ChunkLengthError {
-    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+    pub(crate) fn new(description: String, source: Option<&'static dyn Error>) -> Self {
         ChunkLengthError { description, source }
     }
 }
@@ -34,11 +34,11 @@ unsafe impl Sync for ChunkLengthError {}
 #[derive(Debug)]
 pub(crate) struct ChunkFormatError {
     description: String,
-    source: Option<&'static Error>
+    source: Option<&'static dyn Error>
 }
 
 impl ChunkFormatError {
-    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+    pub(crate) fn new(description: String, source: Option<&'static dyn Error>) -> Self {
         ChunkFormatError { description, source }
     }
 }
@@ -56,11 +56,11 @@ unsafe impl Sync for ChunkFormatError {}
 #[derive(Debug)]
 pub(crate) struct DigestVerificationError {
     description: String,
-    source: Option<&'static Error>
+    source: Option<&'static dyn Error>
 }
 
 impl DigestVerificationError {
-    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+    pub(crate) fn new(description: String, source: Option<&'static dyn Error>) -> Self {
         DigestVerificationError { description, source }
     }
 }
@@ -78,11 +78,11 @@ unsafe impl Sync for DigestVerificationError {}
 #[derive(Debug)]
 pub(crate) struct DigestOffsetError {
     description: String,
-    source: Option<&'static Error>
+    source: Option<&'static dyn Error>
 }
 
 impl DigestOffsetError {
-    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+    pub(crate) fn new(description: String, source: Option<&'static dyn Error>) -> Self {
         DigestOffsetError { description, source }
     }
 }
@@ -100,11 +100,11 @@ unsafe impl Send for DigestOffsetError {}
 #[derive(Debug)]
 pub(crate) struct RtmpStateError {
     description: String,
-    source: Option<&'static Error>
+    source: Option<&'static dyn Error>
 }
 
 impl RtmpStateError {
-    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+    pub(crate) fn new(description: String, source: Option<&'static dyn Error>) -> Self {
         RtmpStateError { description, source }
     }
 }
@@ -122,11 +122,11 @@ unsafe impl Sync for RtmpStateError {}
 #[derive(Debug)]
 pub(crate) struct SignatureDoesNotMatchError {
     description: String,
-    source: Option<&'static Error>
+    source: Option<&'static dyn Error>
 }
 
 impl SignatureDoesNotMatchError {
-    pub(crate) fn new(description: String, source: Option<&'static Error>) -> Self {
+    pub(crate) fn new(description: String, source: Option<&'static dyn Error>) -> Self {
         SignatureDoesNotMatchError { description, source }
     }
 }
