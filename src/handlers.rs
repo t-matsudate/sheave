@@ -938,6 +938,8 @@ impl RtmpHandler {
                                 } else if let ReceivedFcPublish = self.state {
                                     self.handle_fc_publish()?;
                                 } else if let ReceivedCreateStream = self.state {
+                                    self.message_id += 1;
+
                                     let message_id = self.message_id;
 
                                     self.handle_create_stream(transaction_id, message_id)?;
