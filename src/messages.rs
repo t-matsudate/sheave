@@ -762,7 +762,7 @@ impl From<Status> for String {
             NetConnection(net_connection_status) => {
                 let ncs: String = net_connection_status.into();
 
-                "NetConnection.".to_string() + nss.as_str()
+                "NetConnection.".to_string() + ncs.as_str()
             },
             NetStream(net_stream_status) => {
                 let nss: String = net_stream_status.into();
