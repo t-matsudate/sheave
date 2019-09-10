@@ -730,7 +730,7 @@ impl RtmpHandler {
                     result,
                     transaction_id,
                     properties,
-                    information
+                    information: information.into()
                 }
             )
         );

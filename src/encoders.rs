@@ -223,7 +223,7 @@ impl RtmpEncoder for ByteBuffer {
                 self.encode_amf_string(result.into());
                 self.encode_amf_number(transaction_id as f64);
                 self.encode_amf_object(properties);
-                self.encode_amf_object(information);
+                self.encode_amf_object(information.into());
             },
             ReleaseStream {
                 transaction_id,

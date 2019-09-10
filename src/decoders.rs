@@ -363,11 +363,11 @@ impl RtmpDecoder for ByteBuffer {
                                     |properties| properties
                                 )
                             ).unwrap_or(HashMap::new());
-                            let information = self.decode_amf_data().and_then(
+                            let information: InfoObject = self.decode_amf_data().and_then(
                                 |data| data.object().map(
-                                    |information| information
+                                    |information| information.into()
                                 )
-                            ).unwrap_or(HashMap::new());
+                            ).unwrap_or(InfoObject::new());
 
                             ChunkData::Invoke(
                                 InvokeCommand::NetConnection(
