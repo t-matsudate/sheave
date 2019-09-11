@@ -1,6 +1,5 @@
 use std::{
     cmp::{
-        max,
         min
     },
     collections::{
@@ -26,7 +25,8 @@ use crate::{
     decoders::*,
     encoders::*,
     handshake::*,
-    errors::*
+    errors::*,
+    flv::*
 };
 
 #[repr(u8)]
@@ -44,7 +44,6 @@ pub(crate) enum RtmpState {
     ReceivedCreateStream,
     SentCreateStreamResult,
     ReceivedPublish,
-    SentPublishOnStatus,
     Connected,
     Disconnecting,
     Disconnected,
@@ -68,10 +67,9 @@ impl From<u8> for RtmpState {
             0x09 => ReceivedCreateStream,
             0x0a => SentCreateStreamResult,
             0x0b => ReceivedPublish,
-            0x0c => SentPublishOnStatus,
-            0x0d => Connected,
-            0x0e => Disconnecting,
-            0x0f => Disconnected,
+            0x0c => Connected,
+            0x0d => Disconnecting,
+            0x0e => Disconnected,
             0xff => Error,
             _ => panic!("Undefined RTMP state!")
         }
@@ -182,6 +180,7 @@ pub(crate) struct RtmpHandler {
     handshake: RtmpHandshake,
     command_object: CommandObject,
     info_object: InfoObject,
+    flv: Flv,
     received_chunks: HashMap<ChunkId, LastChunk>,
     sent_chunks: HashMap<ChunkId, LastChunk>
 }
@@ -206,6 +205,7 @@ impl RtmpHandler {
         let handshake = RtmpHandshake::new(start_time);
         let command_object = CommandObject::default();
         let info_object = InfoObject::default();
+        let flv = Flv::default();
         let received_chunks = HashMap::default();
         let sent_chunks = HashMap::default();
 
@@ -226,6 +226,7 @@ impl RtmpHandler {
             handshake,
             command_object,
             info_object,
+            flv,
             received_chunks,
             sent_chunks
         }
@@ -307,77 +308,176 @@ impl RtmpHandler {
         }
     }
 
-    fn receive_chunks(&mut self) -> IOResult<Vec<Chunk>> {
-        let mut tmp: [u8; Self::DEFAULT_CHUNK_SIZE as usize] = [0; Self::DEFAULT_CHUNK_SIZE as usize];
-        let mut bytes: Vec<u8> = Vec::new();
+    fn receive_chunk(&mut self) -> IOResult<Chunk> {
+        let mut buffer = ByteBuffer::new(Vec::new());
+        let mut bytes_basic_header: [u8; BasicHeader::LEN_ONE_BYTE] = [0; BasicHeader::LEN_ONE_BYTE];
 
-        while let Ok(read) = self.stream.read(&mut tmp) {
-            if read != Self::DEFAULT_CHUNK_SIZE as usize {
-                bytes.extend_from_slice(&tmp[..read]);
-                break;
-            }
+        self.stream.read(&mut bytes_basic_header).map_err(
+            |_| IOError::new(
+                ErrorKind::InvalidInput,
+                ChunkLengthError::new(
+                    "The basic header couldn't be read.".to_string(),
+                    None
+                )
+            )
+        )?;
 
-            bytes.extend_from_slice(&tmp);
+        let basic_header_type = bytes_basic_header[0] & 0x3f;
+
+        buffer.put_bytes(bytes_basic_header.to_vec());
+
+        match basic_header_type {
+            0 => {
+                let mut bytes_chunk_id: [u8; BasicHeader::LEN_ONE_BYTE] = [0; BasicHeader::LEN_ONE_BYTE];
+
+                self.stream.read(&mut bytes_chunk_id).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The chunk id couldn't be read.".to_string(),
+                            None
+                        )
+                    )
+                )?;
+                buffer.put_bytes(bytes_chunk_id.to_vec());
+            },
+            1 => {
+                let mut bytes_chunk_id: [u8; BasicHeader::LEN_TWO_BYTES] = [0; BasicHeader::LEN_TWO_BYTES];
+
+                self.stream.read(&mut bytes_chunk_id).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The chunk id couldn't be read.".to_string(),
+                            None
+                        )
+                    )
+                )?;
+                buffer.put_bytes(bytes_chunk_id.to_vec());
+            },
+            _ => {}
         }
 
-        println!("{:x?}", bytes);
-        self.bytes_read += bytes.len() as u32;
+        let basic_header = buffer.decode_basic_header().ok_or(
+            IOError::new(
+                ErrorKind::InvalidData,
+                ChunkFormatError::new(
+                    "The basic header format is invalid.".to_string(),
+                    None
+                )
+            )
+        )?;
+        println!("basic_header: {:x?}", basic_header);
+        let message_format = basic_header.get_message_format();
+        let chunk_id = basic_header.get_chunk_id();
 
-        let mut buffer = ByteBuffer::new(bytes);
-        let mut chunks: Vec<Chunk> = Vec::new();
+        match message_format {
+            MessageFormat::New => {
+                let mut bytes_message_header: [u8; MessageHeader::LEN_NEW] = [0; MessageHeader::LEN_NEW];
 
-        while buffer.offset() < buffer.len() {
-            println!("offset: {} len: {}", buffer.offset(), buffer.len());
-            let basic_header = buffer.decode_basic_header().ok_or(
-                IOError::new(
+                self.stream.read(&mut bytes_message_header).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The message header couldn't be read.".to_string(),
+                            None
+                        )
+                    )
+                )?;
+                buffer.put_bytes(bytes_message_header.to_vec());
+            },
+            MessageFormat::SameSource => {
+                let mut bytes_message_header: [u8; MessageHeader::LEN_SAME_SOURCE] = [0; MessageHeader::LEN_SAME_SOURCE];
+
+                self.stream.read(&mut bytes_message_header).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The message header couldn't be read.".to_string(),
+                            None
+                        )
+                    )
+                )?;
+                buffer.put_bytes(bytes_message_header.to_vec());
+            },
+            MessageFormat::TimerChange => {
+                let mut bytes_message_header: [u8; MessageHeader::LEN_TIMER_CHANGE] = [0; MessageHeader::LEN_TIMER_CHANGE];
+
+                self.stream.read(&mut bytes_message_header).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The message header couldn't be read.".to_string(),
+                            None
+                        )
+                    )
+                )?;
+                buffer.put_bytes(bytes_message_header.to_vec());
+            },
+            MessageFormat::Continue => {}
+        }
+
+        let message_header = buffer.decode_message_header(basic_header.get_message_format()).ok_or(
+            IOError::new(
+                ErrorKind::InvalidData,
+                ChunkFormatError::new(
+                    "The message header format is invalid.".to_string(),
+                    None
+                )
+            )
+        )?;
+        println!("message_header: {:x?}", message_header);
+        let timestamp = message_header.get_timestamp().or(
+            self.received_chunks.get(&chunk_id).map(
+                |last_chunk| last_chunk.get_timestamp()
+            )
+        ).unwrap();
+        let message_len = message_header.get_message_len().or(
+            self.received_chunks.get(&chunk_id).map(
+                |last_chunk| last_chunk.get_message_len()
+            )
+        ).unwrap();
+        let message_type = message_header.get_message_type().or(
+            self.received_chunks.get(&chunk_id).map(
+                |last_chunk| last_chunk.get_message_type()
+            )
+        ).unwrap();
+        let message_id = message_header.get_message_id().or(
+            self.received_chunks.get(&chunk_id).map(
+                |last_chunk| last_chunk.get_message_id()
+            )
+        ).unwrap();
+
+        if timestamp.as_secs() >= U24_MAX as u64 {
+            let mut bytes_extended_timestamp: [u8; 4] = [0; 4];
+
+            self.stream.read(&mut bytes_extended_timestamp).map_err(
+                |_| IOError::new(
                     ErrorKind::InvalidInput,
                     ChunkLengthError::new(
-                        "The basic header couldn't be read.".to_string(),
+                        "The extended timestamp couldn't be read.".to_string(),
                         None
                     )
                 )
             )?;
-            let chunk_id = basic_header.get_chunk_id();
+            buffer.put_bytes(bytes_extended_timestamp.to_vec());
+        }
 
-            self.last_received_chunk_id = chunk_id;
+        let extended_timestamp = buffer.decode_extended_timestamp(message_header);
+        println!("extended_timestamp: {:x?}", extended_timestamp);
+        let mut bytes_chunk_data: Vec<u8> = Vec::new();
+        let mut remaining = message_len;
 
-            let mut message_header = buffer.decode_message_header(basic_header.get_message_format()).ok_or(
-                IOError::new(
-                    ErrorKind::InvalidInput,
-                    ChunkLengthError::new(
-                        "The message header couldn't be read.".to_string(),
-                        None
-                    )
-                )
-            )?;
-            let message_type = message_header.get_message_type().or(
-                self.received_chunks.get(&chunk_id).map(
-                    |last_chunk| last_chunk.get_message_type()
-                )
-            ).unwrap();
-            let message_id = message_header.get_message_id().or(
-                self.received_chunks.get(&chunk_id).map(
-                    |last_chunk| last_chunk.get_message_id()
-                )
-            ).unwrap();
-            let mut message_len = message_header.get_message_len().or(
-                self.received_chunks.get(&chunk_id).map(
-                    |last_chunk| last_chunk.get_message_len()
-                )
-            ).unwrap();
-            let mut timestamp = message_header.get_timestamp().or(
-                self.received_chunks.get(&chunk_id).map(
-                    |last_chunk| last_chunk.get_timestamp()
-                )
-            ).unwrap();
-            let splits = message_len / self.chunk_size + ((message_len > self.chunk_size) && (message_len % self.chunk_size > 0)) as u32;
+        while remaining > 0 {
+            let capacity = min(self.chunk_size, remaining) as usize;
+            let mut tmp: Vec<u8> = Vec::with_capacity(capacity);
 
-            message_len += max(0, (splits as i32) - 1) as u32;
+            unsafe {
+                tmp.set_len(capacity);
+            }
 
-            let extended_timestamp = buffer.decode_extended_timestamp(message_header);
-            println!("message_len: {}", message_len);
-            let mut chunk_data = buffer.get_sliced_bytes(message_len as usize).ok_or(
-                IOError::new(
+            let read = self.stream.read(tmp.as_mut_slice()).map_err(
+                |_| IOError::new(
                     ErrorKind::InvalidInput,
                     ChunkLengthError::new(
                         "The chunk data couldn't be read.".to_string(),
@@ -386,52 +486,46 @@ impl RtmpHandler {
                 )
             )?;
 
-            println!("{:x?}", chunk_data);
+            bytes_chunk_data.append(&mut tmp);
+            remaining -= read as u32;
 
-            if message_len > self.chunk_size {
-                let mut split: Vec<u8> = Vec::new();
-                let chunk_size = self.chunk_size as usize;
+            if read as u32 >= self.chunk_size {
+                let mut skipped: [u8; 1] = [0; 1];
 
-                for i in 0..(splits as usize) {
-                    let start = chunk_size * i + (i > 0) as usize;
-                    let end = start + min(chunk_size, chunk_data[start..].len());
-
-                    split.extend_from_slice(&chunk_data[start..end]);
-                }
-
-                println!("{:x?}", split);
-                chunk_data = split;
+                self.stream.read(&mut skipped).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The chunk data couldn't be read.".to_string(),
+                            None
+                        )
+                    )
+                )?;
             }
-
-            let mut chunk_data_buffer = ByteBuffer::new(chunk_data);
-
-            let decoded_chunk_data = chunk_data_buffer.decode_chunk_data(message_type);
-
-            println!("{:x?}", decoded_chunk_data);
-            chunks.push(
-                Chunk::new(
-                    basic_header,
-                    extended_timestamp,
-                    message_header,
-                    decoded_chunk_data.clone()
-                )
-            );
-            self.insert_received_chunk(
-                chunk_id,
-                LastChunk::new(
-                    message_type,
-                    message_id,
-                    message_len,
-                    extended_timestamp.map_or(
-                        timestamp,
-                        |extended| timestamp + extended
-                    ),
-                    decoded_chunk_data.unwrap()
-                )
-            );
         }
 
-        Ok(chunks)
+        buffer.put_bytes(bytes_chunk_data);
+
+        let chunk_data = buffer.decode_chunk_data(message_type);
+        println!("chunk_data: {:x?}", chunk_data);
+        let chunk = Chunk::new(
+            basic_header,
+            extended_timestamp,
+            message_header,
+            chunk_data.clone()
+        );
+
+        self.insert_received_chunk(
+            chunk_id,
+            LastChunk::new(
+                message_type,
+                message_id,
+                message_len,
+                extended_timestamp.unwrap_or(timestamp),
+                chunk_data.unwrap()
+            )
+        );
+        Ok(chunk)
     }
 
     fn send_chunk(&mut self, chunk_id: ChunkId, message_type: MessageType, message_id: u32, message_len: u32, timestamp: Duration, chunk_data: ChunkData) -> IOResult<()> {
@@ -484,6 +578,7 @@ impl RtmpHandler {
             let message_header = MessageHeader::Continue;
             let continue_chunk = Chunk::new(basic_header, None, message_header, None);
             let continue_bytes = encode_chunk(continue_chunk);
+            println!("continue: {:x?}", continue_bytes);
             let chunk_size = self.chunk_size as usize;
             let mut added: Vec<u8> = Vec::new();
             
@@ -615,6 +710,26 @@ impl RtmpHandler {
             Duration::default(),
             ChunkData::ClientBandwidth(self.client_bandwidth, limit_type)
         )
+    }
+
+    fn receive_notify(&mut self, notify_command: NotifyCommand) -> IOResult<()> {
+        use crate::messages::{
+            NotifyCommand::*
+        };
+
+        match notify_command {
+            SetDataFrame {
+                data_frame,
+                meta_data
+            } => {
+                if data_frame == "onMetaData" {
+                    Ok(self.flv.append_meta_data(meta_data))
+                } else {
+                    Ok(println!("Unknown data frame: {}", data_frame))
+                }
+            },
+            Unknown(bytes) => Ok(println!("Unknown notify command: {:x?}", bytes))
+        }
     }
 
     fn receive_invoke(&mut self, invoke_command: InvokeCommand) -> IOResult<()> {
@@ -880,21 +995,13 @@ impl RtmpHandler {
                 self.send_on_status(
                     Status::NetStream(NetStreamStatus::Publish(PublishStatus::Start)),
                     play_path
-                ).map(|_| self.state = RtmpState::SentPublishOnStatus)
+                ).map(|_| self.state = RtmpState::Connected)
             }
         )
     }
 
     fn receive_unknown(&mut self, bytes: Vec<u8>) -> IOResult<()> {
-        Ok(println!("Unknown chunk data: {:x?}", bytes))
-    }
-
-    fn connected(&mut self) -> IOResult<()> {
-        for received in self.receive_chunks()? {
-            println!("{:?}", received);
-        }
-
-        self.state = RtmpState::Connected;
+        println!("Unknown chunk data: {:x?}", bytes);
         panic!("Stop at here!")
     }
 
@@ -904,72 +1011,54 @@ impl RtmpHandler {
 
         match self.state {
             TcpConnect => self.handle_handshake(),
-            Connected => unimplemented!("after connected"),
             Disconnecting | Disconnected | Error => unimplemented!("when disconnection and error"),
             _ => {
-                for received in self.receive_chunks()? {
-                    match received.get_chunk_data().clone() {
-                        Some(chunk_data) => match chunk_data {
-                            ChunkSize(chunk_size) => {
-                                self.receive_chunk_size(chunk_size)?;
-                            },
-                            BytesRead(bytes_read) => {
-                                self.receive_bytes_read(bytes_read)?;
-                            },
-                            Ping(_) => {
-                                unimplemented!("when received ping")
-                            },
-                            ServerBandwidth(bandwidth) => {
-                                self.receive_server_bandwidth(bandwidth)?;
-                            },
-                            ClientBandwidth(bandwidth, limit_type) => {
-                                self.receive_client_bandwidth(bandwidth, limit_type)?;
-                            },
-                            Invoke(invoke_command) => {
-                                self.receive_invoke(invoke_command)?;
-                                println!("state: {:?}", self.state);
+                let received = self.receive_chunk()?;
 
-                                let transaction_id = self.transaction_id;
+                match received.get_chunk_data().clone() {
+                    Some(chunk_data) => match chunk_data {
+                        ChunkSize(chunk_size) => self.receive_chunk_size(chunk_size),
+                        BytesRead(bytes_read) => self.receive_bytes_read(bytes_read),
+                        Ping(_) => unimplemented!("when received ping"),
+                        ServerBandwidth(bandwidth) => self.receive_server_bandwidth(bandwidth),
+                        ClientBandwidth(bandwidth, limit_type) => self.receive_client_bandwidth(bandwidth, limit_type),
+                        Notify(notify_command) => self.receive_notify(notify_command),
+                        Invoke(invoke_command) => {
+                            self.receive_invoke(invoke_command)?;
+                            println!("state: {:?}", self.state);
 
-                                if let ReceivedConnect = self.state {
-                                    self.handle_connect(transaction_id)?;
-                                } else if let ReceivedReleaseStream = self.state {
-                                    self.handle_release_stream(transaction_id)?;
-                                } else if let ReceivedFcPublish = self.state {
-                                    self.handle_fc_publish()?;
-                                } else if let ReceivedCreateStream = self.state {
-                                    self.message_id += 1;
+                            let transaction_id = self.transaction_id;
 
-                                    let message_id = self.message_id;
+                            if let ReceivedConnect = self.state {
+                                self.handle_connect(transaction_id)
+                            } else if let ReceivedReleaseStream = self.state {
+                                self.handle_release_stream(transaction_id)
+                            } else if let ReceivedFcPublish = self.state {
+                                self.handle_fc_publish()
+                            } else if let ReceivedCreateStream = self.state {
+                                self.message_id += 1;
 
-                                    self.handle_create_stream(transaction_id, message_id)?;
-                                } else if let ReceivedPublish = self.state {
-                                    self.handle_publish()?;
-                                } else if let SentPublishOnStatus = self.state {
-                                    self.connected()?;
-                                }  else {
-                                    unimplemented!("other commands")
-                                }
-                            },
-                            Unknown(bytes) => {
-                                self.receive_unknown(bytes)?;
+                                let message_id = self.message_id;
+
+                                self.handle_create_stream(transaction_id, message_id)
+                            } else if let ReceivedPublish = self.state {
+                                self.handle_publish()
+                            } else {
+                                unimplemented!("other commands")
                             }
                         },
-                        _ => {
-                            return Err(
-                                IOError::new(
-                                    ErrorKind::InvalidInput,
-                                    ChunkFormatError::new(
-                                        "Somehow the chunk data is nothing.".to_string(),
-                                        None
-                                    )
-                                )
+                        Unknown(bytes) => self.receive_unknown(bytes)
+                    },
+                    _ => Err(
+                        IOError::new(
+                            ErrorKind::InvalidInput,
+                            ChunkFormatError::new(
+                                "Somehow the chunk data is nothing.".to_string(),
+                                None
                             )
-                        }
-                    }
+                        )
+                    )
                 }
-
-                Ok(())
             }
         }
     }

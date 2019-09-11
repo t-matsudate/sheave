@@ -24,7 +24,9 @@ pub(crate) trait RtmpEncoder: PutByteBuffer {
     fn encode_amf_string(&mut self, string: String);
     fn encode_amf_object(&mut self, object: HashMap<String, AmfData>);
     fn encode_amf_null(&mut self);
+    fn encode_amf_mixed_array(&mut self, mixed_array: HashMap<String, AmfData>);
     fn encode_amf_data(&mut self, data: AmfData);
+    fn encode_notify(&mut self, bytes: NotifyCommand);
     fn encode_invoke_net_connection(&mut self, net_connection: NetConnectionCommand);
     fn encode_invoke_net_stream(&mut self, net_stream: NetStreamCommand);
     fn encode_invoke_fc_publish(&mut self, fc_publish: FcPublishCommand);
@@ -188,6 +190,19 @@ impl RtmpEncoder for ByteBuffer {
         self.put_u8(AmfDataType::Null as u8);
     }
 
+    fn encode_amf_mixed_array(&mut self, mixed_array: HashMap<String, AmfData>) {
+        self.put_u8(AmfDataType::MixedArray as u8);
+        self.put_u32_be(mixed_array.len() as u32);
+
+        for (key, value) in mixed_array {
+            self.put_u16_be(key.len() as u16);
+            self.put_bytes(key.into_bytes());
+            self.encode_amf_data(value);
+        }
+
+        self.put_bytes(AmfData::OBJECT_END_SEQUENCE.to_vec());
+    }
+
     fn encode_amf_data(&mut self, data: AmfData) {
         use crate::messages::AmfData::*;
 
@@ -195,9 +210,26 @@ impl RtmpEncoder for ByteBuffer {
             Number(number) => self.encode_amf_number(number),
             Boolean(boolean) => self.encode_amf_boolean(boolean),
             String(string) => self.encode_amf_string(string),
-            Null => self.encode_amf_null(),
             Object(object) => self.encode_amf_object(object),
+            Null => self.encode_amf_null(),
+            MixedArray(mixed_array) => self.encode_amf_mixed_array(mixed_array),
             _ => ()
+        }
+    }
+
+    fn encode_notify(&mut self, notify_command: NotifyCommand) {
+        use crate::messages::NotifyCommand::*;
+
+        match notify_command {
+            SetDataFrame {
+                data_frame,
+                meta_data
+            } => {
+                self.encode_amf_string("@setDataFrame".to_string());
+                self.encode_amf_string(data_frame);
+                self.encode_amf_object(meta_data.into());
+            },
+            Unknown(bytes) => self.put_bytes(bytes)
         }
     }
 
@@ -334,6 +366,7 @@ impl RtmpEncoder for ByteBuffer {
                     Ping(ping_data) => self.encode_ping(ping_data),
                     ServerBandwidth(bandwidth) => self.encode_server_bandwidth(bandwidth),
                     ClientBandwidth(bandwidth, limit_type) => self.encode_client_bandwidth(bandwidth, limit_type),
+                    Notify(notify_command) => self.encode_notify(notify_command),
                     Invoke(invoke_command) => self.encode_invoke(invoke_command),
                     Unknown(bytes) => self.encode_unknown(bytes)
                 }

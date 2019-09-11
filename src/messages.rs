@@ -77,6 +77,7 @@ pub(crate) enum MessageType {
     Ping,
     ServerBandwidth,
     ClientBandwidth,
+    Notify = 0x12,
     Invoke = 0x14,
     Unknown
 }
@@ -91,6 +92,7 @@ impl From<u8> for MessageType {
             0x04 => Ping,
             0x05 => ServerBandwidth,
             0x06 => ClientBandwidth,
+            0x12 => Notify,
             0x14 => Invoke,
             _ => Unknown
         }
@@ -315,7 +317,7 @@ impl AmfData {
 
     pub(crate) fn object(self) -> Option<HashMap<String, AmfData>> {
         match self {
-            AmfData::Object(o) => Some(o),
+            AmfData::Object(o) | AmfData::MixedArray(o) => Some(o),
             _ => None
         }
     }
@@ -1092,12 +1094,297 @@ pub(crate) enum PingData {
 }
 
 #[derive(Debug, Clone)]
+pub(crate) struct MetaData {
+    stereo: Option<bool>,
+    audio_data_rate: Option<u64>,
+    audio_sample_rate: Option<u64>,
+    audio_sample_size: Option<u64>,
+    audio_codec_id: Option<u64>,
+    video_data_rate: Option<u64>,
+    frame_rate: Option<u64>,
+    video_codec_id: Option<u64>,
+    width: Option<u64>,
+    height: Option<u64>,
+    file_size: Option<u64>,
+    duration: Option<Duration>,
+    major_brand: Option<String>,
+    minor_version: Option<String>,
+    compatible_brands: Option<String>,
+    encoder: Option<String>
+}
+
+impl MetaData {
+    fn new() -> Self {
+        MetaData {
+            stereo: None,
+            audio_data_rate: None,
+            audio_sample_rate: None,
+            audio_sample_size: None,
+            audio_codec_id: None,
+            video_data_rate: None,
+            frame_rate: None,
+            video_codec_id: None,
+            width: None,
+            height: None,
+            file_size: None,
+            duration: None,
+            major_brand: None,
+            minor_version: None,
+            compatible_brands: None,
+            encoder: None
+        }
+    }
+
+    fn set_stereo(&mut self, stereo: Option<bool>) {
+        self.stereo = stereo;
+    }
+
+    fn set_audio_data_rate(&mut self, audio_data_rate: Option<f64>) {
+        self.audio_data_rate = audio_data_rate.map(
+            |audio_data_rate| audio_data_rate as u64
+        );
+    }
+
+    fn set_audio_sample_rate(&mut self, audio_sample_rate: Option<f64>) {
+        self.audio_sample_rate = audio_sample_rate.map(
+            |audio_sample_rate| audio_sample_rate as u64
+        );
+    }
+
+    fn set_audio_sample_size(&mut self, audio_sample_size: Option<f64>) {
+        self.audio_sample_size = audio_sample_size.map(
+            |audio_sample_size| audio_sample_size as u64
+        );
+    }
+
+    fn set_audio_codec_id(&mut self, audio_codec_id: Option<f64>) {
+        self.audio_codec_id = audio_codec_id.map(
+            |audio_codec_id| audio_codec_id as u64
+        );
+    }
+
+    fn set_video_data_rate(&mut self, video_data_rate: Option<f64>) {
+        self.video_data_rate = video_data_rate.map(
+            |video_data_rate| video_data_rate as u64
+        );
+    }
+
+    fn set_frame_rate(&mut self, frame_rate: Option<f64>) {
+        self.frame_rate = frame_rate.map(
+            |frame_rate| frame_rate as u64
+        );
+    }
+
+    fn set_video_codec_id(&mut self, video_codec_id: Option<f64>) {
+        self.video_codec_id = video_codec_id.map(
+            |video_codec_id| video_codec_id as u64
+        );
+    }
+
+    fn set_width(&mut self, width: Option<f64>) {
+        self.width = width.map(
+            |width| width as u64
+        );
+    }
+
+    fn set_height(&mut self, height: Option<f64>) {
+        self.height = height.map(
+            |height| height as u64
+        );
+    }
+
+    fn set_file_size(&mut self, file_size: Option<f64>) {
+        self.file_size = file_size.map(
+            |file_size| file_size as u64
+        );
+    }
+
+    fn set_duration(&mut self, duration: Option<f64>) {
+        self.duration = duration.map(
+            |duration| Duration::from_secs(duration as u64)
+        );
+    }
+
+    fn set_major_brand(&mut self, major_brand: Option<String>) {
+        self.major_brand = major_brand;
+    }
+
+    fn set_minor_version(&mut self, minor_version: Option<String>) {
+        self.minor_version = minor_version;
+    }
+
+    fn set_compatible_brands(&mut self, compatible_brands: Option<String>) {
+        self.compatible_brands = compatible_brands;
+    }
+
+    fn set_encoder(&mut self, encoder: Option<String>) {
+        self.encoder = encoder;
+    }
+}
+
+impl From<HashMap<String, AmfData>> for MetaData {
+    fn from(m: HashMap<String, AmfData>) -> Self {
+        let mut meta_data = MetaData::new();
+
+        for (key, value) in m {
+            if key == "stereo" {
+                meta_data.set_stereo(value.boolean());
+            } else if key == "audiodatarate" {
+                meta_data.set_audio_data_rate(value.number());
+            } else if key == "audiosamplerate" {
+                meta_data.set_audio_sample_rate(value.number());
+            } else if key == "audiosamplesize" {
+                meta_data.set_audio_sample_size(value.number());
+            } else if key == "audiocodecid" {
+                meta_data.set_audio_codec_id(value.number());
+            } else if key == "videodatarate" {
+                meta_data.set_video_data_rate(value.number());
+            } else if key == "framerate" {
+                meta_data.set_frame_rate(value.number());
+            } else if key == "videocodecid" {
+                meta_data.set_video_codec_id(value.number());
+            } else if key == "width" {
+                meta_data.set_width(value.number());
+            } else if key == "height" {
+                meta_data.set_height(value.number());
+            } else if key == "filesize" {
+                meta_data.set_file_size(value.number());
+            } else if key == "duration" {
+                meta_data.set_duration(value.number());
+            } else if key == "major-brand" {
+                meta_data.set_major_brand(value.string());
+            } else if key == "minor-version" {
+                meta_data.set_minor_version(value.string());
+            } else if key == "compatible-brands" {
+                meta_data.set_compatible_brands(value.string());
+            } else if key == "encoder" {
+                meta_data.set_encoder(value.string());
+            } else {
+                info!("Unknown metadata: key {}, value {:?}", key, value);
+            }
+        }
+
+        meta_data
+    }
+}
+
+impl From<MetaData> for HashMap<String, AmfData> {
+    fn from(metadata: MetaData) -> Self {
+        let mut m: HashMap<String, AmfData> = HashMap::new();
+
+        match metadata {
+            MetaData {
+                stereo,
+                audio_data_rate,
+                audio_sample_rate,
+                audio_sample_size,
+                audio_codec_id,
+                video_data_rate,
+                frame_rate,
+                video_codec_id,
+                width,
+                height,
+                file_size,
+                duration,
+                major_brand,
+                minor_version,
+                compatible_brands,
+                encoder
+            } => {
+                duration.map(
+                    |duration| m.insert("duration".to_string(), AmfData::Number(f64::from_bits(duration.as_secs())))
+                );
+                width.map(
+                    |width| m.insert("width".to_string(), AmfData::Number(f64::from_bits(width)))
+                );
+                height.map(
+                    |height| m.insert("height".to_string(), AmfData::Number(f64::from_bits(height)))
+                );
+                video_data_rate.map(
+                    |video_data_rate| m.insert("videodatarate".to_string(), AmfData::Number(f64::from_bits(video_data_rate)))
+                );
+                frame_rate.map(
+                    |frame_rate| m.insert("framerate".to_string(), AmfData::Number(f64::from_bits(frame_rate)))
+                );
+                video_codec_id.map(
+                    |video_codec_id| m.insert("videocodecid".to_string(), AmfData::Number(f64::from_bits(video_codec_id)))
+                );
+                audio_data_rate.map(
+                    |audio_data_rate| m.insert("audiodatarate".to_string(), AmfData::Number(f64::from_bits(audio_data_rate)))
+                );
+                audio_sample_rate.map(
+                    |audio_sample_rate| m.insert("audiosamplerate".to_string(), AmfData::Number(f64::from_bits(audio_sample_rate)))
+                );
+                audio_sample_size.map(
+                    |audio_sample_size| m.insert("audiosamplesize".to_string(), AmfData::Number(f64::from_bits(audio_sample_size)))
+                );
+                stereo.map(
+                    |stereo| m.insert("stereo".to_string(), AmfData::Boolean(stereo))
+                );
+                audio_codec_id.map(
+                    |audio_codec_id| m.insert("audiocodecid".to_string(), AmfData::Number(f64::from_bits(audio_codec_id)))
+                );
+                major_brand.map(
+                    |major_brand| m.insert("major-brand".to_string(), AmfData::String(major_brand))
+                );
+                minor_version.map(
+                    |minor_version| m.insert("minor-version".to_string(), AmfData::String(minor_version))
+                );
+                compatible_brands.map(
+                    |compatible_brands| m.insert("compatible-brands".to_string(), AmfData::String(compatible_brands))
+                );
+                encoder.map(
+                    |encoder| m.insert("encoder".to_string(), AmfData::String(encoder))
+                );
+                file_size.map(
+                    |file_size| m.insert("filesize".to_string(), AmfData::Number(f64::from_bits(file_size)))
+                );
+            }
+        }
+
+        m
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(crate) enum NotifyCommand {
+    SetDataFrame {
+        data_frame: String,
+        meta_data: MetaData
+    },
+    Unknown(Vec<u8>)
+}
+
+impl NotifyCommand {
+    pub(crate) fn is_data_frame(&self) -> bool {
+        match self {
+            &NotifyCommand::SetDataFrame {
+                data_frame: _,
+                meta_data: _
+            } => true,
+            _ => false
+        }
+    }
+
+    pub(crate) fn data_frame(&self) -> Option<(&String, &MetaData)> {
+        match self {
+            &NotifyCommand::SetDataFrame {
+                ref data_frame,
+                ref meta_data
+            } => Some((data_frame, meta_data)),
+            _ => None
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub(crate) enum ChunkData {
     ChunkSize(u32),
     BytesRead(u32),
     Ping(PingData),
     ServerBandwidth(u32),
     ClientBandwidth(u32, LimitType),
+    Notify(NotifyCommand),
     Invoke(InvokeCommand),
     Unknown(Vec<u8>)
 }
@@ -1113,6 +1400,13 @@ impl ChunkData {
     pub(crate) fn bytes_read(&self) -> Option<u32> {
         match self {
             &ChunkData::BytesRead(bytes_read) => Some(bytes_read),
+            _ => None
+        }
+    }
+
+    pub(crate) fn notify(&self) -> Option<&NotifyCommand> {
+        match self {
+            &ChunkData::Notify(ref notify_command) => Some(notify_command),
             _ => None
         }
     }

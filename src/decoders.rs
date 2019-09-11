@@ -24,7 +24,9 @@ pub(crate) trait RtmpDecoder: GetByteBuffer {
     fn decode_amf_string(&mut self) -> Option<AmfData>;
     fn decode_amf_object(&mut self) -> Option<AmfData>;
     fn decode_amf_null(&mut self) -> Option<AmfData>;
+    fn decode_amf_mixed_array(&mut self) -> Option<AmfData>;
     fn decode_amf_data(&mut self) -> Option<AmfData>;
+    fn decode_notify(&mut self) -> Option<ChunkData>;
     fn decode_invoke_connect_result(&mut self) -> Option<ChunkData>;
     fn decode_invoke_release_stream_result(&mut self) -> Option<ChunkData>;
     fn decode_invoke_create_stream_result(&mut self) -> Option<ChunkData>;
@@ -315,6 +317,7 @@ impl RtmpDecoder for ByteBuffer {
 
         while let Some(bytes) = self.peek_bytes(3) {
             if bytes == &AmfData::OBJECT_END_SEQUENCE {
+                self.get_sliced_bytes(3); // Skips the AMF's object end marker.
                 break;
             }
 
@@ -331,6 +334,26 @@ impl RtmpDecoder for ByteBuffer {
         self.get_u8().map(|_| AmfData::Null) // AMF0's Null has only its type id.
     }
 
+    fn decode_amf_mixed_array(&mut self) -> Option<AmfData> {
+        let mut mixed_array: HashMap<String, AmfData> = HashMap::new();
+
+        self.get_u32_be(); // The mixed array can skip the length field because has an object end marker at the end of its array.
+
+        while let Some(bytes) = self.peek_bytes(3) {
+            if bytes == &AmfData::OBJECT_END_SEQUENCE {
+                self.get_sliced_bytes(3); // Skips the AMF's object end marker.
+                break;
+            }
+
+            let key = self.decode_amf_string().unwrap().string().unwrap();
+            let value = self.decode_amf_data().unwrap();
+
+            mixed_array.insert(key, value);
+        }
+
+        Some(AmfData::MixedArray(mixed_array))
+    }
+
     fn decode_amf_data(&mut self) -> Option<AmfData> {
         self.get_u8().and_then(
             |b| {
@@ -345,9 +368,56 @@ impl RtmpDecoder for ByteBuffer {
                     AmfString => self.decode_amf_string(),
                     Object => self.decode_amf_object(),
                     Null => self.decode_amf_null(),
+                    MixedArray => self.decode_amf_mixed_array(),
                     _ => None
                 }
             }
+        )
+    }
+
+    fn decode_notify(&mut self) -> Option<ChunkData> {
+        self.decode_amf_data().and_then(
+            |s| s.string().and_then(
+                |command| {
+                    use crate::messages::{
+                        ChunkData::Notify,
+                        NotifyCommand::*
+                    };
+
+                    if command == "@setDataFrame" {
+                        let data_frame = self.decode_amf_data().and_then(
+                            |s| s.string()
+                        ).unwrap();
+                        let meta_data = self.decode_amf_data().and_then(
+                            |object| object.object().map(
+                                |properties| {
+                                    let meta_data: MetaData = properties.into();
+
+                                    meta_data
+                                }
+                            )
+                        ).unwrap();
+
+                        Some(
+                            Notify(
+                                SetDataFrame {
+                                    data_frame,
+                                    meta_data
+                                }
+                            )
+                        )
+                    } else {
+                        info!("Unknown notify command: {}", command);
+
+                        let len = self.len();
+                        let offset = self.offset();
+
+                        self.get_sliced_bytes(len - offset).map(
+                            |bytes| Notify(Unknown(bytes))
+                        )
+                    }
+                }
+            )
         )
     }
 
@@ -631,6 +701,7 @@ impl RtmpDecoder for ByteBuffer {
             Ping => self.decode_ping(),
             ServerBandwidth => self.decode_server_bandwidth(),
             ClientBandwidth => self.decode_client_bandwidth(),
+            Notify => self.decode_notify(),
             Invoke => self.decode_invoke(),
             _ => self.decode_unknown()
         }
