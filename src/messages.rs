@@ -453,7 +453,7 @@ pub(crate) struct CommandObject {
 }
 
 impl CommandObject {
-    pub(crate) fn new() -> Self {
+    fn new() -> Self {
         CommandObject {
             fpad: None,
             object_encoding: None,
@@ -469,55 +469,55 @@ impl CommandObject {
         }
     }
 
-    pub(self) fn set_fpad(&mut self, fpad: Option<bool>) {
+    fn set_fpad(&mut self, fpad: Option<bool>) {
         self.fpad = fpad;
     }
 
-    pub(self) fn set_object_encoding(&mut self, object_encoding: Option<f64>) {
+    fn set_object_encoding(&mut self, object_encoding: Option<f64>) {
         self.object_encoding = object_encoding.map(
             |object_encoding| ((object_encoding as u64) as u8).into()
         );
     }
 
-    pub(self) fn set_video_function(&mut self, video_function: Option<f64>) {
+    fn set_video_function(&mut self, video_function: Option<f64>) {
         self.video_function = video_function.map(
             |video_function| ((video_function as u64) as u8).into()
         );
     }
 
-    pub(self) fn set_video_codec(&mut self, video_codec: Option<f64>) {
+    fn set_video_codec(&mut self, video_codec: Option<f64>) {
         self.video_codec = video_codec.map(
             |video_codec| ((video_codec as u64) as u8).into()
         );
     }
 
-    pub(self) fn set_audio_codec(&mut self, audio_codec: Option<f64>) {
+    fn set_audio_codec(&mut self, audio_codec: Option<f64>) {
         self.audio_codec = audio_codec.map(
             |audio_codec| ((audio_codec as u64) as u16).into()
         );
     }
 
-    pub(self) fn set_app(&mut self, app: Option<String>) {
+    fn set_app(&mut self, app: Option<String>) {
         self.app = app;
     }
 
-    pub(self) fn set_command_type(&mut self, command_type: Option<String>) {
+    fn set_command_type(&mut self, command_type: Option<String>) {
         self.command_type = command_type;
     }
 
-    pub(self) fn set_flash_ver(&mut self, flash_ver: Option<String>) {
+    fn set_flash_ver(&mut self, flash_ver: Option<String>) {
         self.flash_ver = flash_ver;
     }
 
-    pub(self) fn set_swf_url(&mut self, swf_url: Option<String>) {
+    fn set_swf_url(&mut self, swf_url: Option<String>) {
         self.swf_url = swf_url;
     }
 
-    pub(self) fn set_tc_url(&mut self, tc_url: Option<String>) {
+    fn set_tc_url(&mut self, tc_url: Option<String>) {
         self.tc_url = tc_url;
     }
 
-    pub(self) fn set_page_url(&mut self, page_url: Option<String>) {
+    fn set_page_url(&mut self, page_url: Option<String>) {
         self.page_url = page_url;
     }
 }
@@ -795,23 +795,23 @@ impl InfoObject {
         }
     }
 
-    pub(self) fn set_object_encoding(&mut self, object_encoding: Option<f64>) {
+    fn set_object_encoding(&mut self, object_encoding: Option<f64>) {
         self.object_encoding = object_encoding.map(|object_encoding| (object_encoding as u64 as u8).into());
     }
 
-    pub(self) fn set_code(&mut self, code: Option<String>) {
+    fn set_code(&mut self, code: Option<String>) {
         self.code = code.map(|code| code.into());
     }
 
-    pub(self) fn set_level(&mut self, level: Option<String>) {
+    fn set_level(&mut self, level: Option<String>) {
         self.level = level;
     }
 
-    pub(self) fn set_details(&mut self, details: Option<String>) {
+    fn set_details(&mut self, details: Option<String>) {
         self.details = details;
     }
 
-    pub(self) fn set_description(&mut self, description: Option<String>) {
+    fn set_description(&mut self, description: Option<String>) {
         self.description = description;
     }
 }
