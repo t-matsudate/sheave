@@ -404,10 +404,6 @@ pub(crate) struct Flv {
 }
 
 impl Flv {
-    pub(crate) fn new() -> Self {
-        Flv::default()
-    }
-
     pub(crate) fn append_meta_data(&mut self, meta_data: MetaData) {
         let previous_size = self.body.last().map_or(
             0,
