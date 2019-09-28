@@ -26,7 +26,7 @@ pub(crate) trait RtmpEncoder: PutByteBuffer {
     fn encode_amf_null(&mut self);
     fn encode_amf_mixed_array(&mut self, mixed_array: HashMap<String, AmfData>);
     fn encode_amf_data(&mut self, data: AmfData);
-    fn encode_notify(&mut self, bytes: NotifyCommand);
+    fn encode_notify(&mut self, notify_command: NotifyCommand);
     fn encode_invoke_net_connection(&mut self, net_connection: NetConnectionCommand);
     fn encode_invoke_net_stream(&mut self, net_stream: NetStreamCommand);
     fn encode_invoke_fc_publish(&mut self, fc_publish: FcPublishCommand);
