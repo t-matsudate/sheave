@@ -372,6 +372,7 @@ impl From<MetaData> for FlvTag {
     fn from(meta_data: MetaData) -> Self {
         let mut buffer = ByteBuffer::new(Vec::new());
 
+        buffer.encode_amf_string("onMetaData".to_string());
         buffer.encode_amf_mixed_array(meta_data.into());
 
         let mut flv_tag = FlvTag::new(TagType::ScriptData);
