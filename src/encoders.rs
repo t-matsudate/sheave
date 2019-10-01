@@ -19,6 +19,7 @@ pub(crate) trait RtmpEncoder: PutByteBuffer {
     fn encode_ping(&mut self, ping_data: PingData);
     fn encode_server_bandwidth(&mut self, bandwidth: u32);
     fn encode_client_bandwidth(&mut self, bandwidth: u32, limit_type: LimitType);
+    fn encode_audio(&mut self, bytes: Vec<u8>);
     fn encode_amf_number(&mut self, number: f64);
     fn encode_amf_boolean(&mut self, boolean: bool);
     fn encode_amf_string(&mut self, string: String);
@@ -156,6 +157,10 @@ impl RtmpEncoder for ByteBuffer {
     fn encode_client_bandwidth(&mut self, bandwidth: u32, limit_type: LimitType) {
         self.put_u32_be(bandwidth);
         self.put_u8(limit_type as u8);
+    }
+
+    fn encode_audio(&mut self, bytes: Vec<u8>) {
+        self.put_bytes(bytes);
     }
 
     fn encode_amf_number(&mut self, number: f64) {
@@ -366,6 +371,7 @@ impl RtmpEncoder for ByteBuffer {
                     Ping(ping_data) => self.encode_ping(ping_data),
                     ServerBandwidth(bandwidth) => self.encode_server_bandwidth(bandwidth),
                     ClientBandwidth(bandwidth, limit_type) => self.encode_client_bandwidth(bandwidth, limit_type),
+                    Audio(bytes) => self.encode_audio(bytes),
                     Notify(notify_command) => self.encode_notify(notify_command),
                     Invoke(invoke_command) => self.encode_invoke(invoke_command),
                     Unknown(bytes) => self.encode_unknown(bytes)

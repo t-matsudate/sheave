@@ -1,6 +1,7 @@
 use std::{
     time::{
-        Duration
+        Duration,
+        SystemTime
     }
 };
 use crate::{
@@ -175,7 +176,7 @@ pub(crate) struct AudioTagHeader {
 }
 
 impl AudioTagHeader {
-    fn size(&self) -> u32 {
+    fn real_len(&self) -> u32 {
         let aac_packet_type_size = if self.aac_packet_type.is_some() {
             1
         } else {
@@ -268,7 +269,7 @@ pub(crate) struct VideoTagHeader {
 }
 
 impl VideoTagHeader {
-    fn size(&self) -> u32 {
+    fn real_len(&self) -> u32 {
         let avc_packet_type_size = if self.avc_packet_type.is_some() {
             1
         } else {
@@ -292,7 +293,7 @@ pub(crate) struct EncryptionTagHeader {
 }
 
 impl EncryptionTagHeader {
-    fn size(&self) -> u32 {
+    fn real_len(&self) -> u32 {
         4 + self.filter_name.len() as u32
     }
 }
@@ -304,7 +305,7 @@ pub(crate) enum FilterParams {
 }
 
 impl FilterParams {
-    fn size(&self) -> u32 {
+    fn real_len(&self) -> u32 {
         match self {
             &FilterParams::Encryption(_) => 16,
             &FilterParams::SelectiveEncryption(is_encrypted, _) => if is_encrypted {
@@ -317,90 +318,149 @@ impl FilterParams {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct FlvTag {
-    is_filter: bool,
-    tag_type: TagType,
-    data_size: u32,
-    stream_id: u32,
-    timestamp: Duration,
-    audio_tag_header: Option<AudioTagHeader>,
-    video_tag_header: Option<VideoTagHeader>,
-    encryption_tag_header: Option<EncryptionTagHeader>,
-    filter_params: Option<FilterParams>,
-    data: Vec<u8>
+pub(crate) struct EncryptionTag {
+    filter_params: FilterParams,
+    encryption_tag_header: EncryptionTagHeader
 }
 
-impl FlvTag {
-    fn new(tag_type: TagType) -> Self {
-        FlvTag {
-            is_filter: false,
-            tag_type,
-            data_size: 0,
-            stream_id: 0,
-            timestamp: Duration::new(0, 0),
-            audio_tag_header: None,
-            video_tag_header: None,
-            encryption_tag_header: None,
-            filter_params: None,
-            data: Vec::new()
+impl EncryptionTag {
+    fn real_len(&self) -> u32 {
+        self.filter_params.real_len() + self.encryption_tag_header.real_len()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct AudioTag {
+    encryption_tag: Option<EncryptionTag>,
+    audio_tag_header: AudioTagHeader,
+    bytes: Vec<u8>
+}
+
+impl AudioTag {
+    fn real_len(&self) -> u32 {
+        let mut real_len = self.audio_tag_header.real_len() + self.bytes.len() as u32;
+
+        if let &Some(ref encryption_tag) = &self.encryption_tag {
+            real_len += encryption_tag.real_len();
+        }
+
+        real_len
+    }
+}
+
+impl From<Vec<u8>> for AudioTag {
+    fn from(mut bytes: Vec<u8>) -> AudioTag {
+        let byte_audio_tag_header = bytes[0];
+        let sound_format: SoundFormat = ((byte_audio_tag_header & 0xf0) >> 4).into();
+        let sound_rate: SoundRate = ((byte_audio_tag_header & 0x0c) >> 2).into();
+        let sound_size: SoundSize = ((byte_audio_tag_header & 0x02) >> 1).into();
+        let sound_type: SoundType = (byte_audio_tag_header & 0x01).into();
+        let aac_packet_type: Option<AacPacketType> = if let SoundFormat::Aac = sound_format {
+            Some(bytes[1].into())
+        } else {
+            None
+        };
+        let audio_tag_header = AudioTagHeader {
+            sound_format,
+            sound_rate,
+            sound_size,
+            sound_type,
+            aac_packet_type
+        };
+
+        bytes.remove(0);
+        AudioTag {
+            encryption_tag: None,
+            audio_tag_header,
+            bytes
         }
     }
+}
 
-    fn size(&self) -> u32 {
-        let audio_tag_header_size = self.audio_tag_header.as_ref().map_or(
-            0,
-            |audio_tag_header| audio_tag_header.size()
-        );
-        let video_tag_header_size = self.video_tag_header.as_ref().map_or(
-            0,
-            |video_tag_header| video_tag_header.size()
-        );
-        let encryption_tag_header_size = self.encryption_tag_header.as_ref().map_or(
-            0,
-            |encryption_tag_header| encryption_tag_header.size()
-        );
-        let filter_params_size = self.filter_params.as_ref().map_or(
-            0,
-            |filter_params| filter_params.size()
-        );
+#[derive(Debug, Clone)]
+pub(crate) struct DataTag {
+    encryption_tag: Option<EncryptionTag>,
+    bytes: Vec<u8>
+}
 
-        11 + audio_tag_header_size + video_tag_header_size + encryption_tag_header_size + filter_params_size + self.data.len() as u32
+impl DataTag {
+    fn real_len(&self) -> u32 {
+        let mut real_len = self.bytes.len() as u32;
+
+        if let &Some(ref encryption_tag) = &self.encryption_tag {
+            real_len += encryption_tag.real_len();
+        }
+
+        real_len
     }
 }
 
-impl From<MetaData> for FlvTag {
+impl From<MetaData> for DataTag {
     fn from(meta_data: MetaData) -> Self {
         let mut buffer = ByteBuffer::new(Vec::new());
 
         buffer.encode_amf_string("onMetaData".to_string());
         buffer.encode_amf_mixed_array(meta_data.into());
 
-        let mut flv_tag = FlvTag::new(TagType::ScriptData);
+        let mut bytes: Vec<u8> = Vec::new();
 
-        flv_tag.data.extend_from_slice(buffer.bytes().as_slice());
-        flv_tag.data_size = buffer.bytes().len() as u32;
-        flv_tag
+        bytes.extend_from_slice(buffer.bytes().as_slice());
+
+        DataTag {
+            encryption_tag: None,
+            bytes
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum FlvData {
+    Audio(AudioTag),
+    Data(DataTag)
+}
+
+impl FlvData {
+    fn has_encryption_tag(&self) -> bool {
+        match self {
+            &FlvData::Audio(ref audio_tag) => audio_tag.encryption_tag.is_some(),
+            &FlvData::Data(ref data_tag) => data_tag.encryption_tag.is_some()
+        }
+    }
+
+    fn real_len(&self) -> u32 {
+        match self {
+            &FlvData::Audio(ref audio_tag) => audio_tag.real_len(),
+            &FlvData::Data(ref data_tag) => data_tag.real_len()
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct FlvTag {
+    is_filtered: bool,
+    tag_type: TagType,
+    data_size: u32,
+    stream_id: u32,
+    timestamp: Duration,
+    data: FlvData
+}
+
+impl FlvTag {
+    fn real_len(&self) -> u32 {
+        11 + self.data.real_len()
     }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct FlvBody {
     previous_size: u32,
-    tag: FlvTag
-}
-
-impl FlvBody {
-    fn new(previous_size: u32, tag: FlvTag) -> Self {
-        FlvBody {
-            previous_size,
-            tag
-        }
-    }
+    flv_tag: FlvTag
 }
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Flv {
-    header: FlvHeader,
+    flv_header: FlvHeader,
+    created: Duration,
     body: Vec<FlvBody>
 }
 
@@ -408,9 +468,51 @@ impl Flv {
     pub(crate) fn append_meta_data(&mut self, meta_data: MetaData) {
         let previous_size = self.body.last().map_or(
             0,
-            |last_flv_body| last_flv_body.previous_size + last_flv_body.tag.size()
+            |last_flv_body| last_flv_body.previous_size + last_flv_body.flv_tag.real_len()
         );
+        let data = FlvData::Data(meta_data.into());
+        let is_filtered = data.has_encryption_tag();
+        let data_size = data.real_len();
+        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap() - self.created;
 
-        self.body.push(FlvBody::new(previous_size, meta_data.into()));
+        self.body.push(
+            FlvBody {
+                previous_size,
+                flv_tag: FlvTag {
+                    is_filtered,
+                    tag_type: TagType::ScriptData,
+                    data_size,
+                    stream_id: 0,
+                    timestamp,
+                    data
+                }
+            }
+        );
+    }
+
+    pub(crate) fn append_audio(&mut self, bytes: Vec<u8>) {
+        let previous_size = self.body.last().map_or(
+            0,
+            |last_flv_body| last_flv_body.previous_size + last_flv_body.flv_tag.real_len()
+        );
+        let data = FlvData::Audio(bytes.into());
+        let is_filtered = data.has_encryption_tag();
+        let data_size = data.real_len();
+        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap() - self.created;
+
+        self.body.push(
+            FlvBody {
+                previous_size,
+                flv_tag: FlvTag {
+                    is_filtered,
+                    tag_type: TagType::Audio,
+                    data_size,
+                    stream_id: 0,
+                    timestamp,
+                    data
+                }
+            }
+        );
+        self.flv_header.has_audio = true;
     }
 }

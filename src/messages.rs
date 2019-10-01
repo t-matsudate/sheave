@@ -77,6 +77,7 @@ pub(crate) enum MessageType {
     Ping,
     ServerBandwidth,
     ClientBandwidth,
+    Audio = 0x08,
     Notify = 0x12,
     Invoke = 0x14,
     Unknown
@@ -92,6 +93,7 @@ impl From<u8> for MessageType {
             0x04 => Ping,
             0x05 => ServerBandwidth,
             0x06 => ClientBandwidth,
+            0x08 => Audio,
             0x12 => Notify,
             0x14 => Invoke,
             _ => Unknown
@@ -1384,6 +1386,7 @@ pub(crate) enum ChunkData {
     Ping(PingData),
     ServerBandwidth(u32),
     ClientBandwidth(u32, LimitType),
+    Audio(Vec<u8>),
     Notify(NotifyCommand),
     Invoke(InvokeCommand),
     Unknown(Vec<u8>)
@@ -1400,6 +1403,13 @@ impl ChunkData {
     pub(crate) fn bytes_read(&self) -> Option<u32> {
         match self {
             &ChunkData::BytesRead(bytes_read) => Some(bytes_read),
+            _ => None
+        }
+    }
+
+    pub(crate) fn audio(&self) -> Option<&Vec<u8>> {
+        match self {
+            &ChunkData::Audio(ref bytes) => Some(bytes),
             _ => None
         }
     }

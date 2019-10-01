@@ -384,6 +384,7 @@ impl RtmpHandler {
                         )
                     )
                 )?;
+                println!("bytes_message_header: {:x?}", bytes_message_header);
                 buffer.put_bytes(bytes_message_header.to_vec());
             },
             MessageFormat::SameSource => {
@@ -398,6 +399,7 @@ impl RtmpHandler {
                         )
                     )
                 )?;
+                println!("bytes_message_header: {:x?}", bytes_message_header);
                 buffer.put_bytes(bytes_message_header.to_vec());
             },
             MessageFormat::TimerChange => {
@@ -412,6 +414,7 @@ impl RtmpHandler {
                         )
                     )
                 )?;
+                println!("bytes_message_header: {:x?}", bytes_message_header);
                 buffer.put_bytes(bytes_message_header.to_vec());
             },
             MessageFormat::Continue => {}
@@ -504,10 +507,11 @@ impl RtmpHandler {
             }
         }
 
+        // Disabled printing chunk data because the Audio/Video data is too long.
+        // println!("bytes_chunk_data: {:x?}", bytes);
         buffer.put_bytes(bytes_chunk_data);
 
         let chunk_data = buffer.decode_chunk_data(message_type);
-        println!("chunk_data: {:x?}", chunk_data);
         let chunk = Chunk::new(
             basic_header,
             extended_timestamp,
@@ -710,6 +714,10 @@ impl RtmpHandler {
             Duration::default(),
             ChunkData::ClientBandwidth(self.client_bandwidth, limit_type)
         )
+    }
+
+    fn receive_audio(&mut self, bytes: Vec<u8>) -> IOResult<()> {
+        Ok(self.flv.append_audio(bytes))
     }
 
     fn receive_notify(&mut self, notify_command: NotifyCommand) -> IOResult<()> {
@@ -1001,7 +1009,6 @@ impl RtmpHandler {
     }
 
     fn receive_unknown(&mut self, bytes: Vec<u8>) -> IOResult<()> {
-        println!("Unknown chunk data: {:x?}", bytes);
         panic!("Stop at here!")
     }
 
@@ -1022,6 +1029,7 @@ impl RtmpHandler {
                         Ping(_) => unimplemented!("when received ping"),
                         ServerBandwidth(bandwidth) => self.receive_server_bandwidth(bandwidth),
                         ClientBandwidth(bandwidth, limit_type) => self.receive_client_bandwidth(bandwidth, limit_type),
+                        Audio(bytes) => self.receive_audio(bytes),
                         Notify(notify_command) => self.receive_notify(notify_command),
                         Invoke(invoke_command) => {
                             self.receive_invoke(invoke_command)?;
