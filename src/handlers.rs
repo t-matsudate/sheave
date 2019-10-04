@@ -720,6 +720,10 @@ impl RtmpHandler {
         Ok(self.flv.append_audio(bytes))
     }
 
+    fn receive_video(&mut self, bytes: Vec<u8>) -> IOResult<()> {
+        Ok(self.flv.append_video(bytes))
+    }
+
     fn receive_notify(&mut self, notify_command: NotifyCommand) -> IOResult<()> {
         use crate::messages::{
             NotifyCommand::*
@@ -1008,7 +1012,7 @@ impl RtmpHandler {
         )
     }
 
-    fn receive_unknown(&mut self, bytes: Vec<u8>) -> IOResult<()> {
+    fn receive_unknown(&mut self, _: Vec<u8>) -> IOResult<()> {
         panic!("Stop at here!")
     }
 
@@ -1030,6 +1034,7 @@ impl RtmpHandler {
                         ServerBandwidth(bandwidth) => self.receive_server_bandwidth(bandwidth),
                         ClientBandwidth(bandwidth, limit_type) => self.receive_client_bandwidth(bandwidth, limit_type),
                         Audio(bytes) => self.receive_audio(bytes),
+                        Video(bytes) => self.receive_video(bytes),
                         Notify(notify_command) => self.receive_notify(notify_command),
                         Invoke(invoke_command) => {
                             self.receive_invoke(invoke_command)?;

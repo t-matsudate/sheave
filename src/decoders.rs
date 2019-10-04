@@ -20,6 +20,7 @@ pub(crate) trait RtmpDecoder: GetByteBuffer {
     fn decode_server_bandwidth(&mut self) -> Option<ChunkData>;
     fn decode_client_bandwidth(&mut self) -> Option<ChunkData>;
     fn decode_audio(&mut self) -> Option<ChunkData>;
+    fn decode_video(&mut self) -> Option<ChunkData>;
     fn decode_amf_number(&mut self) -> Option<AmfData>;
     fn decode_amf_boolean(&mut self) -> Option<AmfData>;
     fn decode_amf_string(&mut self) -> Option<AmfData>;
@@ -295,6 +296,15 @@ impl RtmpDecoder for ByteBuffer {
 
         self.get_sliced_bytes(len - offset).map(
             |bytes| ChunkData::Audio(bytes)
+        )
+    }
+
+    fn decode_video(&mut self) -> Option<ChunkData> {
+        let offset = self.offset();
+        let len = self.len();
+
+        self.get_sliced_bytes(len - offset).map(
+            |bytes| ChunkData::Video(bytes)
         )
     }
 
@@ -712,6 +722,7 @@ impl RtmpDecoder for ByteBuffer {
             ServerBandwidth => self.decode_server_bandwidth(),
             ClientBandwidth => self.decode_client_bandwidth(),
             Audio => self.decode_audio(),
+            Video => self.decode_video(),
             Notify => self.decode_notify(),
             Invoke => self.decode_invoke(),
             _ => self.decode_unknown()

@@ -355,8 +355,14 @@ impl From<Vec<u8>> for AudioTag {
         let sound_rate: SoundRate = ((byte_audio_tag_header & 0x0c) >> 2).into();
         let sound_size: SoundSize = ((byte_audio_tag_header & 0x02) >> 1).into();
         let sound_type: SoundType = (byte_audio_tag_header & 0x01).into();
+
+        bytes.remove(0);
+
         let aac_packet_type: Option<AacPacketType> = if let SoundFormat::Aac = sound_format {
-            Some(bytes[1].into())
+            let aac_packet_type_id = bytes[0];
+
+            bytes.remove(0);
+            Some(aac_packet_type_id.into())
         } else {
             None
         };
@@ -368,10 +374,77 @@ impl From<Vec<u8>> for AudioTag {
             aac_packet_type
         };
 
-        bytes.remove(0);
         AudioTag {
             encryption_tag: None,
             audio_tag_header,
+            bytes
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct VideoTag {
+    encryption_tag: Option<EncryptionTag>,
+    video_tag_header: VideoTagHeader,
+    bytes: Vec<u8>
+}
+
+impl VideoTag {
+    fn real_len(&self) -> u32 {
+        let mut real_len = self.video_tag_header.real_len() + self.bytes.len() as u32;
+
+        if let &Some(ref encryption_tag) = &self.encryption_tag {
+            real_len += encryption_tag.real_len();
+        }
+
+        real_len
+    }
+}
+
+impl From<Vec<u8>> for VideoTag {
+    fn from(mut bytes: Vec<u8>) -> Self {
+        let byte_video_tag_header = bytes[0];
+        let frame_type: FrameType = ((byte_video_tag_header & 0xf0) >> 4).into();
+        let codec: Codec = (byte_video_tag_header & 0x0f).into();
+
+        bytes.remove(0);
+
+        let avc_packet_type: Option<AvcPacketType> = if let Codec::Avc = codec {
+            let avc_packet_type_id = bytes[0];
+
+            bytes.remove(0);
+            Some(avc_packet_type_id.into())
+        } else {
+            None
+        };
+        let composition_time = if let Codec::Avc = codec {
+            if let &Some(AvcPacketType::Nalu) = &avc_packet_type {
+                let bytes_composition_time = &bytes[..3];
+                let mut tmp: [u8; 4] = [0; 4];
+
+                for i in 0..bytes_composition_time.len() {
+                    tmp[i + 1] = bytes_composition_time[i];
+                }
+
+                bytes = bytes[3..].to_vec();
+                Some(Duration::from_millis(u32::from_be_bytes(tmp) as u64))
+            } else {
+                bytes = bytes[3..].to_vec();
+                Some(Duration::default())
+            }
+        } else {
+            None
+        };
+        let video_tag_header = VideoTagHeader {
+            frame_type,
+            codec,
+            avc_packet_type,
+            composition_time
+        };
+
+        VideoTag {
+            encryption_tag: None,
+            video_tag_header,
             bytes
         }
     }
@@ -416,6 +489,7 @@ impl From<MetaData> for DataTag {
 #[derive(Debug, Clone)]
 pub(crate) enum FlvData {
     Audio(AudioTag),
+    Video(VideoTag),
     Data(DataTag)
 }
 
@@ -423,6 +497,7 @@ impl FlvData {
     fn has_encryption_tag(&self) -> bool {
         match self {
             &FlvData::Audio(ref audio_tag) => audio_tag.encryption_tag.is_some(),
+            &FlvData::Video(ref video_tag) => video_tag.encryption_tag.is_some(),
             &FlvData::Data(ref data_tag) => data_tag.encryption_tag.is_some()
         }
     }
@@ -430,6 +505,7 @@ impl FlvData {
     fn real_len(&self) -> u32 {
         match self {
             &FlvData::Audio(ref audio_tag) => audio_tag.real_len(),
+            &FlvData::Video(ref video_tag) => video_tag.real_len(),
             &FlvData::Data(ref data_tag) => data_tag.real_len()
         }
     }
@@ -514,5 +590,31 @@ impl Flv {
             }
         );
         self.flv_header.has_audio = true;
+    }
+
+    pub(crate) fn append_video(&mut self, bytes: Vec<u8>) {
+        let previous_size = self.body.last().map_or(
+            0,
+            |last_flv_body| last_flv_body.previous_size + last_flv_body.flv_tag.real_len()
+        );
+        let data = FlvData::Video(bytes.into());
+        let is_filtered = data.has_encryption_tag();
+        let data_size = data.real_len();
+        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap() - self.created;
+
+        self.body.push(
+            FlvBody {
+                previous_size,
+                flv_tag: FlvTag {
+                    is_filtered,
+                    tag_type: TagType::Video,
+                    data_size,
+                    stream_id: 0,
+                    timestamp,
+                    data
+                }
+            }
+        );
+        self.flv_header.has_video = true;
     }
 }
