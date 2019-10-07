@@ -435,45 +435,47 @@ impl RtmpHandler {
         )?;
         println!("message_header: {:x?}", message_header);
         let timestamp = message_header.get_timestamp().or(
-            self.received_chunks.get(&chunk_id).map(
+            self.received_chunks.get(&chunk_id).and_then(
                 |last_chunk| last_chunk.get_timestamp()
             )
-        ).unwrap();
+        );
         let message_len = message_header.get_message_len().or(
-            self.received_chunks.get(&chunk_id).map(
+            self.received_chunks.get(&chunk_id).and_then(
                 |last_chunk| last_chunk.get_message_len()
             )
-        ).unwrap();
+        );
         let message_type = message_header.get_message_type().or(
-            self.received_chunks.get(&chunk_id).map(
+            self.received_chunks.get(&chunk_id).and_then(
                 |last_chunk| last_chunk.get_message_type()
             )
-        ).unwrap();
+        );
         let message_id = message_header.get_message_id().or(
-            self.received_chunks.get(&chunk_id).map(
+            self.received_chunks.get(&chunk_id).and_then(
                 |last_chunk| last_chunk.get_message_id()
             )
-        ).unwrap();
+        );
 
-        if timestamp.as_secs() >= U24_MAX as u64 {
-            let mut bytes_extended_timestamp: [u8; 4] = [0; 4];
+        if let Some(timestamp) = timestamp.as_ref() {
+            if timestamp.as_secs() >= U24_MAX as u64 {
+                let mut bytes_extended_timestamp: [u8; 4] = [0; 4];
 
-            self.stream.read(&mut bytes_extended_timestamp).map_err(
-                |_| IOError::new(
-                    ErrorKind::InvalidInput,
-                    ChunkLengthError::new(
-                        "The extended timestamp couldn't be read.".to_string(),
-                        None
+                self.stream.read(&mut bytes_extended_timestamp).map_err(
+                    |_| IOError::new(
+                        ErrorKind::InvalidInput,
+                        ChunkLengthError::new(
+                            "The extended timestamp couldn't be read.".to_string(),
+                            None
+                        )
                     )
-                )
-            )?;
-            buffer.put_bytes(bytes_extended_timestamp.to_vec());
+                )?;
+                buffer.put_bytes(bytes_extended_timestamp.to_vec());
+            }
         }
 
         let extended_timestamp = buffer.decode_extended_timestamp(message_header);
         println!("extended_timestamp: {:x?}", extended_timestamp);
         let mut bytes_chunk_data: Vec<u8> = Vec::new();
-        let mut remaining = message_len;
+        let mut remaining = message_len.clone().unwrap_or_default();
 
         while remaining > 0 {
             let capacity = min(self.chunk_size, remaining) as usize;
@@ -515,7 +517,7 @@ impl RtmpHandler {
         // println!("bytes_chunk_data: {:x?}", bytes);
         buffer.put_bytes(bytes_chunk_data);
 
-        let chunk_data = buffer.decode_chunk_data(message_type);
+        let chunk_data = buffer.decode_chunk_data(message_type.clone().unwrap_or(MessageType::Unknown));
         let chunk = Chunk::new(
             basic_header,
             extended_timestamp,
@@ -529,21 +531,20 @@ impl RtmpHandler {
                 message_type,
                 message_id,
                 message_len,
-                extended_timestamp.unwrap_or(timestamp),
-                chunk_data.unwrap()
+                extended_timestamp.or(timestamp),
+                chunk_data
             )
         );
         Ok(chunk)
     }
 
-    fn send_chunk(&mut self, chunk_id: ChunkId, message_type: MessageType, message_id: u32, message_len: u32, timestamp: Duration, chunk_data: ChunkData) -> IOResult<()> {
         self.last_sent_chunk_id = chunk_id;
-
+    fn send_chunk(&mut self, chunk_id: ChunkId, message_type: MessageType, message_id: u32, message_len: u32, mut timestamp: Duration, chunk_data: ChunkData) -> IOResult<()> {
         let message_format = self.sent_chunks.get(&chunk_id).map_or(
             MessageFormat::New,
-            |last_chunk| if last_chunk.get_message_id() == message_id {
-                if last_chunk.get_message_type() == message_type && last_chunk.get_message_len() == message_len {
-                    if last_chunk.get_timestamp() == timestamp {
+            |last_chunk| if last_chunk.get_message_id() == Some(message_id) {
+                if last_chunk.get_message_type() == Some(message_type) && last_chunk.get_message_len() == Some(message_len) {
+                    if last_chunk.get_timestamp() == Some(timestamp) {
                         MessageFormat::Continue
                     } else {
                         MessageFormat::TimerChange
@@ -612,11 +613,11 @@ impl RtmpHandler {
                 self.insert_sent_chunk(
                     chunk_id,
                     LastChunk::new(
-                        message_type,
-                        message_id,
-                        message_len,
-                        timestamp,
-                        chunk_data
+                        Some(message_type),
+                        Some(message_id),
+                        Some(message_len),
+                        Some(timestamp),
+                        Some(chunk_data)
                     )
                 );
             }
@@ -649,10 +650,9 @@ impl RtmpHandler {
     fn send_bytes_read(&mut self) -> IOResult<()> {
         let mut timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map_err(|e| IOError::new(ErrorKind::Other, e))?;
 
-        timestamp -= self.received_chunks.get(&self.last_received_chunk_id).map_or(
-            Duration::default(),
+        timestamp -= self.received_chunks.get(&self.last_received_chunk_id).and_then(
             |last_chunk| last_chunk.get_timestamp()
-        );
+        ).unwrap_or(Duration::default());
 
         self.send_chunk(
             ChunkId::U8(Channel::Network as u8),
