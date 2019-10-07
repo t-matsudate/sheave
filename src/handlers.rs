@@ -496,9 +496,8 @@ impl RtmpHandler {
             )?;
 
             bytes_chunk_data.append(&mut tmp);
-            remaining -= read as u32;
 
-            if read as u32 >= self.chunk_size {
+            if remaining > self.chunk_size {
                 let mut skipped: [u8; 1] = [0; 1];
 
                 self.stream.read(&mut skipped).map_err(
