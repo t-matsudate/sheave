@@ -147,7 +147,9 @@ impl LastChunk {
 #[derive(Debug, Clone, Copy)]
 pub(self) enum Channel {
     Network = 0x02,
-    System
+    System,
+    Audio,
+    Video = 0x06
 }
 
 impl From<u8> for Channel {
@@ -157,6 +159,8 @@ impl From<u8> for Channel {
         match channel_id {
             0x02 => Network,
             0x03 => System,
+            0x04 => Audio,
+            0x06 => Video,
             _ => panic!("Undefined channel id!")
         }
     }
