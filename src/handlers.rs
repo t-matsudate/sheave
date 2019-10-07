@@ -536,10 +536,10 @@ impl RtmpHandler {
                 chunk_data
             )
         );
+        self.last_received_chunk_id = chunk_id;
         Ok(chunk)
     }
 
-        self.last_sent_chunk_id = chunk_id;
     fn send_chunk(&mut self, chunk_id: ChunkId, message_type: MessageType, message_id: u32, message_len: u32, mut timestamp: Duration, chunk_data: ChunkData) -> IOResult<()> {
         let message_format = self.sent_chunks.get(&chunk_id).map_or(
             MessageFormat::New,
@@ -609,6 +609,7 @@ impl RtmpHandler {
         }
 
         println!("sent chunk: {:x?}", buffer.bytes());
+        self.last_sent_chunk_id = chunk_id;
         self.stream.write(buffer.bytes().as_slice()).map(
             |_| {
                 self.insert_sent_chunk(
