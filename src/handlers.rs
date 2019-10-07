@@ -585,7 +585,6 @@ impl RtmpHandler {
             let message_header = MessageHeader::Continue;
             let continue_chunk = Chunk::new(basic_header, None, message_header, None);
             let continue_bytes = encode_chunk(continue_chunk);
-            println!("continue: {:x?}", continue_bytes);
             let chunk_size = self.chunk_size as usize;
             let mut added: Vec<u8> = Vec::new();
             
@@ -605,7 +604,6 @@ impl RtmpHandler {
             buffer.encode_chunk_data(Some(chunk_data.clone()));
         }
 
-        println!("sent chunk: {:x?}", buffer.bytes());
         self.last_sent_chunk_id = chunk_id;
         self.stream.write(buffer.bytes().as_slice()).map(
             |_| {
