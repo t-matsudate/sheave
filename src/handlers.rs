@@ -371,7 +371,6 @@ impl RtmpHandler {
                 )
             )
         )?;
-        println!("basic_header: {:x?}", basic_header);
         let message_format = basic_header.get_message_format();
         let chunk_id = basic_header.get_chunk_id();
 
@@ -388,7 +387,6 @@ impl RtmpHandler {
                         )
                     )
                 )?;
-                println!("bytes_message_header: {:x?}", bytes_message_header);
                 buffer.put_bytes(bytes_message_header.to_vec());
             },
             MessageFormat::SameSource => {
@@ -403,7 +401,6 @@ impl RtmpHandler {
                         )
                     )
                 )?;
-                println!("bytes_message_header: {:x?}", bytes_message_header);
                 buffer.put_bytes(bytes_message_header.to_vec());
             },
             MessageFormat::TimerChange => {
@@ -418,7 +415,6 @@ impl RtmpHandler {
                         )
                     )
                 )?;
-                println!("bytes_message_header: {:x?}", bytes_message_header);
                 buffer.put_bytes(bytes_message_header.to_vec());
             },
             MessageFormat::Continue => {}
@@ -433,7 +429,6 @@ impl RtmpHandler {
                 )
             )
         )?;
-        println!("message_header: {:x?}", message_header);
         let timestamp = message_header.get_timestamp().or(
             self.received_chunks.get(&chunk_id).and_then(
                 |last_chunk| last_chunk.get_timestamp()
@@ -473,7 +468,6 @@ impl RtmpHandler {
         }
 
         let extended_timestamp = buffer.decode_extended_timestamp(message_header);
-        println!("extended_timestamp: {:x?}", extended_timestamp);
         let mut bytes_chunk_data: Vec<u8> = Vec::new();
         let mut remaining = message_len.clone().unwrap_or_default();
 
@@ -514,8 +508,6 @@ impl RtmpHandler {
             remaining -= read as u32;
         }
 
-        // Disabled printing chunk data because the Audio/Video data is too long.
-        // println!("bytes_chunk_data: {:x?}", bytes);
         buffer.put_bytes(bytes_chunk_data);
 
         let chunk_data = buffer.decode_chunk_data(message_type.clone().unwrap_or(MessageType::Unknown));
@@ -1024,7 +1016,7 @@ impl RtmpHandler {
     }
 
     fn receive_unknown(&mut self, _: Vec<u8>) -> IOResult<()> {
-        panic!("Stop at here!")
+        Ok(println!("unknown chunk has been sent."))
     }
 
     pub(crate) fn handle_chunk(&mut self) -> IOResult<()> {
