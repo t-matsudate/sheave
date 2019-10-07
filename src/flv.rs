@@ -350,18 +350,19 @@ impl AudioTag {
 
 impl From<Vec<u8>> for AudioTag {
     fn from(mut bytes: Vec<u8>) -> AudioTag {
-        let byte_audio_tag_header = bytes[0];
+        let mut offset = usize::default();
+        let byte_audio_tag_header = bytes[offset];
         let sound_format: SoundFormat = ((byte_audio_tag_header & 0xf0) >> 4).into();
         let sound_rate: SoundRate = ((byte_audio_tag_header & 0x0c) >> 2).into();
         let sound_size: SoundSize = ((byte_audio_tag_header & 0x02) >> 1).into();
         let sound_type: SoundType = (byte_audio_tag_header & 0x01).into();
 
-        bytes.remove(0);
+        offset += 1;
 
         let aac_packet_type: Option<AacPacketType> = if let SoundFormat::Aac = sound_format {
-            let aac_packet_type_id = bytes[0];
+            let aac_packet_type_id = bytes[offset];
 
-            bytes.remove(0);
+            offset += 1;
             Some(aac_packet_type_id.into())
         } else {
             None
@@ -374,6 +375,7 @@ impl From<Vec<u8>> for AudioTag {
             aac_packet_type
         };
 
+        bytes = bytes[offset..].to_vec();
         AudioTag {
             encryption_tag: None,
             audio_tag_header,
@@ -403,33 +405,34 @@ impl VideoTag {
 
 impl From<Vec<u8>> for VideoTag {
     fn from(mut bytes: Vec<u8>) -> Self {
-        let byte_video_tag_header = bytes[0];
+        let mut offset = usize::default();
+        let byte_video_tag_header = bytes[offset];
         let frame_type: FrameType = ((byte_video_tag_header & 0xf0) >> 4).into();
         let codec: Codec = (byte_video_tag_header & 0x0f).into();
 
-        bytes.remove(0);
+        offset += 1;
 
         let avc_packet_type: Option<AvcPacketType> = if let Codec::Avc = codec {
-            let avc_packet_type_id = bytes[0];
+            let avc_packet_type_id = bytes[offset];
 
-            bytes.remove(0);
+            offset += 1;
             Some(avc_packet_type_id.into())
         } else {
             None
         };
         let composition_time = if let Codec::Avc = codec {
             if let &Some(AvcPacketType::Nalu) = &avc_packet_type {
-                let bytes_composition_time = &bytes[..3];
+                let bytes_composition_time = &bytes[offset..3];
                 let mut tmp: [u8; 4] = [0; 4];
 
                 for i in 0..bytes_composition_time.len() {
                     tmp[i + 1] = bytes_composition_time[i];
                 }
 
-                bytes = bytes[3..].to_vec();
+                offset += 3;
                 Some(Duration::from_millis(u32::from_be_bytes(tmp) as u64))
             } else {
-                bytes = bytes[3..].to_vec();
+                offset += 3;
                 Some(Duration::default())
             }
         } else {
@@ -442,6 +445,7 @@ impl From<Vec<u8>> for VideoTag {
             composition_time
         };
 
+        bytes = bytes[offset..].to_vec();
         VideoTag {
             encryption_tag: None,
             video_tag_header,
