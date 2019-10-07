@@ -84,15 +84,15 @@ impl Default for RtmpState {
 
 #[derive(Debug)]
 pub(crate) struct LastChunk {
-    message_type: MessageType,
-    message_id: u32,
-    message_len: u32,
-    timestamp: Duration,
-    chunk_data: ChunkData
+    message_type: Option<MessageType>,
+    message_id: Option<u32>,
+    message_len: Option<u32>,
+    timestamp: Option<Duration>,
+    chunk_data: Option<ChunkData>
 }
 
 impl LastChunk {
-    fn new(message_type: MessageType, message_id: u32, message_len: u32, timestamp: Duration, chunk_data: ChunkData) -> Self {
+    fn new(message_type: Option<MessageType>, message_id: Option<u32>, message_len: Option<u32>, timestamp: Option<Duration>, chunk_data: Option<ChunkData>) -> Self {
         LastChunk {
             message_type,
             message_id,
@@ -102,43 +102,43 @@ impl LastChunk {
         }
     }
 
-    fn get_message_type(&self) -> MessageType {
+    fn get_message_type(&self) -> Option<MessageType> {
         self.message_type
     }
 
-    fn set_message_type(&mut self, message_type: MessageType) {
+    fn set_message_type(&mut self, message_type: Option<MessageType>) {
         self.message_type = message_type;
     }
 
-    fn get_message_id(&self) -> u32 {
+    fn get_message_id(&self) -> Option<u32> {
         self.message_id
     }
 
-    fn set_message_id(&mut self, message_id: u32) {
+    fn set_message_id(&mut self, message_id: Option<u32>) {
         self.message_id = message_id;
     }
 
-    fn get_message_len(&self) -> u32 {
+    fn get_message_len(&self) -> Option<u32> {
         self.message_len
     }
 
-    fn set_message_len(&mut self, message_len: u32) {
+    fn set_message_len(&mut self, message_len: Option<u32>) {
         self.message_len = message_len;
     }
 
-    fn get_timestamp(&self) -> Duration {
+    fn get_timestamp(&self) -> Option<Duration> {
         self.timestamp
     }
 
-    fn set_timestamp(&mut self, timestamp: Duration) {
+    fn set_timestamp(&mut self, timestamp: Option<Duration>) {
         self.timestamp = timestamp;
     }
 
-    fn get_chunk_data(&self) -> &ChunkData {
+    fn get_chunk_data(&self) -> &Option<ChunkData> {
         &self.chunk_data
     }
 
-    fn set_chunk_data(&mut self, chunk_data: ChunkData) {
+    fn set_chunk_data(&mut self, chunk_data: Option<ChunkData>) {
         self.chunk_data = chunk_data;
     }
 }
