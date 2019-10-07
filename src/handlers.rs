@@ -510,6 +510,8 @@ impl RtmpHandler {
                     )
                 )?;
             }
+
+            remaining -= read as u32;
         }
 
         // Disabled printing chunk data because the Audio/Video data is too long.
