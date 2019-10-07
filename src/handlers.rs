@@ -558,16 +558,21 @@ impl RtmpHandler {
             }
         );
         let basic_header = BasicHeader::new(message_format, chunk_id);
+        let extended_timestamp = if timestamp.as_secs() >= U24_MAX as u64 {
+            Some(timestamp)
+        } else {
+            None
+        };
+
+        if timestamp.as_secs() >= U24_MAX as u64 {
+            timestamp = Duration::from_secs(U24_MAX as u64);
+        }
+
         let message_header = match message_format {
             MessageFormat::New => MessageHeader::New { message_type, message_id, message_len, timestamp },
             MessageFormat::SameSource => MessageHeader::SameSource { message_type, message_len, timestamp },
             MessageFormat::TimerChange => MessageHeader::TimerChange { timestamp },
             MessageFormat::Continue => MessageHeader::Continue
-        };
-        let extended_timestamp = if timestamp.as_secs() >= U24_MAX as u64 {
-            timestamp.checked_sub(Duration::from_secs(U24_MAX as u64))
-        } else {
-            None
         };
  
         let mut buffer = ByteBuffer::new(Vec::new());
