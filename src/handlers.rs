@@ -288,7 +288,7 @@ impl RtmpHandler {
                 last_chunk.set_message_type(inserted.get_message_type());
                 last_chunk.set_message_id(inserted.get_message_id());
                 last_chunk.set_message_len(inserted.get_message_len());
-                last_chunk.set_timestamp(inserted.get_timestamp() - last_chunk.get_timestamp());
+                last_chunk.set_timestamp(inserted.get_timestamp());
                 last_chunk.set_chunk_data(inserted.get_chunk_data().clone());
             },
             _ => {
@@ -303,7 +303,7 @@ impl RtmpHandler {
                 last_chunk.set_message_type(inserted.get_message_type());
                 last_chunk.set_message_id(inserted.get_message_id());
                 last_chunk.set_message_len(inserted.get_message_len());
-                last_chunk.set_timestamp(inserted.get_timestamp() - last_chunk.get_timestamp());
+                last_chunk.set_timestamp(inserted.get_timestamp());
                 last_chunk.set_chunk_data(inserted.get_chunk_data().clone());
             },
             _ => {
