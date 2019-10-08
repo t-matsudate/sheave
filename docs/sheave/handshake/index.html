@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `handshake` mod in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, handshake"><title>sheave::handshake - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module handshake</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li></ul></div><p class='location'><a href='../index.html'>sheave</a></p><script>window.sidebarCurrent = {name: 'handshake', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/handshake.rs.html#1-521' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>sheave</a>::<wbr><a class="mod" href=''>handshake</a></span></h1><div class='docblock'><h1 id="the-structsfunctions-to-do-handshake-for-the-rtmp-layer" class="section-header"><a href="#the-structsfunctions-to-do-handshake-for-the-rtmp-layer">The structs/functions to do handshake for the RTMP layer.</a></h1>
+<p>The RTMP also needs to do handshake like the TCP.</p>
+<h2 id="the-chunk-format" class="section-header"><a href="#the-chunk-format">The chunk format</a></h2>
+<p>The chunk what will send from server-side/client-side is following respectively.</p>
+<ol>
+<li>S0/C0 (1 byte)</li>
+<li>S1/C1 (1536 bytes)</li>
+<li>S2/C2 (1536 bytes)</li>
+</ol>
+<h3 id="s0-and-c0" class="section-header"><a href="#s0-and-c0">S0 and C0</a></h3>
+<p>Input the RTMP version.</p>
+<ul>
+<li>3 (Default): The raw RTMP. This isn't encrypted neither the packet nor the network.</li>
+<li>6, 8 and 9: The RTMPE (RTMP Encrypted). This encrypts just the packet. Its algorithm is following:
+<ul>
+<li>6: Uses just the Diffie-Hellman key exchange.</li>
+<li>8: Uses the Diffie-Hellman key exchange with XTEA.</li>
+<li>9: Uses the Diffie-Hellman key exchange with Blowfish.</li>
+</ul>
+</li>
+</ul>
+<p>However note that 6, 8 and 9 (that is, RTMPE) shouldn't use currently because these can be targetted from man-in-the-middle attack.
+RTMPE doesn't encrypt the network.</p>
+<h3 id="s1-and-c1" class="section-header"><a href="#s1-and-c1">S1 and C1</a></h3>
+<p>This has four segments. Input following values in them respectively:</p>
+<ol>
+<li>Timestamp (4 bytes)</li>
+<li>Version (4 bytes)</li>
+<li>Random Bytes (1536 bytes)</li>
+</ol>
+<h4 id="timestamp" class="section-header"><a href="#timestamp">Timestamp</a></h4>
+<p>The timestamp what started the RTMP handshake.
+This hasn't been specified neither in second, in millisecond, nor in nanosecond.
+However this may be ok to input in-second timestamp due to just four bytes.
+This may set 0.</p>
+<h4 id="version" class="section-header"><a href="#version">Version</a></h4>
+<p>In the official specification paper, this had been specified to input just four bytes zeroes.
+However this has currently been input the Adobe Media Server/the Flash Player version in many of the products already to being published.
+This is used to switch either to use HMAC-SHA256 or to use raw random bytes as them be, in the handshake.</p>
+<h4 id="the-random-bytes" class="section-header"><a href="#the-random-bytes">The random bytes</a></h4>
+<p>The random bytes to use for the RTMP handshake.
+In the Adobe Media Server version and above 3/the Flash Player version and above 9, this has been each other imprinted HMAC-SHA256 digest.
+We will calculate the place where imprints its digest following formulas.</p>
+<ul>
+<li>In the raw RTMP: <code>(R[0] + R[1] + R[2] + R[3]) % 778 + 12</code></li>
+<li>In the RTMPE: <code>(R[764] + R[765] + R[766] + R[767]) % 728 + 776</code></li>
+</ul>
+<p>Note where R is 1528 bytes randoms.
+That is, above formulas aren't considering the segments which the RTMP version and the Adobe Media Server/the Flash Player version.</p>
+<p>The keys to use to get its digest are following.</p>
+<ul>
+<li>Server: &quot;Genuine Adobe Media Server 001&quot;</li>
+<li>Client: &quot;Genuine Adobe Flash Player 001&quot;</li>
+</ul>
+<h3 id="s2-and-c2-1536-bytes" class="section-header"><a href="#s2-and-c2-1536-bytes">S2 and C2 (1536 bytes)</a></h3>
+<p>This is the chunk to echo each other the S1/C1 chunk.
+In the server, we will respond the C1 chunk.
+In the client, we will respond the S1 chunk.
+However in the Adobe Media Server version and above 3/the Flash Player version and above 9, we must imprint the HMAC-SHA256 signature at last 32 bytes.
+How to create its signature is following.</p>
+<ol>
+<li>Find the digest imprinted in S1/C1. We can find it by the same way as what we calclated the place to imprint the digest in S1/C1.</li>
+<li>Encrypt its digest by HMAC-SHA256.</li>
+<li>Encrypt S1/C1 by HMAC-SHA256 except last 32 bytes.</li>
+<li>Imprint its signature at last 32 bytes.</li>
+</ol>
+<p>Note that the server will imprint the C1 by the server keys, and the client will imprint the S1 by the client keys.</p>
+<p>The keys to use to get its signature is following.</p>
+<ul>
+<li>Server: &quot;Genuine Adobe Media Server 001&quot; +<br />
+<strong>0x</strong>F0EEC24A8068BEE82E00D0D1029E7E576EEC5D2D29806FAB93B8E636CFEB31AE</li>
+<li>Client: &quot;Genuine Adobe Flash Player 001&quot; +<br />
+<strong>0x</strong>F0EEC24A8068BEE82E00D0D1029E7E576EEC5D2D29806FAB93B8E636CFEB31AE</li>
+</ul>
+<p>We will compare the signature which we got one and already imprinted one.
+If they haven't coincided, it will mean we've received some invalid handshake chunk.
+Note:</p>
+<ul>
+<li>In the FFmpeg, above validation will fail because somehow it won't imprint its signature for the C2 chunk.</li>
+<li>In the OBS (Open Broadcaster Software), above validation hasn't been needed in the first place because it has imprinted neither its digest nor its signature.</li>
+</ul>
+<h2 id="the-sendingreceiving-sequence" class="section-header"><a href="#the-sendingreceiving-sequence">The Sending/Receiving sequence</a></h2>
+<p>We will send the S0/C0 chunk, the S1/C1 chunk, and the S2/C2 chunk following order.</p>
+<ol>
+<li>The client will send the C0 chunk and the C1 chunk to the server.</li>
+<li>When the server received the C0 chunk and the C1 chunk, the server will send the S0 chunk, the S1 chunk, and the S2 chunk to the client.</li>
+<li>When the client received the S0 chunk, the S1 chunk and the S2 chunk, the client will validate its digest and its signature imprinted in the S2 chunk.<br />
+If they'are valid, the client will send the C2 chunk to the server.</li>
+<li>When the server received the C2 chunk, the server will validate its digest and its signature imprinted in the C2 chunk.<br />
+If they're valid, the server will go to the phase of the application connection.</li>
+</ol>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.RtmpHandshake.html" title='sheave::handshake::RtmpHandshake struct'>RtmpHandshake</a></td><td class='docblock-short'><p>The handshake validator for the RTMP</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

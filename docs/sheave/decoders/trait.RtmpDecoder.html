@@ -1,0 +1,370 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `RtmpDecoder` trait in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, RtmpDecoder"><title>sheave::decoders::RtmpDecoder - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Trait RtmpDecoder</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.decode_amf_boolean">decode_amf_boolean</a><a href="#tymethod.decode_amf_data">decode_amf_data</a><a href="#tymethod.decode_amf_mixed_array">decode_amf_mixed_array</a><a href="#tymethod.decode_amf_null">decode_amf_null</a><a href="#tymethod.decode_amf_number">decode_amf_number</a><a href="#tymethod.decode_amf_object">decode_amf_object</a><a href="#tymethod.decode_amf_string">decode_amf_string</a><a href="#tymethod.decode_audio">decode_audio</a><a href="#tymethod.decode_basic_header">decode_basic_header</a><a href="#tymethod.decode_bytes_read">decode_bytes_read</a><a href="#tymethod.decode_chunk_data">decode_chunk_data</a><a href="#tymethod.decode_chunk_size">decode_chunk_size</a><a href="#tymethod.decode_client_bandwidth">decode_client_bandwidth</a><a href="#tymethod.decode_extended_timestamp">decode_extended_timestamp</a><a href="#tymethod.decode_invoke">decode_invoke</a><a href="#tymethod.decode_invoke_connect_result">decode_invoke_connect_result</a><a href="#tymethod.decode_invoke_create_stream_result">decode_invoke_create_stream_result</a><a href="#tymethod.decode_invoke_on_fc_publish">decode_invoke_on_fc_publish</a><a href="#tymethod.decode_invoke_on_status">decode_invoke_on_status</a><a href="#tymethod.decode_invoke_release_stream_result">decode_invoke_release_stream_result</a><a href="#tymethod.decode_message_header">decode_message_header</a><a href="#tymethod.decode_notify">decode_notify</a><a href="#tymethod.decode_ping">decode_ping</a><a href="#tymethod.decode_server_bandwidth">decode_server_bandwidth</a><a href="#tymethod.decode_unknown">decode_unknown</a><a href="#tymethod.decode_video">decode_video</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>sheave</a>::<wbr><a href='index.html'>decoders</a></p><script>window.sidebarCurrent = {name: 'RtmpDecoder', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/decoders.rs.html#276-622' title='goto source code'>[src]</a></span><span class='in-band'>Trait <a href='../index.html'>sheave</a>::<wbr><a href='index.html'>decoders</a>::<wbr><a class="trait" href=''>RtmpDecoder</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><pre class='rust trait'>pub trait RtmpDecoder: <a class="trait" href="../../sheave/decoders/trait.GetByteBuffer.html" title="trait sheave::decoders::GetByteBuffer">GetByteBuffer</a> {
+    fn <a href='#tymethod.decode_basic_header' class='fnname'>decode_basic_header</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../sheave/messages/struct.BasicHeader.html" title="struct sheave::messages::BasicHeader">BasicHeader</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_message_header' class='fnname'>decode_message_header</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message_format: <a class="enum" href="../../sheave/messages/enum.MessageFormat.html" title="enum sheave::messages::MessageFormat">MessageFormat</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_extended_timestamp' class='fnname'>decode_extended_timestamp</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message_header: <a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_chunk_size' class='fnname'>decode_chunk_size</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_bytes_read' class='fnname'>decode_bytes_read</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_ping' class='fnname'>decode_ping</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_server_bandwidth' class='fnname'>decode_server_bandwidth</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_client_bandwidth' class='fnname'>decode_client_bandwidth</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_audio' class='fnname'>decode_audio</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_video' class='fnname'>decode_video</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_number' class='fnname'>decode_amf_number</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_boolean' class='fnname'>decode_amf_boolean</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_string' class='fnname'>decode_amf_string</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_object' class='fnname'>decode_amf_object</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_null' class='fnname'>decode_amf_null</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_mixed_array' class='fnname'>decode_amf_mixed_array</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_amf_data' class='fnname'>decode_amf_data</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_notify' class='fnname'>decode_notify</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_invoke_connect_result' class='fnname'>decode_invoke_connect_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_invoke_release_stream_result' class='fnname'>decode_invoke_release_stream_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_invoke_create_stream_result' class='fnname'>decode_invoke_create_stream_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_invoke_on_fc_publish' class='fnname'>decode_invoke_on_fc_publish</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_invoke_on_status' class='fnname'>decode_invoke_on_status</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_invoke' class='fnname'>decode_invoke</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_unknown' class='fnname'>decode_unknown</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+<div class='item-spacer'></div>    fn <a href='#tymethod.decode_chunk_data' class='fnname'>decode_chunk_data</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;message_type: <a class="enum" href="../../sheave/messages/enum.MessageType.html" title="enum sheave::messages::MessageType">MessageType</a><br>&nbsp;&nbsp;&nbsp;&nbsp;) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;;
+}</pre></div><div class='docblock'><h1 id="the-decoder-for-the-rtmp-chunk" class="section-header"><a href="#the-decoder-for-the-rtmp-chunk">The decoder for the RTMP chunk</a></h1>
+<p>The trait to decode the bytes into the RTMP chunk.</p>
+</div>
+            <h2 id='required-methods' class='small-section-header'>Required methods<a href='#required-methods' class='anchor'></a></h2><div class='methods'><h3 id='tymethod.decode_basic_header' class='method'><code id='decode_basic_header.v'>fn <a href='#tymethod.decode_basic_header' class='fnname'>decode_basic_header</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../sheave/messages/struct.BasicHeader.html" title="struct sheave::messages::BasicHeader">BasicHeader</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk basic header.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 2 bits as the format of the chunk message header.</li>
+<li>If next 6 bits are 0, you regard next 1 byte as the chunk stream id.</li>
+<li>If they are 1, you regard next 2 bytes as the chunk stream id.
+<ul>
+<li>Note that you must decode them as Little Endian.</li>
+</ul>
+</li>
+<li>Otherwise you regard its 6 bits as the chunk stream id.</li>
+<li>If you couldn't decode above fields all, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_message_header' class='method'><code id='decode_message_header.v'>fn <a href='#tymethod.decode_message_header' class='fnname'>decode_message_header</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;message_format: <a class="enum" href="../../sheave/messages/enum.MessageFormat.html" title="enum sheave::messages::MessageFormat">MessageFormat</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk message header.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 3 bytes as the timestamp.</li>
+<li>You regard next 3 bytes as the message length.</li>
+<li>You regard next 1 byte as the message type id.</li>
+<li>You regard next 4 bytes as the message stream id.
+<ul>
+<li>Note that you must decode them as Little Endian.</li>
+</ul>
+</li>
+<li>If you couldn't decode above fields all, return the <code>None</code>.</li>
+</ul>
+<h1 id="parameters" class="section-header"><a href="#parameters">Parameters</a></h1>
+<ul>
+<li><code>message_format: MessageFormat</code></li>
+</ul>
+<p>The chunk message header's format.
+You can get this by using <code>decode_basic_header()</code> to the buffer.
+The returned <code>MessageHeader</code> will rely on the value got from above method for its format.</p>
+</div><h3 id='tymethod.decode_extended_timestamp' class='method'><code id='decode_extended_timestamp.v'>fn <a href='#tymethod.decode_extended_timestamp' class='fnname'>decode_extended_timestamp</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;message_header: <a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>&gt;</code></h3><div class='docblock'><p>Decodes the extended timestamp.
+This expects that you satisfy following points:</p>
+<ul>
+<li>If the timestamp in the chunk message header hasn't exceeded 0xffffff, returns the <code>None</code>.</li>
+<li>Otherwise you regard the 4 bytes as the extended timestamp.</li>
+<li>You check that the timestamp in the chunk message header has been 0xffffff.</li>
+<li>Though it will be improbable, you set 0xffffff to the timestamp in the chunk message header forcibly if it hasn't been 0xffffff.</li>
+<li>If you couldn't decode the extended timestamp, return the <code>None</code>.</li>
+</ul>
+<h1 id="parameters-1" class="section-header"><a href="#parameters-1">Parameters</a></h1>
+<ul>
+<li><code>message_header: MessageHeader</code></li>
+</ul>
+<p>The message header decoded just before.
+It will rely on the timestamp in this value for whether the extended timestamp will exist.</p>
+</div><h3 id='tymethod.decode_chunk_size' class='method'><code id='decode_chunk_size.v'>fn <a href='#tymethod.decode_chunk_size' class='fnname'>decode_chunk_size</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Chunk Size.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard the 4 bytes as Chunk Size's value.</li>
+<li>If the most significant bit is 1, you emit the <code>panic!</code>.</li>
+<li>If you couldn't decode Chunk Size, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_bytes_read' class='method'><code id='decode_bytes_read.v'>fn <a href='#tymethod.decode_bytes_read' class='fnname'>decode_bytes_read</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Bytes Read.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard the 4 bytes as Bytes Read's value.</li>
+<li>If you couldn't decode Bytes Read, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_ping' class='method'><code id='decode_ping.v'>fn <a href='#tymethod.decode_ping' class='fnname'>decode_ping</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Ping.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 2 bytes as Ping's event type.<br />
+Ping's event data will be associated with their event types.<br />
+See messages.rs more details about the correspondence of Ping's event type to its event data.</li>
+<li>You regard bytes following after Ping's event type as its event data, and decode their event data corresponding to its event type.</li>
+<li>If you couldn't decode either event type or event data, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_server_bandwidth' class='method'><code id='decode_server_bandwidth.v'>fn <a href='#tymethod.decode_server_bandwidth' class='fnname'>decode_server_bandwidth</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Server Bandwidth.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard the 4 bytes as Server Bandwidth's value.</li>
+<li>If you couldn't decode Server Bandwidth, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_client_bandwidth' class='method'><code id='decode_client_bandwidth.v'>fn <a href='#tymethod.decode_client_bandwidth' class='fnname'>decode_client_bandwidth</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Client Bandwidth.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 4 bytes as Client Bandwidth's value.</li>
+<li>You regard next 1 byte as the limit type of Client Bandwidth.<br />
+See messages.rs more details about its limit type.</li>
+<li>If you couldn't decode either client bandwidth or limit type, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_audio' class='method'><code id='decode_audio.v'>fn <a href='#tymethod.decode_audio' class='fnname'>decode_audio</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Audio.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard remaining bytes as Audio data.</li>
+<li>If you couldn't decode Audio data, return the <code>None</code>.</li>
+</ul>
+<p>Note that you shouldn't consider about the file format and the codec in this moment.
+Because the program will become intricately.</p>
+</div><h3 id='tymethod.decode_video' class='method'><code id='decode_video.v'>fn <a href='#tymethod.decode_video' class='fnname'>decode_video</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Video.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard remaining bytes as Video data.</li>
+<li>If you couldn't decode Video data, return the <code>None</code>.</li>
+</ul>
+<p>Note that you shouldn't consider about the file format and the codec in this moment due to the same cause as Audio data.</p>
+</div><h3 id='tymethod.decode_amf_number' class='method'><code id='decode_amf_number.v'>fn <a href='#tymethod.decode_amf_number' class='fnname'>decode_amf_number</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF's number.
+This expect that you satisfy following points:</p>
+<ul>
+<li>You regard the 8 bytes as a floating point number (IEEE 754).</li>
+<li>If you couldn't decode them, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_amf_boolean' class='method'><code id='decode_amf_boolean.v'>fn <a href='#tymethod.decode_amf_boolean' class='fnname'>decode_amf_boolean</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF's boolean.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard the 1 byte as a (AMF's) boolean.</li>
+<li>If it is 0, you regard it as the <code>false</code>.</li>
+<li>If it is else, you regard it as the <code>true</code>.</li>
+<li>If you couldn't decode it, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_amf_string' class='method'><code id='decode_amf_string.v'>fn <a href='#tymethod.decode_amf_string' class='fnname'>decode_amf_string</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF's string.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 2 bytes as its string's length.</li>
+<li>You take actual string just as much as its length, then decode it as UTF-8.</li>
+<li>If you took the string what its length is 0, may decode it into the <code>Some(&quot;&quot;.to_string())</code>.</li>
+<li>If you couldn't decode above all, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_amf_object' class='method'><code id='decode_amf_object.v'>fn <a href='#tymethod.decode_amf_object' class='fnname'>decode_amf_object</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF's object.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You must associate its name with its value.
+<ul>
+<li>The name will exist as the string without AMF's marker.</li>
+<li>The value will exist to follow after its name.<br />
+This will have AMF's marker.</li>
+</ul>
+</li>
+<li>If you detected the object end marker following after the empty string key, you must terminate to decode AMF's object.<br />
+Or you may detect it as just 0x000009.</li>
+<li>If you couldn't decode both the name and the value completely, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_amf_null' class='method'><code id='decode_amf_null.v'>fn <a href='#tymethod.decode_amf_null' class='fnname'>decode_amf_null</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF's null.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard this as nothing to decode, and return the <code>AmfData::Null</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_amf_mixed_array' class='method'><code id='decode_amf_mixed_array.v'>fn <a href='#tymethod.decode_amf_mixed_array' class='fnname'>decode_amf_mixed_array</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF's mixed array.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 4 bytes as the length of this array.</li>
+<li>You regard remaining bytes as what the name and the value will follow after.</li>
+<li>The length will become equal to the count of name/value pairs, though you may discard it because this array will also contain the object end marker.</li>
+<li>If you couldn't decode both the length and the name/value pairs completely, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_amf_data' class='method'><code id='decode_amf_data.v'>fn <a href='#tymethod.decode_amf_data' class='fnname'>decode_amf_data</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code></h3><div class='docblock'><p>Decodes a part of the chunk data as AMF.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard first 1 byte as AMF's data type marker, and regard bytes following it as actual AMF's data.<br />
+See <code>AmfData</code> for more details about the correspondence of AMF's data type to actual value.</li>
+<li>If you couldn't decode both the AMF data type and its data completely, return the <code>None</code>.</li>
+</ul>
+<p>And keep your mind that you should use the method named as <code>decode_amf_*</code> when will decode bytes as AMF.
+The correspondence of the AMF data type to the method what should use when decode AMF's data bytes is following:</p>
+<table><thead><tr><th align="right">AMF data type (id)</th><th align="left">Method</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left"><code>decode_amf_number()</code></td></tr>
+<tr><td align="right">1</td><td align="left"><code>decode_amf_boolean()</code></td></tr>
+<tr><td align="right">2</td><td align="left"><code>decode_amf_string()</code></td></tr>
+<tr><td align="right">3</td><td align="left"><code>decode_amf_object()</code></td></tr>
+<tr><td align="right">5</td><td align="left"><code>decode_amf_null()</code></td></tr>
+<tr><td align="right">8</td><td align="left"><code>decode_amf_mixed_array()</code></td></tr>
+</tbody></table>
+<p>You will this method when will decode actual AMF data after checking id of the AMF data type.</p>
+</div><h3 id='tymethod.decode_notify' class='method'><code id='decode_notify.v'>fn <a href='#tymethod.decode_notify' class='fnname'>decode_notify</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Notify.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard the chunk data as the AMF's <code>MixedArray</code> what will follow after 2 AMF's <code>String</code>s.
+<ul>
+<li>First string will be &quot;@setDataFrame&quot;.</li>
+<li>Second string will be &quot;onMetaData&quot;.</li>
+</ul>
+</li>
+<li>If you couldn't decode their strings and <code>MixedArray</code>, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_invoke_connect_result' class='method'><code id='decode_invoke_connect_result.v'>fn <a href='#tymethod.decode_invoke_connect_result' class='fnname'>decode_invoke_connect_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decode the chunk data as the response message of the connect command of the NetConnection command.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You decode regarding the response message as what will have following 4 fileds:
+<ul>
+<li>Command name: &quot;_result&quot; or &quot;_error&quot; (<code>String</code>)</li>
+<li>Transaction id: the same value as what the request of connect has (<code>Number</code>)</li>
+<li>Properties: an AMF's <code>Object</code></li>
+<li>Information: See the <code>InfoObject</code> (<code>Object</code>)</li>
+</ul>
+</li>
+<li>If you couldn't decode above fields all, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_invoke_release_stream_result' class='method'><code id='decode_invoke_release_stream_result.v'>fn <a href='#tymethod.decode_invoke_release_stream_result' class='fnname'>decode_invoke_release_stream_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as the response message of the releaseStream command of the NetConnection command.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You decode regarding the response message as what will have following 4 fields:
+<ul>
+<li>Command name: &quot;_result&quot; or &quot;_error&quot; (<code>String</code>)</li>
+<li>Transaction id: the same value as what the releaseStream request has (<code>Number</code>)</li>
+<li>Command object: probable nothing (<code>Null</code>)</li>
+</ul>
+</li>
+<li>If you couldn't decode above fields all, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_invoke_create_stream_result' class='method'><code id='decode_invoke_create_stream_result.v'>fn <a href='#tymethod.decode_invoke_create_stream_result' class='fnname'>decode_invoke_create_stream_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as the response message of the createStream command of the NetConnection command.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You decode regarding the response message as what will have following 4 fields:
+<ul>
+<li>Command name: &quot;_result&quot; or &quot;_error&quot; (<code>String</code>)</li>
+<li>Transaction id: the same value as what the createStream request has (<code>Number</code>)</li>
+<li>Command object: probable nothing (<code>Null</code>)</li>
+<li>Message stream id: one what the server is holding for this client (<code>Number</code>)</li>
+</ul>
+</li>
+<li>If you couldn't decode above field all, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_invoke_on_fc_publish' class='method'><code id='decode_invoke_on_fc_publish.v'>fn <a href='#tymethod.decode_invoke_on_fc_publish' class='fnname'>decode_invoke_on_fc_publish</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the response message of the FCPublish command.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You decode regarding the response message as what will have following 1 field:
+<ul>
+<li>Command name: &quot;onFCPublish&quot; (<code>String</code>)</li>
+</ul>
+</li>
+<li>If you couldn't above field, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_invoke_on_status' class='method'><code id='decode_invoke_on_status.v'>fn <a href='#tymethod.decode_invoke_on_status' class='fnname'>decode_invoke_on_status</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the response message of the NetStream command.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You deocode regarding the response message as what will have following 4 fields:
+<ul>
+<li>Command name: &quot;onStatus&quot; (<code>String</code>)</li>
+<li>Transaction id: 0 (<code>Number</code>)</li>
+<li>Command object: probable nothing (<code>Null</code>)</li>
+<li>Info object: See the <code>InfoObject</code> (<code>Object</code>)</li>
+</ul>
+</li>
+<li>If you couldn't decode above field all, return the <code>None</code>.</li>
+</ul>
+</div><h3 id='tymethod.decode_invoke' class='method'><code id='decode_invoke.v'>fn <a href='#tymethod.decode_invoke' class='fnname'>decode_invoke</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the invocation request message.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You decode regarding the invocation request as what will have following messages:
+<ul>
+<li>&quot;connect&quot;</li>
+<li>&quot;releaseStream&quot;</li>
+<li>&quot;FCPublish&quot;</li>
+<li>&quot;createStream&quot;</li>
+<li>&quot;publish&quot;</li>
+</ul>
+</li>
+</ul>
+<p>And you decode regarding above messages as what will have following fields respectively:</p>
+<h2 id="connect" class="section-header"><a href="#connect">connect</a></h2>
+<ul>
+<li>Command name: &quot;connect&quot; (<code>String</code>)</li>
+<li>Transaction id: 1 (<code>Number</code>)</li>
+<li>Command object: See the <code>CommandObject</code> (<code>Object</code>)</li>
+<li>Optional argument: In the official specification paper, this has been specified the <code>Object</code>, though we can't check the existence of this field.<br />
+Therefore you won't be required to consider about this field.</li>
+</ul>
+<h2 id="releasestream" class="section-header"><a href="#releasestream">releaseStream</a></h2>
+<ul>
+<li>Command name: &quot;releaseStream&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 2 (<code>Number</code>)</li>
+<li>Command object: probable nothing (<code>Null</code>)</li>
+<li>Playpath: playpath in &quot;rtmp://example.com/appName/<em>playpath</em>&quot; (if it is specified) (<code>String</code>)</li>
+</ul>
+<h2 id="fcpublish" class="section-header"><a href="#fcpublish">FCPublish</a></h2>
+<ul>
+<li>Command name: &quot;FCPublish&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 3 (<code>Number</code>)</li>
+<li>Command object: probable nothing (<code>Null</code>)</li>
+<li>Playpath: playpath in &quot;rtmp://example.com/appName/<em>playpath</em>&quot; (if it is specified) (<code>String</code>)</li>
+</ul>
+<h2 id="createstream" class="section-header"><a href="#createstream">createStream</a></h2>
+<ul>
+<li>Command name: &quot;createStream&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 4 (<code>Number</code>)</li>
+<li>Command object: probable nothing (<code>Null</code>)</li>
+</ul>
+<h2 id="publish" class="section-header"><a href="#publish">publish</a></h2>
+<ul>
+<li>
+<p>Command name: &quot;publish&quot; (<code>String</code>)</p>
+</li>
+<li>
+<p>Transaction id: probable 5 (<code>Number</code>)</p>
+</li>
+<li>
+<p>Command object: probable nothing (<code>Null</code>)</p>
+</li>
+<li>
+<p>Playpath: playpath in &quot;rtmp://example.com/appName/<em>playpath</em>&quot; (if it is specified) (<code>String</code>)</p>
+</li>
+<li>
+<p>Playtype: either &quot;live&quot;, &quot;record&quot; or &quot;append&quot; (<code>String</code>)</p>
+</li>
+<li>
+<p>If you couldn't decode above messages, return the <code>None</code></p>
+</li>
+</ul>
+</div><h3 id='tymethod.decode_unknown' class='method'><code id='decode_unknown.v'>fn <a href='#tymethod.decode_unknown' class='fnname'>decode_unknown</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data as Unknown bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard remaining bytes as some unknown bytes.<br />
+You aren't required to consider that their bytes is what in this moment.</li>
+<li>You may pass them through other processes keeping them as be.</li>
+</ul>
+</div><h3 id='tymethod.decode_chunk_data' class='method'><code id='decode_chunk_data.v'>fn <a href='#tymethod.decode_chunk_data' class='fnname'>decode_chunk_data</a>(&amp;mut self, message_type: <a class="enum" href="../../sheave/messages/enum.MessageType.html" title="enum sheave::messages::MessageType">MessageType</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code></h3><div class='docblock'><p>Decodes the chunk data.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You must associate the message type id with actual chunk data.<br />
+See the <code>MessageType</code> and the <code>ChunkData</code> for more details about their correspondence.</li>
+<li>If you couldn't decode the chunk data, return the <code>None</code>.</li>
+</ul>
+<p>And keep your mind that you should use the method named as &quot;decode_*&quot; when will decode the chunk data.
+The correspondence of the message type and the method what should use when decode the chunk data is following:</p>
+<table><thead><tr><th align="right">Message type id</th><th align="left">Method</th></tr></thead><tbody>
+<tr><td align="right">1</td><td align="left"><code>decode_chunk_size()</code></td></tr>
+<tr><td align="right">3</td><td align="left"><code>decode_bytes_read()</code></td></tr>
+<tr><td align="right">4</td><td align="left"><code>decode_ping()</code></td></tr>
+<tr><td align="right">5</td><td align="left"><code>decode_server_bandwidth()</code></td></tr>
+<tr><td align="right">6</td><td align="left"><code>decode_client_bandwidth()</code></td></tr>
+<tr><td align="right">8</td><td align="left"><code>decode_audio()</code></td></tr>
+<tr><td align="right">9</td><td align="left"><code>decode_video()</code></td></tr>
+<tr><td align="right">18</td><td align="left"><code>decode_notify()</code></td></tr>
+<tr><td align="right">20</td><td align="left"><code>decode_invoke()</code></td></tr>
+<tr><td align="right">other</td><td align="left"><code>decode_unknown()</code></td></tr>
+</tbody></table>
+<p>You will use this method when will decode actual chunk data after checking the message type id in the chunk message header.</p>
+<h1 id="parameters-2" class="section-header"><a href="#parameters-2">Parameters</a></h1>
+<ul>
+<li><code>message_type: MessageType</code></li>
+</ul>
+<p>The message type input in the chunk message header.
+The chunk data must be associated actual content with the message type ida in the chunk message header.</p>
+</div></div><span class='loading-content'>Loading content...</span>
+            <h2 id='implementors' class='small-section-header'>Implementors<a href='#implementors' class='anchor'></a></h2><div class='item-list' id='implementors-list'><h3 id='impl-RtmpDecoder' class='impl'><code class='in-band'>impl RtmpDecoder for <a class="struct" href="../../sheave/messages/struct.ByteBuffer.html" title="struct sheave::messages::ByteBuffer">ByteBuffer</a></code><a href='#impl-RtmpDecoder' class='anchor'></a><a class='srclink' href='../../src/sheave/decoders.rs.html#762-1313' title='goto source code'>[src]</a></h3><div class='impl-items'><h4 id='method.decode_basic_header' class="method hidden"><code id='decode_basic_header.v-1'>fn <a href='#method.decode_basic_header' class='fnname'>decode_basic_header</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../../sheave/messages/struct.BasicHeader.html" title="struct sheave::messages::BasicHeader">BasicHeader</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#763-785' title='goto source code'>[src]</a></h4><h4 id='method.decode_message_header' class="method hidden"><code id='decode_message_header.v-1'>fn <a href='#method.decode_message_header' class='fnname'>decode_message_header</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;message_format: <a class="enum" href="../../sheave/messages/enum.MessageFormat.html" title="enum sheave::messages::MessageFormat">MessageFormat</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#787-817' title='goto source code'>[src]</a></h4><h4 id='method.decode_extended_timestamp' class="method hidden"><code id='decode_extended_timestamp.v-1'>fn <a href='#method.decode_extended_timestamp' class='fnname'>decode_extended_timestamp</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;message_header: <a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a><br>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#819-829' title='goto source code'>[src]</a></h4><h4 id='method.decode_chunk_size' class="method hidden"><code id='decode_chunk_size.v-1'>fn <a href='#method.decode_chunk_size' class='fnname'>decode_chunk_size</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#831-841' title='goto source code'>[src]</a></h4><h4 id='method.decode_bytes_read' class="method hidden"><code id='decode_bytes_read.v-1'>fn <a href='#method.decode_bytes_read' class='fnname'>decode_bytes_read</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#843-845' title='goto source code'>[src]</a></h4><h4 id='method.decode_ping' class="method hidden"><code id='decode_ping.v-1'>fn <a href='#method.decode_ping' class='fnname'>decode_ping</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#847-859' title='goto source code'>[src]</a></h4><h4 id='method.decode_server_bandwidth' class="method hidden"><code id='decode_server_bandwidth.v-1'>fn <a href='#method.decode_server_bandwidth' class='fnname'>decode_server_bandwidth</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#861-865' title='goto source code'>[src]</a></h4><h4 id='method.decode_client_bandwidth' class="method hidden"><code id='decode_client_bandwidth.v-1'>fn <a href='#method.decode_client_bandwidth' class='fnname'>decode_client_bandwidth</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#867-873' title='goto source code'>[src]</a></h4><h4 id='method.decode_audio' class="method hidden"><code id='decode_audio.v-1'>fn <a href='#method.decode_audio' class='fnname'>decode_audio</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#875-882' title='goto source code'>[src]</a></h4><h4 id='method.decode_video' class="method hidden"><code id='decode_video.v-1'>fn <a href='#method.decode_video' class='fnname'>decode_video</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#884-891' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_number' class="method hidden"><code id='decode_amf_number.v-1'>fn <a href='#method.decode_amf_number' class='fnname'>decode_amf_number</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#893-897' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_boolean' class="method hidden"><code id='decode_amf_boolean.v-1'>fn <a href='#method.decode_amf_boolean' class='fnname'>decode_amf_boolean</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#899-903' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_string' class="method hidden"><code id='decode_amf_string.v-1'>fn <a href='#method.decode_amf_string' class='fnname'>decode_amf_string</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#905-915' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_object' class="method hidden"><code id='decode_amf_object.v-1'>fn <a href='#method.decode_amf_object' class='fnname'>decode_amf_object</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#917-933' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_null' class="method hidden"><code id='decode_amf_null.v-1'>fn <a href='#method.decode_amf_null' class='fnname'>decode_amf_null</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#935-937' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_mixed_array' class="method hidden"><code id='decode_amf_mixed_array.v-1'>fn <a href='#method.decode_amf_mixed_array' class='fnname'>decode_amf_mixed_array</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#939-957' title='goto source code'>[src]</a></h4><h4 id='method.decode_amf_data' class="method hidden"><code id='decode_amf_data.v-1'>fn <a href='#method.decode_amf_data' class='fnname'>decode_amf_data</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#959-978' title='goto source code'>[src]</a></h4><h4 id='method.decode_notify' class="method hidden"><code id='decode_notify.v-1'>fn <a href='#method.decode_notify' class='fnname'>decode_notify</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#980-1024' title='goto source code'>[src]</a></h4><h4 id='method.decode_invoke_connect_result' class="method hidden"><code id='decode_invoke_connect_result.v-1'>fn <a href='#method.decode_invoke_connect_result' class='fnname'>decode_invoke_connect_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1026-1059' title='goto source code'>[src]</a></h4><h4 id='method.decode_invoke_release_stream_result' class="method hidden"><code id='decode_invoke_release_stream_result.v-1'>fn <a href='#method.decode_invoke_release_stream_result' class='fnname'>decode_invoke_release_stream_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1061-1084' title='goto source code'>[src]</a></h4><h4 id='method.decode_invoke_create_stream_result' class="method hidden"><code id='decode_invoke_create_stream_result.v-1'>fn <a href='#method.decode_invoke_create_stream_result' class='fnname'>decode_invoke_create_stream_result</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1086-1113' title='goto source code'>[src]</a></h4><h4 id='method.decode_invoke_on_fc_publish' class="method hidden"><code id='decode_invoke_on_fc_publish.v-1'>fn <a href='#method.decode_invoke_on_fc_publish' class='fnname'>decode_invoke_on_fc_publish</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1115-1131' title='goto source code'>[src]</a></h4><h4 id='method.decode_invoke_on_status' class="method hidden"><code id='decode_invoke_on_status.v-1'>fn <a href='#method.decode_invoke_on_status' class='fnname'>decode_invoke_on_status</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1133-1164' title='goto source code'>[src]</a></h4><h4 id='method.decode_invoke' class="method hidden"><code id='decode_invoke.v-1'>fn <a href='#method.decode_invoke' class='fnname'>decode_invoke</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1166-1286' title='goto source code'>[src]</a></h4><h4 id='method.decode_unknown' class="method hidden"><code id='decode_unknown.v-1'>fn <a href='#method.decode_unknown' class='fnname'>decode_unknown</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1288-1295' title='goto source code'>[src]</a></h4><h4 id='method.decode_chunk_data' class="method hidden"><code id='decode_chunk_data.v-1'>fn <a href='#method.decode_chunk_data' class='fnname'>decode_chunk_data</a>(&amp;mut self, message_type: <a class="enum" href="../../sheave/messages/enum.MessageType.html" title="enum sheave::messages::MessageType">MessageType</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;</code><a class='srclink' href='../../src/sheave/decoders.rs.html#1297-1312' title='goto source code'>[src]</a></h4></div></div><span class='loading-content'>Loading content...</span><script type="text/javascript">window.inlined_types=new Set([]);</script><script type="text/javascript" async
+                         src="../../implementors/sheave/decoders/trait.RtmpDecoder.js">
+                 </script></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `PutByteBuffer` trait in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, PutByteBuffer"><title>sheave::encoders::PutByteBuffer - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Trait PutByteBuffer</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.put_bytes">put_bytes</a><a href="#tymethod.put_f64">put_f64</a><a href="#tymethod.put_u16_be">put_u16_be</a><a href="#tymethod.put_u16_le">put_u16_le</a><a href="#tymethod.put_u24_be">put_u24_be</a><a href="#tymethod.put_u32_be">put_u32_be</a><a href="#tymethod.put_u32_le">put_u32_le</a><a href="#tymethod.put_u8">put_u8</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>sheave</a>::<wbr><a href='index.html'>encoders</a></p><script>window.sidebarCurrent = {name: 'PutByteBuffer', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/encoders.rs.html#36-174' title='goto source code'>[src]</a></span><span class='in-band'>Trait <a href='../index.html'>sheave</a>::<wbr><a href='index.html'>encoders</a>::<wbr><a class="trait" href=''>PutByteBuffer</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><pre class='rust trait'>pub trait PutByteBuffer {
+    fn <a href='#tymethod.put_u8' class='fnname'>put_u8</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_u16_be' class='fnname'>put_u16_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_u16_le' class='fnname'>put_u16_le</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_u24_be' class='fnname'>put_u24_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_u32_be' class='fnname'>put_u32_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_u32_le' class='fnname'>put_u32_le</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_f64' class='fnname'>put_f64</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.put_bytes' class='fnname'>put_bytes</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;);
+}</pre></div><div class='docblock'><h1 id="the-byte-putter" class="section-header"><a href="#the-byte-putter">The byte putter</a></h1>
+<p>The trait to put some value into the buffer.
+This will require that consider the length to put or its byte order.
+The correspondence of the name to the length/the byte order is following:</p>
+<table><thead><tr><th align="left">Word</th><th align="right">Length (in byte)</th><th align="left">Byte order</th></tr></thead><tbody>
+<tr><td align="left">_u8</td><td align="right">1</td><td align="left">Not considered</td></tr>
+<tr><td align="left">_u16_be</td><td align="right">2</td><td align="left">Big Endian</td></tr>
+<tr><td align="left">_u16_le</td><td align="right">2</td><td align="left">Little Endian</td></tr>
+<tr><td align="left">_u24_be</td><td align="right">3</td><td align="left">Big Endian</td></tr>
+<tr><td align="left">_u32_be</td><td align="right">4</td><td align="left">Big Endian</td></tr>
+<tr><td align="left">_u32_le</td><td align="right">4</td><td align="left">Little Endian</td></tr>
+<tr><td align="left">_f64</td><td align="right">8</td><td align="left">IEEE 754</td></tr>
+</tbody></table>
+</div>
+            <h2 id='required-methods' class='small-section-header'>Required methods<a href='#required-methods' class='anchor'></a></h2><div class='methods'><h3 id='tymethod.put_u8' class='method'><code id='put_u8.v'>fn <a href='#tymethod.put_u8' class='fnname'>put_u8</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>)</code></h3><div class='docblock'><p>Puts just 1 byte into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_u8</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">u8</span>) {
+    <span class="ident">v</span>.<span class="ident">push</span>(<span class="ident">byte</span>);
+}</pre></div>
+<h1 id="parameters" class="section-header"><a href="#parameters">Parameters</a></h1>
+<ul>
+<li><code>byte: u8</code></li>
+</ul>
+<p>A 1 byte value to put into the buffer.</p>
+</div><h3 id='tymethod.put_u16_be' class='method'><code id='put_u16_be.v'>fn <a href='#tymethod.put_u16_be' class='fnname'>put_u16_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>)</code></h3><div class='docblock'><p>Puts 2 bytes as Big Endian into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_u16_be</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">u16</span>) {
+    <span class="ident">v</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">byte</span>.<span class="ident">to_be_bytes</span>());
+}</pre></div>
+<h1 id="parameters-1" class="section-header"><a href="#parameters-1">Parameters</a></h1>
+<ul>
+<li><code>byte: u16</code></li>
+</ul>
+<p>A 2 bytes value to put into the buffer.
+This is expected to convert into the <code>[u8; 2]</code> type as Big Endian.</p>
+</div><h3 id='tymethod.put_u16_le' class='method'><code id='put_u16_le.v'>fn <a href='#tymethod.put_u16_le' class='fnname'>put_u16_le</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>)</code></h3><div class='docblock'><p>Puts 2 bytes as Little Endian into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_u16_le</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">u16</span>) {
+    <span class="ident">v</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">byte</span>.<span class="ident">to_le_bytes</span>());
+}</pre></div>
+<h1 id="parameters-2" class="section-header"><a href="#parameters-2">Parameters</a></h1>
+<ul>
+<li><code>byte: u16</code></li>
+</ul>
+<p>A 2 bytes value to put into the buffer.
+This is expected to convert into the <code>[u8; 2]</code> type as Little Endian.</p>
+</div><h3 id='tymethod.put_u24_be' class='method'><code id='put_u24_be.v'>fn <a href='#tymethod.put_u24_be' class='fnname'>put_u24_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></h3><div class='docblock'><p>Puts 3 bytes as Big Endian into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_u24_be</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">u32</span>) {
+    <span class="comment">// The first byte won&#39;t be needed because this method is requiring just 3 bytes.</span>
+    <span class="ident">v</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">byte</span>.<span class="ident">to_be_bytes</span>()[<span class="number">1</span>..]);
+}</pre></div>
+<h1 id="parameters-3" class="section-header"><a href="#parameters-3">Parameters</a></h1>
+<ul>
+<li><code>byte: u32</code></li>
+</ul>
+<p>A 4 bytes value to put into the buffer.
+This is expected to convert into the <code>[u8; 4]</code> type as Big Endian.
+Though this is 4 bytes because the type for 3 bytes isn't existing yet, keep this value up to 0x00ffffff.</p>
+</div><h3 id='tymethod.put_u32_be' class='method'><code id='put_u32_be.v'>fn <a href='#tymethod.put_u32_be' class='fnname'>put_u32_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></h3><div class='docblock'><p>Puts 4 bytes as Big Endian into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_u32_be</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">u32</span>) {
+    <span class="ident">v</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">byte</span>.<span class="ident">to_be_bytes</span>());
+}</pre></div>
+<h1 id="parameters-4" class="section-header"><a href="#parameters-4">Parameters</a></h1>
+<ul>
+<li><code>byte: u32</code></li>
+</ul>
+<p>A 4 bytes value to put into the buffer.
+This is expected to convert into the <code>[u8; 4]</code> type as Big Endian.</p>
+</div><h3 id='tymethod.put_u32_le' class='method'><code id='put_u32_le.v'>fn <a href='#tymethod.put_u32_le' class='fnname'>put_u32_le</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></h3><div class='docblock'><p>Puts 4 bytes as Little Endian into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_u32_le</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">u32</span>) {
+    <span class="ident">v</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">byte</span>.<span class="ident">to_le_bytes</span>());
+}</pre></div>
+<h1 id="parameters-5" class="section-header"><a href="#parameters-5">Parameters</a></h1>
+<ul>
+<li><code>byte: u32</code></li>
+</ul>
+<p>A 4 bytes value to put into the buffer.
+This is expected to convert into the <code>[u8; 4]</code> type as Little Endian.</p>
+</div><h3 id='tymethod.put_f64' class='method'><code id='put_f64.v'>fn <a href='#tymethod.put_f64' class='fnname'>put_f64</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>)</code></h3><div class='docblock'><p>Puts 8 bytes as IEEE 754 into the buffer.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">put_f64</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">byte</span>: <span class="ident">f64</span>) {
+    <span class="comment">// f64::to_bits() makes the u64 value from the f64 value.</span>
+    <span class="ident">v</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">byte</span>.<span class="ident">to_bits</span>().<span class="ident">to_be_bytes</span>());
+}</pre></div>
+<h1 id="parameters-6" class="section-header"><a href="#parameters-6">Parameters</a></h1>
+<ul>
+<li><code>byte: f64</code></li>
+</ul>
+<p>A 8 bytes value to put into the buffer.
+This is expected to convert into the <code>[u8; 8]</code> type as Big Endian.</p>
+</div><h3 id='tymethod.put_bytes' class='method'><code id='put_bytes.v'>fn <a href='#tymethod.put_bytes' class='fnname'>put_bytes</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code></h3><div class='docblock'><p>Puts the bytes into the buffer as it be.
+This expects that you write the code equivalent to following:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="comment">// Note that &quot;mut&quot; is a pattern, and can&#39;t use in the trait defenition.</span>
+<span class="kw">fn</span> <span class="ident">put_bytes</span>(<span class="ident">v</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>) {
+    <span class="ident">v</span>.<span class="ident">append</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">bytes</span>);
+}</pre></div>
+<h1 id="parameters-7" class="section-header"><a href="#parameters-7">Parameters</a></h1>
+<ul>
+<li><code>bytes: Vec&lt;u8&gt;</code></li>
+</ul>
+<p>The bytes to put into the buffer.</p>
+</div></div><span class='loading-content'>Loading content...</span>
+            <h2 id='implementors' class='small-section-header'>Implementors<a href='#implementors' class='anchor'></a></h2><div class='item-list' id='implementors-list'><h3 id='impl-PutByteBuffer' class='impl'><code class='in-band'>impl PutByteBuffer for <a class="struct" href="../../sheave/messages/struct.ByteBuffer.html" title="struct sheave::messages::ByteBuffer">ByteBuffer</a></code><a href='#impl-PutByteBuffer' class='anchor'></a><a class='srclink' href='../../src/sheave/encoders.rs.html#737-791' title='goto source code'>[src]</a></h3><div class='impl-items'><h4 id='method.put_u8' class="method hidden"><code id='put_u8.v-1'>fn <a href='#method.put_u8' class='fnname'>put_u8</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#738-741' title='goto source code'>[src]</a></h4><h4 id='method.put_u16_be' class="method hidden"><code id='put_u16_be.v-1'>fn <a href='#method.put_u16_be' class='fnname'>put_u16_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#743-748' title='goto source code'>[src]</a></h4><h4 id='method.put_u16_le' class="method hidden"><code id='put_u16_le.v-1'>fn <a href='#method.put_u16_le' class='fnname'>put_u16_le</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u16.html">u16</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#750-755' title='goto source code'>[src]</a></h4><h4 id='method.put_u24_be' class="method hidden"><code id='put_u24_be.v-1'>fn <a href='#method.put_u24_be' class='fnname'>put_u24_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#757-762' title='goto source code'>[src]</a></h4><h4 id='method.put_u32_be' class="method hidden"><code id='put_u32_be.v-1'>fn <a href='#method.put_u32_be' class='fnname'>put_u32_be</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#764-769' title='goto source code'>[src]</a></h4><h4 id='method.put_u32_le' class="method hidden"><code id='put_u32_le.v-1'>fn <a href='#method.put_u32_le' class='fnname'>put_u32_le</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#771-776' title='goto source code'>[src]</a></h4><h4 id='method.put_f64' class="method hidden"><code id='put_f64.v-1'>fn <a href='#method.put_f64' class='fnname'>put_f64</a>(&amp;mut self, byte: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#778-783' title='goto source code'>[src]</a></h4><h4 id='method.put_bytes' class="method hidden"><code id='put_bytes.v-1'>fn <a href='#method.put_bytes' class='fnname'>put_bytes</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#785-790' title='goto source code'>[src]</a></h4></div></div><span class='loading-content'>Loading content...</span><script type="text/javascript">window.inlined_types=new Set([]);</script><script type="text/javascript" async
+                         src="../../implementors/sheave/encoders/trait.PutByteBuffer.js">
+                 </script></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

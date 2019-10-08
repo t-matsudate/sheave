@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `sheave` crate."><meta name="keywords" content="rust, rustlang, rust-lang, sheave"><title>sheave - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../sheave/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate sheave</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all sheave's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'sheave', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/sheave/lib.rs.html#1-141' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>sheave</a></span></h1><div class='docblock'><h1 id="real-time-messaging-protocol" class="section-header"><a href="#real-time-messaging-protocol">Real Time Messaging Protocol</a></h1>
+<p>Mainly, this is the protocol for sending/receiving audio/video data over TCP.</p>
+<h2 id="protocols" class="section-header"><a href="#protocols">Protocols</a></h2>
+<p>As the protocol based on RTMP, there are also following protocols:</p>
+<ul>
+<li>RTMPE</li>
+<li>RTMPS</li>
+<li>RTMPT, RTMPTE, RTMPTS</li>
+</ul>
+<h3 id="rtmpe" class="section-header"><a href="#rtmpe">RTMPE</a></h3>
+<p>Real Time Messaging Protocol <em>encrypted</em>.
+This will encrypt the chunk by using Diffie-Hellman key exchange.
+However this has been deprecated because this hadn't encrypted the network, that is, this can be targetted from man-in-the-middle attack.</p>
+<h3 id="rtmps" class="section-header"><a href="#rtmps">RTMPS</a></h3>
+<p>Real Time Messaging Protocol over <em>SSL/TLS</em>.
+This will be secure than RTMPE because encrypts the connection with the client.</p>
+<h3 id="rtmpt-rtmpte-rtmpts" class="section-header"><a href="#rtmpt-rtmpte-rtmpts">RTMPT, RTMPTE, RTMPTS</a></h3>
+<p>Real Time Messaging Protocol over HTTP/HTTPS.
+This is the same as RTMP, RTMPE and RTMPS except is on the HTTP/HTTPS.</p>
+<h2 id="steps" class="section-header"><a href="#steps">Steps</a></h2>
+<p>RTMP takes following steps:</p>
+<ol>
+<li>RTMP handshake</li>
+<li>Invocations</li>
+<li>Publishing</li>
+</ol>
+<h3 id="rtmp-handshake" class="section-header"><a href="#rtmp-handshake">RTMP handshake</a></h3>
+<p>Takes the handshake with the client as RTMP.
+This can need HMAC-SHA256 digests/signatures at this moment.
+And if you will use RTMPS/RTMPTS, also the SSL certificate will need.
+See handshake.rs for more detail about the handshake.</p>
+<h3 id="invocations" class="section-header"><a href="#invocations">Invocations</a></h3>
+<p>Exchanges application information to use, with the client.
+See handlers.rs for more detail about this phace, and also see messages.rs for more detail about each chunk.</p>
+<h3 id="publishing" class="section-header"><a href="#publishing">Publishing</a></h3>
+<p>Stores audio/video data sent from the client.
+If some request from other clients has, sends their audio/video data to its client.
+See handlers.rs for more detail about this phase, and also see flv.rs for more detail about stored audio/video data.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="decoders/index.html" title='sheave::decoders mod'>decoders</a></td><td class='docblock-short'><p>The traits to encode the chunk messages.</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="encoders/index.html" title='sheave::encoders mod'>encoders</a></td><td class='docblock-short'><p>The traits to encode the chunk messages.</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="errors/index.html" title='sheave::errors mod'>errors</a></td><td class='docblock-short'><p>The errors</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="flv/index.html" title='sheave::flv mod'>flv</a></td><td class='docblock-short'><p>The types for FLV file format.</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="handlers/index.html" title='sheave::handlers mod'>handlers</a></td><td class='docblock-short'><p>The struct to handle RTMP</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="handshake/index.html" title='sheave::handshake mod'>handshake</a></td><td class='docblock-short'><p>The structs/functions to do handshake for the RTMP layer.</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="messages/index.html" title='sheave::messages mod'>messages</a></td><td class='docblock-short'><p>The chunk message patterns</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.run.html" title='sheave::run fn'>run</a></td><td class='docblock-short'><p>Starts the server.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "sheave";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

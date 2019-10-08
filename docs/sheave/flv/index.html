@@ -1,0 +1,403 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `flv` mod in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, flv"><title>sheave::flv - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module flv</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></div><p class='location'><a href='../index.html'>sheave</a></p><script>window.sidebarCurrent = {name: 'flv', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/flv.rs.html#1-1994' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>sheave</a>::<wbr><a class="mod" href=''>flv</a></span></h1><div class='docblock'><h1 id="the-types-for-flv-file-format" class="section-header"><a href="#the-types-for-flv-file-format">The types for FLV file format.</a></h1>
+<p>We will be required to store sent Audio/Video data from the client because they must send the to other clients too.
+Therefore we must store several segments of Audio/Video data sent from the client just as much as needed.
+The FLV file format consists of following fields respectively:</p>
+<ol>
+<li>The FLV header</li>
+<li>The FLV bodies
+<ul>
+<li>The sequence of following fields:
+<ul>
+<li>The size of previous tag (unsigned 4 bytes number but the size of first tag must be 0)</li>
+<li>The FLV tag</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="the-flv-header" class="section-header"><a href="#the-flv-header">The FLV header</a></h2>
+<p>The FLV header consists of following fields respectively:</p>
+<ol>
+<li>Signatures (array of unsigned 1 byte, total of 3 bytes)</li>
+<li>Version (unsigned 1 byte number)</li>
+<li>Reserved (unsigned 5 <strong>bits</strong>)</li>
+<li>Audio flag (unsigned 1 <strong>bit</strong>)</li>
+<li>Reserved (unsigned 1 <strong>bit</strong>)</li>
+<li>Video flag (unsigned 1 <strong>bit</strong>)</li>
+<li>Data offset (unsigned 4 bytes number, in byte)</li>
+</ol>
+<h3 id="signatures" class="section-header"><a href="#signatures">Signatures</a></h3>
+<p>This is &quot;FLV&quot; as the string.</p>
+<h3 id="version" class="section-header"><a href="#version">Version</a></h3>
+<p>The version for this file.
+For example, if this is 1, it indicates that this is FLV version 1.</p>
+<h3 id="reserved-of-5-bits" class="section-header"><a href="#reserved-of-5-bits">Reserved of 5 bits</a></h3>
+<p>This shall be 0.</p>
+<h3 id="audio-flag" class="section-header"><a href="#audio-flag">Audio flag</a></h3>
+<p>This indicates whether the audio data exists in this file.</p>
+<h3 id="reserved-of-1-bit" class="section-header"><a href="#reserved-of-1-bit">Reserved of 1 bit</a></h3>
+<p>This shall be 0.</p>
+<h3 id="video-flag" class="section-header"><a href="#video-flag">Video flag</a></h3>
+<p>This indicates whether the video data exists in this file.</p>
+<h3 id="data-offset" class="section-header"><a href="#data-offset">Data offset</a></h3>
+<p>This is the offset to actual data.
+That is, the size of this header.</p>
+<h2 id="the-flv-tag" class="section-header"><a href="#the-flv-tag">The FLV tag</a></h2>
+<p>The FLV tag consits of following fields respectively:</p>
+<ol>
+<li>Reserved (unsigned 2 <strong>bits</strong>)</li>
+<li>Filtered flag (unsigned 1 <strong>bit</strong>)</li>
+<li>Tag type (unsigned 5 <strong>bits</strong> number)</li>
+<li>Data size (unsigned 3 bytes number)</li>
+<li>Timestamp (unsigned 3 bytes number)</li>
+<li>Eextended timestamp (unsigned 1 byte number, in milliseconds)
+<ul>
+<li>This will be used when the timestamp has exceeded the limit for 3 bytes.</li>
+<li>Note that this will be represented as upper 1 byte of the 4 bytes timestamp.</li>
+</ul>
+</li>
+<li>Stream id (unsigned 3 bytes)</li>
+<li>Actual data
+<ul>
+<li>Audio</li>
+<li>Video</li>
+<li>ScriptData</li>
+</ul>
+</li>
+</ol>
+<h3 id="reserved" class="section-header"><a href="#reserved">Reserved</a></h3>
+<p>This shall be 0.</p>
+<h3 id="filtered-flag" class="section-header"><a href="#filtered-flag">Filtered flag</a></h3>
+<p>This indicates whether the FLV bodies have been encrypted. </p>
+<h3 id="tag-type" class="section-header"><a href="#tag-type">Tag type</a></h3>
+<p>Tha tag type consists of following values:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Tag type</th></tr></thead><tbody>
+<tr><td align="right">8</td><td align="left"><code>Audio</code></td></tr>
+<tr><td align="right">9</td><td align="left"><code>Video</code></td></tr>
+<tr><td align="right">18</td><td align="left"><code>ScriptData</code></td></tr>
+</tbody></table>
+<p>Above numbers are identical with the message type id in the chunk message header.
+That is, the <code>Audio</code> tag indicates the Audio of chunk data, the <code>Video</code> tag indicates the Video of chunk data, and the <code>ScriptData</code> indicates the Notify of chunk data.</p>
+<h3 id="data-size" class="section-header"><a href="#data-size">Data size</a></h3>
+<p>The actual data size.
+That is, this will be equal to what subturacts the total tag size to this header size.</p>
+<h3 id="timestamp" class="section-header"><a href="#timestamp">Timestamp</a></h3>
+<p>The timestamp when this FLV tag was created.
+This field must count based on the timestamp of first FLV tag relatively, and the timestamp of first FLV tag must 0.
+This is counted in millisecond.</p>
+<h3 id="extended-timestamp" class="section-header"><a href="#extended-timestamp">Extended timestamp</a></h3>
+<p>This will be used when the timestamp has exceeded 3 bytes limit, as the head 1 byte of 4 bytes timestamp.</p>
+<h3 id="stream-id" class="section-header"><a href="#stream-id">Stream id</a></h3>
+<p>This must be input 0.</p>
+<h2 id="the-encryption-tag" class="section-header"><a href="#the-encryption-tag">The encryption tag</a></h2>
+<p>The encryption tag consists of following fields respectively:</p>
+<ol>
+<li>The additional header object</li>
+<li>The encryption tag header</li>
+<li>The filter params</li>
+<li>The encryption body</li>
+</ol>
+<h3 id="the-additional-header-object" class="section-header"><a href="#the-additional-header-object">The additional header object</a></h3>
+<p>If you use encryption, the additional header object will be sent as the <code>Notify</code> chunk with &quot;|AdditionalHeader&quot; message, as the first FLV element, and just after &quot;onMetaData&quot; of ScriptData tag.
+Note that the property is AMF's value.
+The additional header object consists of following property:</p>
+<ul>
+<li>The encryption header object</li>
+</ul>
+<h4 id="the-encryption-header-object" class="section-header"><a href="#the-encryption-header-object">The encryption header object</a></h4>
+<p>The encryption header object will be sent as the ScriptData tag named as &quot;Encryption&quot;.
+And this consists of following properties:</p>
+<ul>
+<li>Version (<code>Number</code>)</li>
+<li>Method (<code>String</code>)</li>
+<li>Some flags (<code>Number</code>)</li>
+<li>Params (The standard encoding parameters object)</li>
+<li>Sigformat/Signature (<code>String</code>/<code>LongString</code>)</li>
+</ul>
+<h5 id="version-1" class="section-header"><a href="#version-1">Version</a></h5>
+<p>This indicate the Encryption header's version.
+The correspondence of the number to the version is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Version</th></tr></thead><tbody>
+<tr><td align="right">1</td><td align="left">FMRMS v1.x products</td></tr>
+<tr><td align="right">2</td><td align="left">Flash Access 2.0 products</td></tr>
+</tbody></table>
+<h5 id="method" class="section-header"><a href="#method">Method</a></h5>
+<p>This shall be &quot;Standard&quot;.</p>
+<h5 id="some-flags" class="section-header"><a href="#some-flags">Some flags</a></h5>
+<p>This shall be 0.</p>
+<h5 id="standard-encoding-parameters-object" class="section-header"><a href="#standard-encoding-parameters-object">Standard encoding parameters object</a></h5>
+<p>This consists of following properties:</p>
+<ul>
+<li>Version (<code>Number</code>)</li>
+<li>EncryptionAlgorithm (<code>String</code>)</li>
+<li>EncryptionParams (The AES-CBC encryption parameters object)</li>
+<li>KeyInfo (The key information object)</li>
+</ul>
+<h6 id="version-2" class="section-header"><a href="#version-2">Version</a></h6>
+<p>This shall be 1.</p>
+<h6 id="encryptionalgorithm" class="section-header"><a href="#encryptionalgorithm">EncryptionAlgorithm</a></h6>
+<p>This shall be &quot;AES-CBC&quot;.</p>
+<h6 id="the-aes-cbc-encryption-parameters-object" class="section-header"><a href="#the-aes-cbc-encryption-parameters-object">The AES-CBC encryption parameters object</a></h6>
+<p>This consists of following peoperty:</p>
+<ul>
+<li>KeyLength (<code>Number</code>)</li>
+</ul>
+<p>This shall be 16. (128 bits)</p>
+<h6 id="the-key-information-object" class="section-header"><a href="#the-key-information-object">The key information object</a></h6>
+<p>This consists of following properties:</p>
+<ul>
+<li>SubType (<code>String</code>)</li>
+</ul>
+<p>If the encryption header's version is 1, this will be input &quot;APS&quot;, otherwise this will be input &quot;FlashAccessv2&quot;.
+APS is Adobe Policy Server.
+Online key agreement negotiation protocol.
+FlashAccessv2 is Flash Access 2.0 products.
+Online key retrieval protocol.</p>
+<ul>
+<li>Data</li>
+</ul>
+<p>If the encryption header's version is 1, this will be input the adobe policy server object, otherwise this will be input the flash access v2 object.</p>
+<p>The flash access v2 object consists of a <code>LongString</code> value named as &quot;MetaData&quot;.
+It's enceded by Base64, and will be used the DRM client to retrieve the decryption key.</p>
+<p>The adobe policy server object couldn't be found the specification due to no longer produced by conforming applications.</p>
+<h5 id="sigformatsignature-stringlongstring" class="section-header"><a href="#sigformatsignature-stringlongstring">Sigformat/Signature (<code>String</code>/<code>LongString</code>)</a></h5>
+<p>This hasn't written no document in the FLV file format specification.</p>
+<h3 id="the-encryption-tag-header" class="section-header"><a href="#the-encryption-tag-header">The encryption tag header</a></h3>
+<p>The encryption tag header consists of following fields respectively:</p>
+<ol>
+<li>Number of filters (unsigned 1 byte)</li>
+<li>Filter name (String)</li>
+<li>Length (unsigned 3 bytes)</li>
+</ol>
+<h4 id="number-of-filters" class="section-header"><a href="#number-of-filters">Number of filters</a></h4>
+<p>This indicates the count of filters applied to the packet.
+This shall be 1.</p>
+<h4 id="filter-name-string" class="section-header"><a href="#filter-name-string">Filter name (String)</a></h4>
+<p>This is a string for filter name.
+The name is following:</p>
+<ul>
+<li>&quot;Encryption&quot; (if the version in the encryption header is 1)</li>
+<li>&quot;SE&quot; (otherwise)</li>
+</ul>
+<h4 id="length-unsigned-3-bytes" class="section-header"><a href="#length-unsigned-3-bytes">Length (unsigned 3 bytes)</a></h4>
+<p>This indicates the length of the filter params (in byte).</p>
+<h3 id="the-filter-params" class="section-header"><a href="#the-filter-params">The filter params</a></h3>
+<p>The filter params consist of following fields respectively:</p>
+<ul>
+<li>Encryption filter params</li>
+</ul>
+<p><em>or</em></p>
+<ul>
+<li>Selective encryption filter params</li>
+</ul>
+<h4 id="the-encryption-filter-params" class="section-header"><a href="#the-encryption-filter-params">The encryption filter params</a></h4>
+<p>The encryption filter params consist of following field:</p>
+<ol>
+<li>IV (array of unsigned 1 byte, total of 16 bytes)</li>
+</ol>
+<h5 id="iv" class="section-header"><a href="#iv">IV</a></h5>
+<p>The initialization vector to be used for AES-CBC encryption.</p>
+<h4 id="the-selective-encryption-filter-params" class="section-header"><a href="#the-selective-encryption-filter-params">The selective encryption filter params</a></h4>
+<p>The selective encryption filter params consist of following fields respectively:</p>
+<ol>
+<li>Encrypted AU (unsigned 1 <strong>bit</strong>)</li>
+<li>Reserved (unsigned 7 <strong>bits</strong>)</li>
+</ol>
+<h5 id="encrypted-au" class="section-header"><a href="#encrypted-au">Encrypted AU</a></h5>
+<p>This is indicates whether the packet is encrypted.</p>
+<h5 id="reserved-1" class="section-header"><a href="#reserved-1">Reserved</a></h5>
+<p>This shall be 0.</p>
+<ol start="3">
+<li>IV (array of unsigned 1 byte, total of 16 bytes)</li>
+</ol>
+<p>The initialization vector to be used for AES-CBC encryption.
+This will be skipped unless the field of Encrypted AU is 1.</p>
+<h3 id="the-encryption-body" class="section-header"><a href="#the-encryption-body">The encryption body</a></h3>
+<p>The encryption body consists of following fields respectively:</p>
+<ol>
+<li>Content (array of unsigned 1 byte)</li>
+<li>Padding (array of unsigned 1 byte)</li>
+</ol>
+<h4 id="content" class="section-header"><a href="#content">Content</a></h4>
+<p>If the field of Encrypted AU is 0, this will be input the plaintext.
+If it is 1, this will be input the encrypted text.
+This length is equal to the input text length.</p>
+<h4 id="padding-array-of-unsigned-1-byte" class="section-header"><a href="#padding-array-of-unsigned-1-byte">Padding (array of unsigned 1 byte)</a></h4>
+<p>This is the padding string for encrypting the content.
+This is also encrypted.
+This length is equal to actual padding string length.
+See RFC2630 for more detail about this.</p>
+<h2 id="the-audio-tag" class="section-header"><a href="#the-audio-tag">The audio tag</a></h2>
+<p>The audio tag consists of following fields respectively:</p>
+<ol>
+<li>The audio tag header.</li>
+<li>The audio data.</li>
+</ol>
+<h3 id="the-audio-tag-header" class="section-header"><a href="#the-audio-tag-header">The audio tag header.</a></h3>
+<p>The audio tag header consits of following fields respectively:</p>
+<ol>
+<li>Sound format (unsigned 4 <strong>bits</strong>)</li>
+<li>Sound rate (unsigned 2 <strong>bits</strong>)</li>
+<li>Sound size (unsigned 1 <strong>bit</strong>)</li>
+<li>Sound type (unsigned 1 <strong>bit</strong>)</li>
+<li>AAC packet type (unsigned 1 byte)</li>
+</ol>
+<h4 id="sound-format" class="section-header"><a href="#sound-format">Sound format</a></h4>
+<p>This indicates the audio file format.
+The correspondence of the number to the sound format is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Sound format</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left">Linear PCM (native endian)</td></tr>
+<tr><td align="right">1</td><td align="left">ADPCM</td></tr>
+<tr><td align="right">2</td><td align="left">MP3</td></tr>
+<tr><td align="right">3</td><td align="left">Linear PCM (little endian)</td></tr>
+<tr><td align="right">4</td><td align="left">Nellymoser 16kHz mono</td></tr>
+<tr><td align="right">5</td><td align="left">Nellymoser 8kHz mono</td></tr>
+<tr><td align="right">6</td><td align="left">Nellymoser</td></tr>
+<tr><td align="right">7</td><td align="left">G.711 A-law logarithmic PCM</td></tr>
+<tr><td align="right">8</td><td align="left">G.711 mu-law logarithmic PCM</td></tr>
+<tr><td align="right">9</td><td align="left">Reserved</td></tr>
+<tr><td align="right">10</td><td align="left">AAC</td></tr>
+<tr><td align="right">11</td><td align="left">Speex</td></tr>
+<tr><td align="right">14</td><td align="left">MP3 8kHz</td></tr>
+<tr><td align="right">15</td><td align="left">Device-specific sound</td></tr>
+</tbody></table>
+<h4 id="sound-rate" class="section-header"><a href="#sound-rate">Sound rate</a></h4>
+<p>This indicates the audio sampling rate.
+The correspondence of the number to the sound rate is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="right">Sound rate (in kHz)</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="right">5.5</td></tr>
+<tr><td align="right">1</td><td align="right">11.0</td></tr>
+<tr><td align="right">2</td><td align="right">22.0</td></tr>
+<tr><td align="right">3</td><td align="right">44.0</td></tr>
+</tbody></table>
+<h4 id="sound-size" class="section-header"><a href="#sound-size">Sound size</a></h4>
+<p>This indicates which the audio is either 8 bits or 16 bits.
+The correspondence of the number to the sound size is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="right">Sound size (in bit)</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="right">8</td></tr>
+<tr><td align="right">1</td><td align="right">16</td></tr>
+</tbody></table>
+<h4 id="sound-type-unsigned-1-bit" class="section-header"><a href="#sound-type-unsigned-1-bit">Sound type (unsigned 1 <strong>bit</strong>)</a></h4>
+<p>This indicates which the audio is either mono or stereo.
+The correspondence of the number to the sound type is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Sound type</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left">Mono</td></tr>
+<tr><td align="right">1</td><td align="left">Stereo</td></tr>
+</tbody></table>
+<h4 id="aac-packet-type-unsigned-1-byte" class="section-header"><a href="#aac-packet-type-unsigned-1-byte">AAC packet type (unsigned 1 byte)</a></h4>
+<p>This indicates which the audio is either AAC sequence header or AAC raw, if it is AAC.
+Therefore this will be skipped unless the codec is AAC.
+The correspondence of the number to the AAC packet type is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">AAC packet type</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left">AAC sequence header</td></tr>
+<tr><td align="right">1</td><td align="left">AAC raw</td></tr>
+</tbody></table>
+<h3 id="the-audio-data" class="section-header"><a href="#the-audio-data">The audio data</a></h3>
+<p>This has depended on the audio codec for its byte format.
+See other documents about the audio codecs.</p>
+<h2 id="the-video-tag" class="section-header"><a href="#the-video-tag">The video tag</a></h2>
+<p>The video tag consists of following fields respectively:</p>
+<ol>
+<li>The video tag header</li>
+<li>The video data</li>
+</ol>
+<h3 id="the-video-tag-header" class="section-header"><a href="#the-video-tag-header">The video tag header</a></h3>
+<p>The video tag header consists of following fields respectively:</p>
+<ol>
+<li>Frame type (unsigned 4 <strong>bits</strong>)</li>
+<li>Codec id (unsigned 4 <strong>bits</strong>)</li>
+<li>AVC packet type (unsigned 1 byte)</li>
+<li>Composition time (unsigned 3 bytes)</li>
+</ol>
+<h4 id="frame-type" class="section-header"><a href="#frame-type">Frame type</a></h4>
+<p>This indicates the video frame type.
+The correspondence of the number to the frame type is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Frame type</th></tr></thead><tbody>
+<tr><td align="right">1</td><td align="left">key frame</td></tr>
+<tr><td align="right">2</td><td align="left">inter frame</td></tr>
+<tr><td align="right">3</td><td align="left">disposable inter frame</td></tr>
+<tr><td align="right">4</td><td align="left">generated key frame</td></tr>
+<tr><td align="right">5</td><td align="left">video info/command frame</td></tr>
+</tbody></table>
+<h4 id="codec-id-unsigned-4-bits" class="section-header"><a href="#codec-id-unsigned-4-bits">Codec id (unsigned 4 <strong>bits</strong>)</a></h4>
+<p>This indicates the codec for video data.
+The correspondence of the number to the video codec is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Video codec</th></tr></thead><tbody>
+<tr><td align="right">2</td><td align="left">Sorenson H.263</td></tr>
+<tr><td align="right">3</td><td align="left">Screen video</td></tr>
+<tr><td align="right">4</td><td align="left">On2 VP6</td></tr>
+<tr><td align="right">5</td><td align="left">On2 VP6 with alpha channel</td></tr>
+<tr><td align="right">6</td><td align="left">Screen video version 2</td></tr>
+<tr><td align="right">7</td><td align="left">AVC</td></tr>
+</tbody></table>
+<h4 id="avc-packet-type-unsigned-1-byte" class="section-header"><a href="#avc-packet-type-unsigned-1-byte">AVC packet type (unsigned 1 byte)</a></h4>
+<p>This indicate which the video is either AVC sequence header, AVC NALU or AVC end of sequence.
+Therefore this will be skipped unless the codec is AVC.
+The correspondence of the number to the AVC packet type is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">AVC packet type</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left">AVC sequence header</td></tr>
+<tr><td align="right">1</td><td align="left">AVC NALU</td></tr>
+<tr><td align="right">2</td><td align="left">AVC end of sequence</td></tr>
+</tbody></table>
+<h4 id="composition-time-signed-3-bytes" class="section-header"><a href="#composition-time-signed-3-bytes">Composition time (signed 3 bytes)</a></h4>
+<p>This indicates the time offset for the AVC codec.
+Therefore this will be skipped unless the codec is AVC, and will be input 0 unless the AVC packet type is 1 (NALU).
+See the ISO 14496-12 for more detail about the Composition time.</p>
+<h3 id="the-video-data" class="section-header"><a href="#the-video-data">The video data</a></h3>
+<p>This has depended on the video codec for its byte format.
+See other documents about the video codecs.</p>
+<h2 id="the-data-tag" class="section-header"><a href="#the-data-tag">The data tag</a></h2>
+<p>The data tag consists of what is identical to the <code>MixedArray</code> of AMF sent as the <code>Notify</code> chunk currently.
+That is, this consists of following fields respectively:</p>
+<ol>
+<li>Name</li>
+<li>ScriptData</li>
+</ol>
+<h3 id="name" class="section-header"><a href="#name">Name</a></h3>
+<p>&quot;onMetaData&quot; (<code>String</code>)</p>
+<h3 id="scriptdata" class="section-header"><a href="#scriptdata">ScriptData</a></h3>
+<p>Following name/value pairs.
+However these aren't input all necessarily.</p>
+<table><thead><tr><th align="left">Name</th><th align="left">AMF data type</th></tr></thead><tbody>
+<tr><td align="left">audiocodecid</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">audiodatarate</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">audiodelay</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">audiosamplerate</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">audiosamplesize</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">canSeekToEnd</td><td align="left"><code>Boolean</code></td></tr>
+<tr><td align="left">creationdate</td><td align="left"><code>String</code></td></tr>
+<tr><td align="left">duration</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">filesize</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">framerate</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">height</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">stereo</td><td align="left"><code>Boolean</code></td></tr>
+<tr><td align="left">videocodecid</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">videodatarate</td><td align="left"><code>Number</code></td></tr>
+<tr><td align="left">width</td><td align="left"><code>Number</code></td></tr>
+</tbody></table>
+<p>See <code>AmfData</code> for more detail about the AMF.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.AudioTag.html" title='sheave::flv::AudioTag struct'>AudioTag</a></td><td class='docblock-short'><p>The audio tag</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.AudioTagHeader.html" title='sheave::flv::AudioTagHeader struct'>AudioTagHeader</a></td><td class='docblock-short'><p>The audio tag header</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.DataTag.html" title='sheave::flv::DataTag struct'>DataTag</a></td><td class='docblock-short'><p>The Data tag</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.EncryptionTag.html" title='sheave::flv::EncryptionTag struct'>EncryptionTag</a></td><td class='docblock-short'><p>The encryption tag</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.EncryptionTagHeader.html" title='sheave::flv::EncryptionTagHeader struct'>EncryptionTagHeader</a></td><td class='docblock-short'><p>The encryption tag header</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Flv.html" title='sheave::flv::Flv struct'>Flv</a></td><td class='docblock-short'><p>The FLV</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.FlvBody.html" title='sheave::flv::FlvBody struct'>FlvBody</a></td><td class='docblock-short'><p>The FLV file bodies</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.FlvHeader.html" title='sheave::flv::FlvHeader struct'>FlvHeader</a></td><td class='docblock-short'><p>The FLV header</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.FlvTag.html" title='sheave::flv::FlvTag struct'>FlvTag</a></td><td class='docblock-short'><p>The FLV tag</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.VideoTag.html" title='sheave::flv::VideoTag struct'>VideoTag</a></td><td class='docblock-short'><p>The video tag</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.VideoTagHeader.html" title='sheave::flv::VideoTagHeader struct'>VideoTagHeader</a></td><td class='docblock-short'><p>The video tag header</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.AacPacketType.html" title='sheave::flv::AacPacketType enum'>AacPacketType</a></td><td class='docblock-short'><p>The AAC packet type</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.AvcPacketType.html" title='sheave::flv::AvcPacketType enum'>AvcPacketType</a></td><td class='docblock-short'><p>The AVC packet type</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.Codec.html" title='sheave::flv::Codec enum'>Codec</a></td><td class='docblock-short'><p>The codec</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.FilterParams.html" title='sheave::flv::FilterParams enum'>FilterParams</a></td><td class='docblock-short'><p>The filter parameters</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.FlvData.html" title='sheave::flv::FlvData enum'>FlvData</a></td><td class='docblock-short'><p>The FLV data</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.FrameType.html" title='sheave::flv::FrameType enum'>FrameType</a></td><td class='docblock-short'><p>The frame type</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.SoundFormat.html" title='sheave::flv::SoundFormat enum'>SoundFormat</a></td><td class='docblock-short'><p>The sound format</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.SoundRate.html" title='sheave::flv::SoundRate enum'>SoundRate</a></td><td class='docblock-short'><p>The sound rate</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.SoundSize.html" title='sheave::flv::SoundSize enum'>SoundSize</a></td><td class='docblock-short'><p>The sound size</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.SoundType.html" title='sheave::flv::SoundType enum'>SoundType</a></td><td class='docblock-short'><p>The sound type</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.TagType.html" title='sheave::flv::TagType enum'>TagType</a></td><td class='docblock-short'><p>The tag type</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

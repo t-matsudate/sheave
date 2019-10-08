@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `run` fn in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, run"><title>sheave::run - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../sheave/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class='location'><a href='index.html'>sheave</a></p><script>window.sidebarCurrent = {name: 'run', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/sheave/lib.rs.html#126-141' title='goto source code'>[src]</a></span><span class='in-band'>Function <a href='index.html'>sheave</a>::<wbr><a class="fn" href=''>run</a></span></h1><pre class='rust fn'>pub fn run() -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/std/io/error/type.Result.html" title="type std::io::error::Result">IOResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>&gt;</pre><div class='docblock'><h1 id="starts-the-server" class="section-header"><a href="#starts-the-server">Starts the server.</a></h1>
+<p>This takes following steps respectively:</p>
+<ol>
+<li>Keeps the timestamp</li>
+<li>Generates the TCP connection</li>
+<li>Handles the RTMP chunks</li>
+</ol>
+<h2 id="keeps-the-timestamp" class="section-header"><a href="#keeps-the-timestamp">Keeps the timestamp</a></h2>
+<p>First, Keeps the timestamp when started.
+All chunk will refer to this for counting the difference of the timestamp.</p>
+<h2 id="generates-the-tcp-connection" class="section-header"><a href="#generates-the-tcp-connection">Generates the TCP connection</a></h2>
+<p>Generates the TCP connection as &quot;127.0.0.1:1935&quot; (currently).
+Then, waits for the client to connect to the server.</p>
+<h2 id="handles-the-rtmp-chunks" class="section-header"><a href="#handles-the-rtmp-chunks">Handles the RTMP chunks</a></h2>
+<p>Handles the RTMP chunks.
+Note that in several chunks, sending plural responses will be required, or also sending no response will be required.
+See handlers.rs for more detail about this phase, and see messages.rs for more detail about each chunk.</p>
+<h1 id="errors" class="section-header"><a href="#errors">Errors</a></h1>
+<p>When you got the <code>ChunkLengthError</code>:</p>
+<ul>
+<li>The server couldn't read the chunk completely.</li>
+</ul>
+<p>When you got the <code>DigestVerificationError</code>:</p>
+<ul>
+<li>The HMAC-SHA256 digest didn't find in the C1 chunk.</li>
+</ul>
+<p>When you got the <code>SignatureDoesNotMatchError</code>:</p>
+<ul>
+<li>The HMAC-SHA256 signature in the C2 chunk didn't match with stored one in the server.</li>
+</ul>
+<p>When you got the <code>ChunkLengthError</code>:</p>
+<ul>
+<li>The format of some header or some chunk data is invalid.</li>
+</ul>
+</div></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "sheave";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

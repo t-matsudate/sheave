@@ -1,3 +1,71 @@
+//! # The struct to handle RTMP
+//!
+//! The RTMP will be required to exchange several chunks beforehand for streaming with audio/video data.
+//! Their exchanging chunks are following:
+//!
+//! 1. The RTMP handshake
+//! 2. The connect invocation
+//! 3. The releaseStream invocation
+//! 4. The FCPublish invocation
+//! 5. The createStream invocation
+//! 6. The publish invocation
+//! 7. Publishing audio/video data
+//!
+//! ## The RTMP handshake
+//!
+//! See the handshake.rs.
+//!
+//! ## The connect invocation
+//!
+//! We will exchange the information of the application each other.
+//! At this momennt, the server must send following responses respectively before sending its result:
+//!
+//! 1. The server-side bandwidth limit
+//! 2. The client-side bandwidth limit
+//! 3. The ping event (Stream Begin)
+//! 4. The chunk size limit
+//!
+//! Note that somehow the server will be required to send a result of the connect invocation twice to FFmpeg.
+//! See the `InvokeCommand` and the `NetConnectionCommand` for more detail about the connect invocation.
+//! And see messages.rs for more detail about the server-side bandwidth limit, the client-side bandwidth limit, the ping event and the chunk size limit.
+//!
+//! ## The releaseStream invocation
+//!
+//! The client will send the identifier to indicate audio/video data, then the server will respond its result to the client.
+//! See the `InvokeCommand` and the `NetConnectionCommand` for more detail about the releaseStream invocation.
+//!
+//! ## The FCPublish invocation
+//!
+//! The client will send the same identifier as releaseStream, then the server will respond its result to the client.
+//! See the `InvokeCommand` and the `FcPublishCommand` for more detail about the FCPublish invocation.
+//!
+//! ## The createStream invocation
+//!
+//! The client will send a request to emit the message stream id, then the server will respond its result contained emitted message stream id to the client.
+//! See the `InvokeCommand` and the `NetConnectionCommand` for more detail about the createStream invocation.
+//!
+//! ## The publish invocation
+//!
+//! The client will send a message to tell starting to publish audio/video data, then the server will respond its result contained the server status to the client.
+//! At this moment, the server must send the ping event (Stream Begin) before sending its result.
+//! See the `InvokeCommand` and the `NetStreamCommand` for more detail about the publish invocation.
+//! And see messages.rs for more detail about the ping event.
+//!
+//! ## Publishing audio/video data
+//!
+//! The client will start to publish the audio/video data.
+//! At this moment, the server will receive a metadata of their audio/video data as the Notify chunk from the client at the first.
+//! See flv.rs for more detail about their auido/video data.
+//! And see the `Metadata` for more detail about the metadata.
+//!
+//! [handshake.rs]: ./handshake.rs.html
+//! [messages.rs]: ./messages.rs.html
+//! [flv.rs]: ./flv.rs.html
+//! [`InvokeCommand`]: ./messages/enum.InvokeCommand.html
+//! [`NetConnectionCommand`]: ./messages/enum.NetConnectionCommand.html
+//! [`FcPublishCommand`]: ./messages/enum.FcPublishCommand.html
+//! [`NetStreamCommand`]: ./messages/enum.NetStreamCommand.html
+//! [`MetaData`]: ./messages/struct.MetaData.html
 use std::{
     cmp::{
         min
@@ -29,9 +97,33 @@ use crate::{
     flv::*
 };
 
+/// # The patterns of RTMP
+///
+/// The correspondence of the number to this enum is following:
+///
+/// |Number|RtmpState                |
+/// | ---: | :---------------------- |
+/// |0     |`TcpConnect`             |
+/// |1     |`ReceivedHandshake`      |
+/// |2     |`HandshakeDone`          |
+/// |3     |`ReceivedConnect`        |
+/// |4     |`SentConnectResult`      |
+/// |5     |`ReceivedReleaseStream`  |
+/// |6     |`SentReleaseStreamResult`|
+/// |7     |`ReceivedFcPublish`      |
+/// |8     |`SentOnFcPublish`        |
+/// |9     |`ReceivedCreateStream`   |
+/// |10    |`SentCreateStreamResult` |
+/// |11    |`ReceivedPublish`        |
+/// |12    |`Connected`              |
+/// |13    |`Disconnecting`          |
+/// |14    |`Disconnected`           |
+/// |255   |`Error`                  |
+///
+/// This enum and the `u8` value can convert into each other because this has implemented the `From<u8>` and has set the `#[repr(u8)]` attribute.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum RtmpState {
+pub enum RtmpState {
     TcpConnect,
     ReceivedHandshake,
     HandshakeDone,
@@ -51,6 +143,74 @@ pub(crate) enum RtmpState {
 }
 
 impl From<u8> for RtmpState {
+    /// Converts the `u8` value into this enum.
+    ///
+    /// # Parameters
+    ///
+    /// * `state: u8`
+    ///
+    /// The number to indicate the RTMP state.
+    /// Pass 255 to this if you need to mean some error.
+    ///
+    /// # Panics
+    ///
+    /// This will emit the `panic!` if is passed neither 255 nor the value below 15.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use sheave::handlers::RtmpState;
+    ///
+    /// let tcp_connect: RtmpState = (0x00 as u8).into();
+    /// let received_handshake: RtmpState = (0x01 as u8).into();
+    /// let handshake_done: RtmpState = (0x02 as u8).into();
+    /// let received_connect: RtmpState = (0x03 as u8).into();
+    /// let sent_connect_result: RtmpState = (0x04 as u8).into();
+    /// let received_release_stream: RtmpState = (0x05 as u8).into();
+    /// let sent_release_stream_result: RtmpState = (0x06 as u8).into();
+    /// let received_fc_publish: RtmpState = (0x07 as u8).into();
+    /// let sent_on_fc_publish: RtmpState = (0x08 as u8).into();
+    /// let received_create_stream: RtmpState = (0x09 as u8).into();
+    /// let sent_create_stream_result: RtmpState = (0x0a as u8).into();
+    /// let received_publish: RtmpState = (0x0b as u8).into();
+    /// let connected: RtmpState = (0x0c as u8).into();
+    /// let disconnecting: RtmpState = (0x0d as u8).into();
+    /// let disconnected: RtmpState = (0x0e as u8).into();
+    /// let error: RtmpState = (0xff as u8).into();
+    ///
+    /// /* This will print `TcpConnect`. */
+    /// println!("{:?}", tcp_connect);
+    /// /* This will print `ReceivedHandshake`. */
+    /// println!("{:?}", received_handshake);
+    /// /* This will print `HandshakeDone`. */
+    /// println!("{:?}", handshake_done);
+    /// /* This will print `ReceivedConnect`. */
+    /// println!("{:?}", received_connect);
+    /// /* This will print `SentConnectResult`. */
+    /// println!("{:?}", sent_connect_result);
+    /// /* This will print `ReceivedReleaseStream`. */
+    /// println!("{:?}", received_release_stream);
+    /// /* This will print `SentReleaseStreamResult`. */
+    /// println!("{:?}", sent_release_stream_result);
+    /// /* This will print `ReceivedFcPublish`. */
+    /// println!("{:?}", received_fc_publish);
+    /// /* This will print `SentOnFcPublish`. */
+    /// println!("{:?}", sent_on_fc_publish);
+    /// /* This will print `ReceivedCreateStream`. */
+    /// println!("{:?}", received_create_stream);
+    /// /* This will print `SentCreateStreamResult`. */
+    /// println!("{:?}", sent_create_stream_result);
+    /// /* This will print `ReceivedPublish`. */
+    /// println!("{:?}", received_publish);
+    /// /* This will print `Connected`. */
+    /// println!("{:?}", connected);
+    /// /* This will print `Disconnecting`. */
+    /// println!("{:?}", disconnecting);
+    /// /* This will print `Disconnected`. */
+    /// println!("{:?}", disconnected);
+    /// /* This will print `Error`. */
+    /// println!("{:?}", error);
+    /// ```
     fn from(state: u8) -> Self {
         use RtmpState::*;
 
@@ -77,13 +237,32 @@ impl From<u8> for RtmpState {
 }
 
 impl Default for RtmpState {
+    /// Constructs a new `RtmpState` with its default value, for constructing a new `RtmpHandler`.
     fn default() -> Self {
         RtmpState::TcpConnect
     }
 }
 
+/// # The last sent/received chunk information
+///
+/// This consists of following data:
+///
+/// |Field        |Type                 |
+/// | :---------- | :------------------ |
+/// |message\_type|`Option<MessageType>`|
+/// |message\_id  |`Option<u32>`        |
+/// |message\_len |`Option<u32>`        |
+/// |timestamp    |`Option<Duration>`   |
+/// |chunk\_data  |`Option<ChunkData>`  |
+///
+/// Above fields can get from the message header in chunks which sent/received.
+/// If its format is 0, these will be contained all just in the message header.
+/// Otherwise we must refer to these from the chunk which sent/received at the last.
+/// See messages.rs for more detail about the structure of the chunk message header.
+///
+/// [messages.rs]: ../messages.rs.html
 #[derive(Debug)]
-pub(crate) struct LastChunk {
+pub struct LastChunk {
     message_type: Option<MessageType>,
     message_id: Option<u32>,
     message_len: Option<u32>,
@@ -92,7 +271,35 @@ pub(crate) struct LastChunk {
 }
 
 impl LastChunk {
-    fn new(message_type: Option<MessageType>, message_id: Option<u32>, message_len: Option<u32>, timestamp: Option<Duration>, chunk_data: Option<ChunkData>) -> Self {
+    /// Constructs a new `LastChunk`.
+    ///
+    /// # Parameters
+    ///
+    /// * `message_type: Option<MessageType>`
+    ///
+    /// The enum of message type contained in chunk message hader.
+    /// See `MessageType` for more detail about this enum.
+    ///
+    /// * `message_id: Option<u32>`
+    ///
+    /// The message stream id contained in chunk message header.
+    ///
+    /// * `message_len: Option<u32>`
+    ///
+    /// The chunk data length contained in chunk message header.
+    ///
+    /// * `timestamp: Option<Duration>`
+    ///
+    /// The timestamp contained in chunk message header.
+    ///
+    /// * `chunk_data: Option<ChunkData>`
+    ///
+    /// Actual chunk data contained in chunk.
+    /// See `ChunkData` for more detail about this enum.
+    ///
+    /// [`MessageType`]: ../messages/enum.MessageType.html
+    /// [`ChunkData`]: ../messages/enum.ChunkData.html
+    pub fn new(message_type: Option<MessageType>, message_id: Option<u32>, message_len: Option<u32>, timestamp: Option<Duration>, chunk_data: Option<ChunkData>) -> Self {
         LastChunk {
             message_type,
             message_id,
@@ -102,50 +309,96 @@ impl LastChunk {
         }
     }
 
-    fn get_message_type(&self) -> Option<MessageType> {
+    /// Returns the message type.
+    pub fn get_message_type(&self) -> Option<MessageType> {
         self.message_type
     }
 
-    fn set_message_type(&mut self, message_type: Option<MessageType>) {
+    /// Sets the message type.
+    ///
+    /// # Parameters
+    ///
+    /// * `message_type: Option<MessageType>`
+    ///
+    /// The message type contained in chunk message header.
+    /// See `MessageType` for more detail about this enum.
+    ///
+    /// [`MessageType`]: ../messages/enum.MessageType.html
+    pub fn set_message_type(&mut self, message_type: Option<MessageType>) {
         self.message_type = message_type;
     }
 
-    fn get_message_id(&self) -> Option<u32> {
+    /// Returns the message id.
+    pub fn get_message_id(&self) -> Option<u32> {
         self.message_id
     }
 
-    fn set_message_id(&mut self, message_id: Option<u32>) {
+    /// Sets the message id.
+    ///
+    /// # Parameters
+    ///
+    /// * `message_id: Option<u32>`
+    ///
+    /// The message stream id contained in chunk message header.
+    pub fn set_message_id(&mut self, message_id: Option<u32>) {
         self.message_id = message_id;
     }
 
-    fn get_message_len(&self) -> Option<u32> {
+    /// Returns the message length.
+    pub fn get_message_len(&self) -> Option<u32> {
         self.message_len
     }
 
-    fn set_message_len(&mut self, message_len: Option<u32>) {
+    /// Sets the message length.
+    ///
+    /// # Parameters
+    ///
+    /// * `message_len: Option<u32>`
+    ///
+    /// The chunk data length contained in chunk message header.
+    pub fn set_message_len(&mut self, message_len: Option<u32>) {
         self.message_len = message_len;
     }
 
-    fn get_timestamp(&self) -> Option<Duration> {
+    /// Returns the timestamp.
+    pub fn get_timestamp(&self) -> Option<Duration> {
         self.timestamp
     }
 
-    fn set_timestamp(&mut self, timestamp: Option<Duration>) {
+    /// Sets the timestamp.
+    ///
+    /// # Parameters
+    ///
+    /// * `timestamp: Option<Duration>`
+    ///
+    /// The timestamp contained in chunk message header.
+    pub fn set_timestamp(&mut self, timestamp: Option<Duration>) {
         self.timestamp = timestamp;
     }
 
-    fn get_chunk_data(&self) -> &Option<ChunkData> {
+    /// Returns the chunk data.
+    pub fn get_chunk_data(&self) -> &Option<ChunkData> {
         &self.chunk_data
     }
 
-    fn set_chunk_data(&mut self, chunk_data: Option<ChunkData>) {
+    /// Sets the chunk data.
+    ///
+    /// # Parameters
+    ///
+    /// * `chunk_data: Option<ChunkData>`
+    ///
+    /// Actual chunk data contained in chunk.
+    /// See `ChunkData` for more detail about this enum.
+    ///
+    /// [`ChunkData`]: ../messages/enum.ChunkData.html
+    pub fn set_chunk_data(&mut self, chunk_data: Option<ChunkData>) {
         self.chunk_data = chunk_data;
     }
 }
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
-pub(self) enum Channel {
+enum Channel {
     Network = 0x02,
     System,
     Audio,
@@ -166,8 +419,11 @@ impl From<u8> for Channel {
     }
 }
 
+/// # The RTMP handler
+///
+/// This handles the RTMP request/response, and stores the data sent from/to the client.
 #[derive(Debug)]
-pub(crate) struct RtmpHandler {
+pub struct RtmpHandler {
     limit_type: LimitType,
     state: RtmpState,
     last_received_chunk_id: ChunkId,
@@ -193,7 +449,20 @@ impl RtmpHandler {
     const DEFAULT_CHUNK_SIZE: u32 = 128;
     const DEFAULT_BANDWIDTH: u32 = 3000000;
 
-    pub(crate) fn new(start_time: Duration, stream: TcpStream) -> Self {
+    /// Constructs a new `RtmpHandler`.
+    ///
+    /// # Parameters
+    ///
+    /// * `start_time: Duration`
+    ///
+    /// The timestamp when the server started.
+    /// All process will refer to this for counting incremental differences of the timestamp when chunks send.
+    ///
+    /// * `stream: TcpStream`
+    ///
+    /// The stream to connect with the client.
+    /// This can get from `TcpListener.incoming()` or `TcpListener.accept()`.
+    pub fn new(start_time: Duration, stream: TcpStream) -> Self {
         let limit_type = LimitType::default();
         let state = RtmpState::default();
         let last_received_chunk_id = ChunkId::default();
@@ -236,7 +505,8 @@ impl RtmpHandler {
         }
     }
 
-    pub(crate) fn get_state(&self) -> RtmpState {
+    /// Returns current RTMP connection state.
+    pub fn get_state(&self) -> RtmpState {
         self.state
     }
 
@@ -273,11 +543,6 @@ impl RtmpHandler {
                         |_| self.state = RtmpState::HandshakeDone
                     )
                 )
-            }
-        ).map_err(
-            |e| {
-                error!("Client was rejected due to invalid handshake");
-                e
             }
         )
     }
@@ -623,7 +888,7 @@ impl RtmpHandler {
 
     fn receive_chunk_size(&mut self, chunk_size: u32) -> IOResult<()> {
         if chunk_size & 0x80000000 == 1 {
-            warn!("The most significant bit is 1 in chunk size.");
+            println!("The most significant bit is 1 in chunk size.");
         }
 
         Ok(self.chunk_size = chunk_size)
@@ -1017,7 +1282,26 @@ impl RtmpHandler {
         Ok(println!("unknown chunk has been sent."))
     }
 
-    pub(crate) fn handle_chunk(&mut self) -> IOResult<()> {
+    /// Handles sent/received chuks.
+    ///
+    /// # Errors
+    ///
+    /// When you got the `ChunkLengthError`:
+    ///
+    /// * The server couldn't read the chunk completely.
+    ///
+    /// When you got the `DigestVerificationError`:
+    ///
+    /// * The HMAC-SHA256 digest didn't find in the C1 chunk.
+    ///
+    /// When you got the `SignatureDoesNotMatchError`:
+    ///
+    /// * The HMAC-SHA256 signature in the C2 chunk didn't match with stored one the server.
+    ///
+    /// When you got the `ChunkFormatError`:
+    ///
+    /// * The format of some header or some chunk data is invalid.
+    pub fn handle_chunk(&mut self) -> IOResult<()> {
         use RtmpState::*;
         use crate::messages::ChunkData::*;
 

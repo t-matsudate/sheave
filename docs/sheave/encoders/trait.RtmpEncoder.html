@@ -1,0 +1,524 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `RtmpEncoder` trait in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, RtmpEncoder"><title>sheave::encoders::RtmpEncoder - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Trait RtmpEncoder</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.encode_amf_boolean">encode_amf_boolean</a><a href="#tymethod.encode_amf_data">encode_amf_data</a><a href="#tymethod.encode_amf_mixed_array">encode_amf_mixed_array</a><a href="#tymethod.encode_amf_null">encode_amf_null</a><a href="#tymethod.encode_amf_number">encode_amf_number</a><a href="#tymethod.encode_amf_object">encode_amf_object</a><a href="#tymethod.encode_amf_string">encode_amf_string</a><a href="#tymethod.encode_audio">encode_audio</a><a href="#tymethod.encode_basic_header">encode_basic_header</a><a href="#tymethod.encode_bytes_read">encode_bytes_read</a><a href="#tymethod.encode_chunk_data">encode_chunk_data</a><a href="#tymethod.encode_chunk_size">encode_chunk_size</a><a href="#tymethod.encode_client_bandwidth">encode_client_bandwidth</a><a href="#tymethod.encode_extended_timestamp">encode_extended_timestamp</a><a href="#tymethod.encode_invoke">encode_invoke</a><a href="#tymethod.encode_invoke_fc_publish">encode_invoke_fc_publish</a><a href="#tymethod.encode_invoke_net_connection">encode_invoke_net_connection</a><a href="#tymethod.encode_invoke_net_stream">encode_invoke_net_stream</a><a href="#tymethod.encode_message_header">encode_message_header</a><a href="#tymethod.encode_notify">encode_notify</a><a href="#tymethod.encode_ping">encode_ping</a><a href="#tymethod.encode_server_bandwidth">encode_server_bandwidth</a><a href="#tymethod.encode_unknown">encode_unknown</a><a href="#tymethod.encode_video">encode_video</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class='location'><a href='../index.html'>sheave</a>::<wbr><a href='index.html'>encoders</a></p><script>window.sidebarCurrent = {name: 'RtmpEncoder', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/encoders.rs.html#179-735' title='goto source code'>[src]</a></span><span class='in-band'>Trait <a href='../index.html'>sheave</a>::<wbr><a href='index.html'>encoders</a>::<wbr><a class="trait" href=''>RtmpEncoder</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><pre class='rust trait'>pub trait RtmpEncoder: <a class="trait" href="../../sheave/encoders/trait.PutByteBuffer.html" title="trait sheave::encoders::PutByteBuffer">PutByteBuffer</a> {
+    fn <a href='#tymethod.encode_basic_header' class='fnname'>encode_basic_header</a>(&amp;mut self, basic_header: <a class="struct" href="../../sheave/messages/struct.BasicHeader.html" title="struct sheave::messages::BasicHeader">BasicHeader</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_message_header' class='fnname'>encode_message_header</a>(&amp;mut self, message_header: <a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_extended_timestamp' class='fnname'>encode_extended_timestamp</a>(&amp;mut self, timestamp: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>&gt;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_chunk_size' class='fnname'>encode_chunk_size</a>(&amp;mut self, chunk_size: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_bytes_read' class='fnname'>encode_bytes_read</a>(&amp;mut self, bytes_read: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_ping' class='fnname'>encode_ping</a>(&amp;mut self, ping_data: <a class="enum" href="../../sheave/messages/enum.PingData.html" title="enum sheave::messages::PingData">PingData</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_server_bandwidth' class='fnname'>encode_server_bandwidth</a>(&amp;mut self, bandwidth: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_client_bandwidth' class='fnname'>encode_client_bandwidth</a>(&amp;mut self, bandwidth: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, limit_type: <a class="enum" href="../../sheave/messages/enum.LimitType.html" title="enum sheave::messages::LimitType">LimitType</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_audio' class='fnname'>encode_audio</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_video' class='fnname'>encode_video</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_number' class='fnname'>encode_amf_number</a>(&amp;mut self, number: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_boolean' class='fnname'>encode_amf_boolean</a>(&amp;mut self, boolean: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_string' class='fnname'>encode_amf_string</a>(&amp;mut self, string: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_object' class='fnname'>encode_amf_object</a>(&amp;mut self, object: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_null' class='fnname'>encode_amf_null</a>(&amp;mut self);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_mixed_array' class='fnname'>encode_amf_mixed_array</a>(&amp;mut self, mixed_array: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_amf_data' class='fnname'>encode_amf_data</a>(&amp;mut self, data: <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_notify' class='fnname'>encode_notify</a>(&amp;mut self, notify_command: <a class="enum" href="../../sheave/messages/enum.NotifyCommand.html" title="enum sheave::messages::NotifyCommand">NotifyCommand</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_invoke_net_connection' class='fnname'>encode_invoke_net_connection</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;mut self, <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;net_connection: <a class="enum" href="../../sheave/messages/enum.NetConnectionCommand.html" title="enum sheave::messages::NetConnectionCommand">NetConnectionCommand</a><br>&nbsp;&nbsp;&nbsp;&nbsp;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_invoke_net_stream' class='fnname'>encode_invoke_net_stream</a>(&amp;mut self, net_stream: <a class="enum" href="../../sheave/messages/enum.NetStreamCommand.html" title="enum sheave::messages::NetStreamCommand">NetStreamCommand</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_invoke_fc_publish' class='fnname'>encode_invoke_fc_publish</a>(&amp;mut self, fc_publish: <a class="enum" href="../../sheave/messages/enum.FcPublishCommand.html" title="enum sheave::messages::FcPublishCommand">FcPublishCommand</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_invoke' class='fnname'>encode_invoke</a>(&amp;mut self, invoke: <a class="enum" href="../../sheave/messages/enum.InvokeCommand.html" title="enum sheave::messages::InvokeCommand">InvokeCommand</a>);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_unknown' class='fnname'>encode_unknown</a>(&amp;mut self, unknown: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;);
+<div class='item-spacer'></div>    fn <a href='#tymethod.encode_chunk_data' class='fnname'>encode_chunk_data</a>(&amp;mut self, chunk_data: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;);
+}</pre></div><div class='docblock'><h1 id="the-encoder-for-the-rtmp-chunk" class="section-header"><a href="#the-encoder-for-the-rtmp-chunk">The encoder for the RTMP chunk</a></h1>
+<p>The trait to encode the RTMP chunk into the bytes.</p>
+</div>
+            <h2 id='required-methods' class='small-section-header'>Required methods<a href='#required-methods' class='anchor'></a></h2><div class='methods'><h3 id='tymethod.encode_basic_header' class='method'><code id='encode_basic_header.v'>fn <a href='#tymethod.encode_basic_header' class='fnname'>encode_basic_header</a>(&amp;mut self, basic_header: <a class="struct" href="../../sheave/messages/struct.BasicHeader.html" title="struct sheave::messages::BasicHeader">BasicHeader</a>)</code></h3><div class='docblock'><p>Encodes the chunk basic header into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this header into the buffer at head.</li>
+</ul>
+<p>See messages.rs for more detail about the chunk basic header.</p>
+<h1 id="parameters" class="section-header"><a href="#parameters">Parameters</a></h1>
+<ul>
+<li><code>basic_header: BasicHeader</code></li>
+</ul>
+<p>The chunk basic header to put into the buffer.
+See <code>BasicHeader</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_message_header' class='method'><code id='encode_message_header.v'>fn <a href='#tymethod.encode_message_header' class='fnname'>encode_message_header</a>(&amp;mut self, message_header: <a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a>)</code></h3><div class='docblock'><p>Encodes the chunk message header into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this header into just after the chunk basic header in the buffer.</li>
+</ul>
+<p>If this header is Format 3, you must input nothing.
+See messages.rs for more detail about the chunk basic header.</p>
+<h1 id="parameters-1" class="section-header"><a href="#parameters-1">Parameters</a></h1>
+<ul>
+<li><code>message_header: MessageHeader</code></li>
+</ul>
+<p>The chunk message header to put into the buffer.
+See <code>MessageHeader</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_extended_timestamp' class='method'><code id='encode_extended_timestamp.v'>fn <a href='#tymethod.encode_extended_timestamp' class='fnname'>encode_extended_timestamp</a>(&amp;mut self, timestamp: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>&gt;)</code></h3><div class='docblock'><p>Encodes the extended timestamp into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You this into just after the chunk message header in the buffer.
+<ul>
+<li>If this is <code>None</code>, you encode nothing.</li>
+<li>Otherwise you put this into the buffer as <strong>4 bytes</strong> value.</li>
+</ul>
+</li>
+</ul>
+<p>See messages.rs for more detail about the extended timestamp.</p>
+<h1 id="parameters-2" class="section-header"><a href="#parameters-2">Parameters</a></h1>
+<ul>
+<li><code>timestamp: Option&lt;Duration&gt;</code></li>
+</ul>
+<p>The extended timestamp to put into the buffer.
+Consider how to process the value above 0xffffffff.</p>
+</div><h3 id='tymethod.encode_chunk_size' class='method'><code id='encode_chunk_size.v'>fn <a href='#tymethod.encode_chunk_size' class='fnname'>encode_chunk_size</a>(&amp;mut self, chunk_size: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></h3><div class='docblock'><p>Encodes the chunk size value into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+</ul>
+<p>See messages.rs for more detail about the chunk size.</p>
+<h1 id="parameters-3" class="section-header"><a href="#parameters-3">Parameters</a></h1>
+<ul>
+<li><code>chunk_size: u32</code></li>
+</ul>
+<p>The chunk size to put into the buffer.
+Consider how to process the value above 0x7fffffff.</p>
+</div><h3 id='tymethod.encode_bytes_read' class='method'><code id='encode_bytes_read.v'>fn <a href='#tymethod.encode_bytes_read' class='fnname'>encode_bytes_read</a>(&amp;mut self, bytes_read: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></h3><div class='docblock'><p>Decodes the size of total read bytes into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+</ul>
+<p>See messages.rs for more detail about the size of read bytes.</p>
+<h1 id="parameter" class="section-header"><a href="#parameter">Parameter</a></h1>
+<ul>
+<li><code>bytes_read: u32</code></li>
+</ul>
+<p>The size of read bytes to put into the buffer.</p>
+</div><h3 id='tymethod.encode_ping' class='method'><code id='encode_ping.v'>fn <a href='#tymethod.encode_ping' class='fnname'>encode_ping</a>(&amp;mut self, ping_data: <a class="enum" href="../../sheave/messages/enum.PingData.html" title="enum sheave::messages::PingData">PingData</a>)</code></h3><div class='docblock'><p>Encodes the ping event into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+<li>You put Ping's data following after its event type (2 bytes).</li>
+</ul>
+<p>See messages.rs for more detail about Ping.</p>
+<h1 id="parameters-4" class="section-header"><a href="#parameters-4">Parameters</a></h1>
+<ul>
+<li><code>ping_data: PingData</code></li>
+</ul>
+<p>Ping's data to put into the buffer.
+See <code>PingType</code> and <code>PingData</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_server_bandwidth' class='method'><code id='encode_server_bandwidth.v'>fn <a href='#tymethod.encode_server_bandwidth' class='fnname'>encode_server_bandwidth</a>(&amp;mut self, bandwidth: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code></h3><div class='docblock'><p>Encodes server side bandwidth into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+</ul>
+<p>See messages.rs for more detail about the server bandwidth.</p>
+<h1 id="parameters-5" class="section-header"><a href="#parameters-5">Parameters</a></h1>
+<ul>
+<li><code>bandwidth: u32</code></li>
+</ul>
+<p>The server side bandwidth to put into the buffer.</p>
+</div><h3 id='tymethod.encode_client_bandwidth' class='method'><code id='encode_client_bandwidth.v'>fn <a href='#tymethod.encode_client_bandwidth' class='fnname'>encode_client_bandwidth</a>(&amp;mut self, bandwidth: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, limit_type: <a class="enum" href="../../sheave/messages/enum.LimitType.html" title="enum sheave::messages::LimitType">LimitType</a>)</code></h3><div class='docblock'><p>Encodes the client side bandwidth and its limit type into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put these into following places:
+<ul>
+<li>If the extended timestamp is existing, you put these into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put these into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+<li>You put the limit type (1 byte) after the client side bandwidth.</li>
+</ul>
+<p>See messages.rs for more detail about the client side bandwidth.</p>
+<h1 id="parameters-6" class="section-header"><a href="#parameters-6">Parameters</a></h1>
+<ul>
+<li><code>bandwidth: u32</code></li>
+</ul>
+<p>The client side bandwidh to put into the buffer.</p>
+<ul>
+<li><code>limit_type: LimitType</code></li>
+</ul>
+<p>The limit type for the client side bandwidth to put into the buffer.
+See <code>LimitType</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_audio' class='method'><code id='encode_audio.v'>fn <a href='#tymethod.encode_audio' class='fnname'>encode_audio</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code></h3><div class='docblock'><p>Encodes the audio data into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+</ul>
+<p>Note that you shouldn't consider about the file format and the codec in this moment.
+Because the program will become intricately.
+See flv.rs for more detail about the audio data.</p>
+<h1 id="parameter-1" class="section-header"><a href="#parameter-1">Parameter</a></h1>
+<ul>
+<li><code>bytes: Vec&lt;u8&gt;</code></li>
+</ul>
+<p>The audio data to put into this buffer.</p>
+<p>[flv.rs] ../flv.rs.html</p>
+</div><h3 id='tymethod.encode_video' class='method'><code id='encode_video.v'>fn <a href='#tymethod.encode_video' class='fnname'>encode_video</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code></h3><div class='docblock'><p>Encodes the video data into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+</ul>
+<p>Note that you shouldn't consider about the file format and the codec in this moment.
+Because the program will become intricately.
+See flv.rs for more detail about the video data.</p>
+<h1 id="parameters-7" class="section-header"><a href="#parameters-7">Parameters</a></h1>
+<ul>
+<li><code>bytes: Vec&lt;u8&gt;</code></li>
+</ul>
+<p>The video data to put into the buffer.</p>
+</div><h3 id='tymethod.encode_amf_number' class='method'><code id='encode_amf_number.v'>fn <a href='#tymethod.encode_amf_number' class='fnname'>encode_amf_number</a>(&amp;mut self, number: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>)</code></h3><div class='docblock'><p>Encodes f64 value into the bytes of the AMF's <code>Number</code>.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into the buffer following after an AMF data type marker of the number(0x00).</li>
+</ul>
+<h1 id="parameters-8" class="section-header"><a href="#parameters-8">Parameters</a></h1>
+<ul>
+<li><code>number: f64</code></li>
+</ul>
+<p>The number to put into the buffer.</p>
+</div><h3 id='tymethod.encode_amf_boolean' class='method'><code id='encode_amf_boolean.v'>fn <a href='#tymethod.encode_amf_boolean' class='fnname'>encode_amf_boolean</a>(&amp;mut self, boolean: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>)</code></h3><div class='docblock'><p>Encodes bool value into the bytes of AMF's <code>Boolean</code>.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into the buffer following after an AMF data type marker of the boolean (0x01).</li>
+<li>You regard false as 0, true as otherwise.</li>
+</ul>
+<h1 id="parameters-9" class="section-header"><a href="#parameters-9">Parameters</a></h1>
+<ul>
+<li><code>boolean: bool</code></li>
+</ul>
+<p>The boolean value to put into the buffer.</p>
+</div><h3 id='tymethod.encode_amf_string' class='method'><code id='encode_amf_string.v'>fn <a href='#tymethod.encode_amf_string' class='fnname'>encode_amf_string</a>(&amp;mut self, string: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code></h3><div class='docblock'><p>Encodes string value into the bytes of the AMF's <code>String</code>.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into the buffer following after an AMF data type marker of the string (0x02).</li>
+<li>At this moment, you must put the length of this string (2 bytes <strong>integer</strong>, Big Endian) before actual string.<br />
+The length must be equal to actual string length.</li>
+<li>You must encode this sure as UTF-8.</li>
+</ul>
+<h1 id="parameters-10" class="section-header"><a href="#parameters-10">Parameters</a></h1>
+<ul>
+<li><code>string: String</code></li>
+</ul>
+<p>The string to put into this buffer.
+You make sure that this is encoded as UTF-8.</p>
+</div><h3 id='tymethod.encode_amf_object' class='method'><code id='encode_amf_object.v'>fn <a href='#tymethod.encode_amf_object' class='fnname'>encode_amf_object</a>(&amp;mut self, object: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;)</code></h3><div class='docblock'><p>Encodes hash map value into the bytes of AMF's <code>Object</code>.
+This expects that you satisfy following pints:</p>
+<ul>
+<li>You put this into the buffer following after the AMF data type marker of the object (0x03).</li>
+<li>At this moment, you make sure that the object has consisted of name/value pairs:
+<ul>
+<li>The name is a string without only the AMF data type marker.</li>
+<li>The value is some AMF's value.</li>
+<li>AMF's object must terminate by AMF's object end marker (0x09), and the object end marker must follow after a key of empty string.<br />
+That is, the object end marker will consist of 0x000009 (3 bytes).</li>
+</ul>
+</li>
+<li>You must encode the name as as UTF-8.</li>
+</ul>
+<h1 id="parameters-11" class="section-header"><a href="#parameters-11">Parameters</a></h1>
+<ul>
+<li><code>object: HashMap&lt;String, AmfData&gt;</code></li>
+</ul>
+<p>The object to put into the buffer.
+You make sure that the key is encoded as UTF-8.</p>
+</div><h3 id='tymethod.encode_amf_null' class='method'><code id='encode_amf_null.v'>fn <a href='#tymethod.encode_amf_null' class='fnname'>encode_amf_null</a>(&amp;mut self)</code></h3><div class='docblock'><p>Encodes the AMF's <code>Null</code> into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You regard this as what has no value.<br />
+That is, you put only the AMF data type marker into the buffer.</li>
+</ul>
+</div><h3 id='tymethod.encode_amf_mixed_array' class='method'><code id='encode_amf_mixed_array.v'>fn <a href='#tymethod.encode_amf_mixed_array' class='fnname'>encode_amf_mixed_array</a>(&amp;mut self, mixed_array: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;)</code></h3><div class='docblock'><p>Encodes hash map value into the bytes of AMF's <code>MixedArray</code>.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into the buffer following after the AMF data type marker of mixed array (0x08).</li>
+<li>At this moment, you make sure that the mixed array has consisted of name/value pairs with their length.
+<ul>
+<li>The length is a 4 bytes <strong>integer</strong> (Big Endian).<br />
+The length must be equal to actual count of name/value pairs, though we can ignore this value because the mixed array has the object end marker.</li>
+<li>The name is a string without only the AMF data type marker.</li>
+<li>The value is some AMF's value.</li>
+<li>AMF's mixed array must terminate by AMF's object end marker (0x09), and the object end marker must follow after a key of empty string.<br />
+That is, the object end marker will consist of 0x000009 (3 bytes).</li>
+<li>You must encode the name as UTF-8.</li>
+</ul>
+</li>
+</ul>
+<h1 id="parameters-12" class="section-header"><a href="#parameters-12">Parameters</a></h1>
+<ul>
+<li><code>mixed_array: HashMap&lt;String, AmfData&gt;</code></li>
+</ul>
+<p>The mixed array to put into the buffer.
+You make sure that the key is encoded as UTF-8.</p>
+</div><h3 id='tymethod.encode_amf_data' class='method'><code id='encode_amf_data.v'>fn <a href='#tymethod.encode_amf_data' class='fnname'>encode_amf_data</a>(&amp;mut self, data: <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>)</code></h3><div class='docblock'><p>Encodes the AMF's value into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into the buffer following after its data type marker.<br />
+At this moment, you should use the method named as &quot;encode_amf_*&quot; corresponded to its data type marker.<br />
+The correspondence of the AMF data type to the method what should use when encode AMF's data bytes is following:</li>
+</ul>
+<table><thead><tr><th align="left">AMF data type</th><th align="left">Method</th></tr></thead><tbody>
+<tr><td align="left"><code>Number</code></td><td align="left"><code>encode_amf_number()</code></td></tr>
+<tr><td align="left"><code>Boolean</code></td><td align="left"><code>encode_amf_boolean()</code></td></tr>
+<tr><td align="left"><code>String</code></td><td align="left"><code>encode_amf_string()</code></td></tr>
+<tr><td align="left"><code>Object</code></td><td align="left"><code>encode_amf_object()</code></td></tr>
+<tr><td align="left"><code>Null</code></td><td align="left"><code>encode_amf_null()</code></td></tr>
+<tr><td align="left"><code>MixedArray</code></td><td align="left"><code>encode_amf_mixed_array()</code></td></tr>
+</tbody></table>
+<p>See <code>AmfDataType</code> for more detail about the AMF data type marker.</p>
+<h1 id="parameters-13" class="section-header"><a href="#parameters-13">Parameters</a></h1>
+<ul>
+<li><code>data: AmfData</code></li>
+</ul>
+<p>Some AMF's value to put into the buffer.
+See <code>AmfData</code> for more detail about the AMF's value.</p>
+</div><h3 id='tymethod.encode_notify' class='method'><code id='encode_notify.v'>fn <a href='#tymethod.encode_notify' class='fnname'>encode_notify</a>(&amp;mut self, notify_command: <a class="enum" href="../../sheave/messages/enum.NotifyCommand.html" title="enum sheave::messages::NotifyCommand">NotifyCommand</a>)</code></h3><div class='docblock'><p>Encodes the notify message into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+<li>At this morment, you put following fields into the buffer respectively:
+<ul>
+<li>First, &quot;@setDataFrame&quot; (<code>String</code>).</li>
+<li>Second, &quot;onMetaData&quot; (<code>String</code>).</li>
+<li>Then, actual MetaData for FLV (<code>MixedArray</code>).</li>
+</ul>
+</li>
+</ul>
+<p>See <code>AmfDataType</code> and <code>MetaData</code> for more detail about the AMF data type marker and the content of actual metadata.</p>
+<h1 id="parameters-14" class="section-header"><a href="#parameters-14">Parameters</a></h1>
+<ul>
+<li><code>notify_command: NotifyCommand</code></li>
+</ul>
+<p>The content of notify message to put into this buffer.
+See <code>AmfData</code> and <code>NotifyCommand</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_invoke_net_connection' class='method'><code id='encode_invoke_net_connection.v'>fn <a href='#tymethod.encode_invoke_net_connection' class='fnname'>encode_invoke_net_connection</a>(&amp;mut self, net_connection: <a class="enum" href="../../sheave/messages/enum.NetConnectionCommand.html" title="enum sheave::messages::NetConnectionCommand">NetConnectionCommand</a>)</code></h3><div class='docblock'><p>Encodes the NetConnection command of the invocation message into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You encode regarding the NetConnection command as what will have following messages:
+<ul>
+<li>&quot;connect&quot;</li>
+<li>&quot;releaseStream&quot;</li>
+<li>&quot;createStream&quot;</li>
+</ul>
+</li>
+</ul>
+<p>And you encode regarding above messages as what will have following fields respectively:</p>
+<h2 id="connect" class="section-header"><a href="#connect">connect</a></h2>
+<p>In request:</p>
+<ul>
+<li>Command name: &quot;connect&quot; (<code>String</code>).</li>
+<li>Transaction id: 1 (<code>Number</code>).</li>
+<li>Command object: See the <code>CommandObject</code> (<code>Object</code>)</li>
+<li>Optional Argument: In the official specification paper, this has been specified the <code>Object</code>, though we can't check the existence of this field.<br />
+Therefore you won't be required to consider about this field.</li>
+</ul>
+<p>In response:</p>
+<ul>
+<li>Command name: &quot;_result&quot; or &quot;_error&quot; (<code>String</code>)</li>
+<li>Transaction id: the same value as what the request of the connect has (<code>Number</code>)</li>
+<li>Properties: an AMF's <code>Object</code></li>
+<li>Information: See the <code>InfoObject</code> (<code>Object</code>).</li>
+</ul>
+<h2 id="releasestream" class="section-header"><a href="#releasestream">releaseStream</a></h2>
+<p>In request:</p>
+<ul>
+<li>Command name: &quot;releaseStream&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 2 (<code>Number</code>)</li>
+<li>Command object: See the <code>CommandObject</code> (<code>Object</code>).<br />
+Note that you must put an AMF's <code>Null</code> into the buffer instead if this is nothing.</li>
+<li>Playpath: playpath in &quot;rtmp://example.com/appName/<em>playpath</em>&quot; (if is specified) (<code>String</code>)</li>
+</ul>
+<p>In response:</p>
+<ul>
+<li>Command name: &quot;_result&quot; or &quot;_error&quot; (<code>String</code>)</li>
+<li>Transaction id: the same value as what the request of releaseStream has (<code>Number</code>)</li>
+<li>Command object: See the <code>CommandObject</code> (<code>Object</code>).<br />
+Note that you must put AMF's <code>Null</code> into the buffer instead if this is nothing.</li>
+</ul>
+<h2 id="createstream" class="section-header"><a href="#createstream">createStream</a></h2>
+<p>In request:</p>
+<ul>
+<li>Command name: &quot;createStream&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 4 (<code>Number</code>)</li>
+<li>Command object: see the <code>CommandObject</code> (<code>Object</code>).<br />
+Note that you must put AMF's <code>Null</code> into the buffer instead if this is nothing.</li>
+</ul>
+<p>In response:</p>
+<ul>
+<li>Command name: &quot;_result&quot; or &quot;_error&quot; (<code>String</code>)</li>
+<li>Transaction id: the same value as what the request of createStream has (<code>Number</code>)</li>
+<li>Command object: See the <code>CommandObject</code> (<code>Object</code>).<br />
+Note that you must put AMF's <code>Null</code> into the buffer instead if this is nothing.</li>
+<li>Message stream id: new stream message id for its client (<code>Number</code>)</li>
+</ul>
+<h1 id="parameters-15" class="section-header"><a href="#parameters-15">Parameters</a></h1>
+<ul>
+<li><code>net_connection: NetConnectionCommand</code></li>
+</ul>
+<p>The NetConnection command of invocation message to put into the buffer.
+See the <code>NetConnectionCommand</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_invoke_net_stream' class='method'><code id='encode_invoke_net_stream.v'>fn <a href='#tymethod.encode_invoke_net_stream' class='fnname'>encode_invoke_net_stream</a>(&amp;mut self, net_stream: <a class="enum" href="../../sheave/messages/enum.NetStreamCommand.html" title="enum sheave::messages::NetStreamCommand">NetStreamCommand</a>)</code></h3><div class='docblock'><p>Encodes the NetStream command of the invocation message into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You encode regarding the NetStream command as what will have following messages:
+<ul>
+<li>&quot;publish&quot;</li>
+</ul>
+</li>
+</ul>
+<p>And you encode regarding above messages as what will have following fields respectively:</p>
+<h2 id="publish" class="section-header"><a href="#publish">publish</a></h2>
+<p>In request:</p>
+<ul>
+<li>Command name: &quot;publish&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 5 (<code>Number</code>)</li>
+<li>Command object: an AMF's <code>Null</code></li>
+<li>Playpath: playpath in &quot;rtmp://example.com/appName/<em>playpath</em>&quot; (if is specified) (<code>String</code>)</li>
+<li>Playtype: either &quot;live&quot;, &quot;record&quot; or &quot;append&quot; (<code>String</code>)</li>
+</ul>
+<p>In response:</p>
+<ul>
+<li>Command name: &quot;onStatus&quot; (<code>String</code>)</li>
+<li>Transaction id: 0 (<code>Number</code>)</li>
+<li>Command object: an AMF's <code>Null</code></li>
+<li>Info object: See the <code>InfoObject</code> (<code>Object</code>)</li>
+</ul>
+<h1 id="parameters-16" class="section-header"><a href="#parameters-16">Parameters</a></h1>
+<ul>
+<li><code>net_stream: NetStreamCommand</code></li>
+</ul>
+<p>The NetStream command to put into the buffer.
+See the <code>NetStreamCommand</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_invoke_fc_publish' class='method'><code id='encode_invoke_fc_publish.v'>fn <a href='#tymethod.encode_invoke_fc_publish' class='fnname'>encode_invoke_fc_publish</a>(&amp;mut self, fc_publish: <a class="enum" href="../../sheave/messages/enum.FcPublishCommand.html" title="enum sheave::messages::FcPublishCommand">FcPublishCommand</a>)</code></h3><div class='docblock'><p>Encodes the FCPublish command of the invocation message into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You encode regarding the FCPublish command as what will have following messages:
+<ul>
+<li>&quot;FCPublish&quot;</li>
+</ul>
+</li>
+</ul>
+<p>And you encode regarding above messages as what will have following fields respectively:</p>
+<h2 id="fcpublish" class="section-header"><a href="#fcpublish">FCPublish</a></h2>
+<p>In request:</p>
+<ul>
+<li>Command name: &quot;FCPublish&quot; (<code>String</code>)</li>
+<li>Transaction id: probable 3 (<code>Number</code>)</li>
+<li>Command object: an AMF's <code>Null</code></li>
+<li>Playpath: playpath in &quot;rtmp://example.com/appName/<em>playpath</em>&quot; (if is specified) (<code>String</code>)</li>
+</ul>
+<p>In response:</p>
+<ul>
+<li>Command name: &quot;onFCPublish&quot; (<code>String</code>)</li>
+</ul>
+<h1 id="parameters-17" class="section-header"><a href="#parameters-17">Parameters</a></h1>
+<ul>
+<li><code>fc_publish: FcPublishCommand</code></li>
+</ul>
+<p>The FCPublish command to put into the buffer.
+See the <code>FcPublishCommand</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_invoke' class='method'><code id='encode_invoke.v'>fn <a href='#tymethod.encode_invoke' class='fnname'>encode_invoke</a>(&amp;mut self, invoke: <a class="enum" href="../../sheave/messages/enum.InvokeCommand.html" title="enum sheave::messages::InvokeCommand">InvokeCommand</a>)</code></h3><div class='docblock'><p>Encodes some invocation message into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>You put this into following place:
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+</li>
+<li>At this moment, you put following fields into the buffer respectively:
+<ul>
+<li>Some command name of subcommands (<code>String</code>)</li>
+<li>Transaction id (<code>Number</code>)</li>
+<li>Actual data for subcommands (some AMF's value)</li>
+</ul>
+</li>
+<li>You should use the method named as &quot;encode_invoke_*&quot; corresponded to the type of the command.<br />
+The correspondence of the the command to the method what should use when encode the command is following:</li>
+</ul>
+<table><thead><tr><th align="left">Command</th><th align="left">Method</th></tr></thead><tbody>
+<tr><td align="left"><code>NetConnection</code></td><td align="left"><code>encode_invoke_net_connect()</code></td></tr>
+<tr><td align="left"><code>NetStream</code></td><td align="left"><code>encode_invoke_net_stream()</code></td></tr>
+<tr><td align="left"><code>FCPublish</code></td><td align="left"><code>encode_invoke_fc_publish()</code></td></tr>
+</tbody></table>
+<h1 id="parameters-18" class="section-header"><a href="#parameters-18">Parameters</a></h1>
+<ul>
+<li><code>invoke: InvokeCommand</code></li>
+</ul>
+<p>The command of invocation message to put into the buffer.
+See the <code>InvokeCommand</code> for more detail about this type.</p>
+</div><h3 id='tymethod.encode_unknown' class='method'><code id='encode_unknown.v'>fn <a href='#tymethod.encode_unknown' class='fnname'>encode_unknown</a>(&amp;mut self, unknown: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code></h3><div class='docblock'><p>Puts some unknown bytes into the buffer as it be.
+This expects that you satisfy following points:</p>
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+</ul>
+<h1 id="parameters-19" class="section-header"><a href="#parameters-19">Parameters</a></h1>
+<ul>
+<li><code>unknown: Vec&lt;u8&gt;</code></li>
+</ul>
+<p>Some unknown bytes to put into the buffer.</p>
+</div><h3 id='tymethod.encode_chunk_data' class='method'><code id='encode_chunk_data.v'>fn <a href='#tymethod.encode_chunk_data' class='fnname'>encode_chunk_data</a>(&amp;mut self, chunk_data: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;)</code></h3><div class='docblock'><p>Encodes some chunk data into the bytes.
+This expects that you satisfy following points:</p>
+<ul>
+<li>If the extended timestamp is existing, you put this into just after the extended timestamp in the buffer.</li>
+<li>Otherwise you put this into just after the chunk message header in the buffer.</li>
+<li>If the chunk data is nothing, you put nothing into the buffer.</li>
+<li>And you should use the method named &quot;encode_*&quot; corresponded to the type of the chunk pattern.<br />
+The correspondence of the chunk pattern to the method what should use when encode the chunk data is following:</li>
+</ul>
+<table><thead><tr><th align="left">ChunkData</th><th align="left">Method</th></tr></thead><tbody>
+<tr><td align="left"><code>ChunkSize</code></td><td align="left"><code>encode_chunk_size()</code></td></tr>
+<tr><td align="left"><code>BytesRead</code></td><td align="left"><code>encode_bytes_read()</code></td></tr>
+<tr><td align="left"><code>PingData</code></td><td align="left"><code>encode_ping()</code></td></tr>
+<tr><td align="left"><code>ServerBandwidth</code></td><td align="left"><code>encode_server_bandwidth()</code></td></tr>
+<tr><td align="left"><code>ClientBandwidth</code></td><td align="left"><code>encode_client_bandwidth()</code></td></tr>
+<tr><td align="left"><code>Audio</code></td><td align="left"><code>encode_audio()</code></td></tr>
+<tr><td align="left"><code>Video</code></td><td align="left"><code>encode_video()</code></td></tr>
+<tr><td align="left"><code>Notify</code></td><td align="left"><code>encode_notify()</code></td></tr>
+<tr><td align="left"><code>Invoke</code></td><td align="left"><code>encode_invoke()</code></td></tr>
+<tr><td align="left">Otherwise</td><td align="left"><code>encode_unknown()</code></td></tr>
+</tbody></table>
+<h1 id="parameters-20" class="section-header"><a href="#parameters-20">Parameters</a></h1>
+<ul>
+<li><code>chunk_data: Option&lt;ChunkData&gt;</code></li>
+</ul>
+<p>The chunk data to put into the buffer.
+If chunk data to encode is nothing, pass the <code>None</code>.
+See the <code>ChunkData</code> for more detail about this type.</p>
+</div></div><span class='loading-content'>Loading content...</span>
+            <h2 id='implementors' class='small-section-header'>Implementors<a href='#implementors' class='anchor'></a></h2><div class='item-list' id='implementors-list'><h3 id='impl-RtmpEncoder' class='impl'><code class='in-band'>impl RtmpEncoder for <a class="struct" href="../../sheave/messages/struct.ByteBuffer.html" title="struct sheave::messages::ByteBuffer">ByteBuffer</a></code><a href='#impl-RtmpEncoder' class='anchor'></a><a class='srclink' href='../../src/sheave/encoders.rs.html#793-1085' title='goto source code'>[src]</a></h3><div class='impl-items'><h4 id='method.encode_basic_header' class="method hidden"><code id='encode_basic_header.v-1'>fn <a href='#method.encode_basic_header' class='fnname'>encode_basic_header</a>(&amp;mut self, basic_header: <a class="struct" href="../../sheave/messages/struct.BasicHeader.html" title="struct sheave::messages::BasicHeader">BasicHeader</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#794-811' title='goto source code'>[src]</a></h4><h4 id='method.encode_message_header' class="method hidden"><code id='encode_message_header.v-1'>fn <a href='#method.encode_message_header' class='fnname'>encode_message_header</a>(&amp;mut self, message_header: <a class="enum" href="../../sheave/messages/enum.MessageHeader.html" title="enum sheave::messages::MessageHeader">MessageHeader</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#813-826' title='goto source code'>[src]</a></h4><h4 id='method.encode_extended_timestamp' class="method hidden"><code id='encode_extended_timestamp.v-1'>fn <a href='#method.encode_extended_timestamp' class='fnname'>encode_extended_timestamp</a>(&amp;mut self, timestamp: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#828-832' title='goto source code'>[src]</a></h4><h4 id='method.encode_chunk_size' class="method hidden"><code id='encode_chunk_size.v-1'>fn <a href='#method.encode_chunk_size' class='fnname'>encode_chunk_size</a>(&amp;mut self, chunk_size: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#834-836' title='goto source code'>[src]</a></h4><h4 id='method.encode_bytes_read' class="method hidden"><code id='encode_bytes_read.v-1'>fn <a href='#method.encode_bytes_read' class='fnname'>encode_bytes_read</a>(&amp;mut self, bytes_read: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#838-840' title='goto source code'>[src]</a></h4><h4 id='method.encode_ping' class="method hidden"><code id='encode_ping.v-1'>fn <a href='#method.encode_ping' class='fnname'>encode_ping</a>(&amp;mut self, ping_data: <a class="enum" href="../../sheave/messages/enum.PingData.html" title="enum sheave::messages::PingData">PingData</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#842-849' title='goto source code'>[src]</a></h4><h4 id='method.encode_server_bandwidth' class="method hidden"><code id='encode_server_bandwidth.v-1'>fn <a href='#method.encode_server_bandwidth' class='fnname'>encode_server_bandwidth</a>(&amp;mut self, bandwidth: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#851-853' title='goto source code'>[src]</a></h4><h4 id='method.encode_client_bandwidth' class="method hidden"><code id='encode_client_bandwidth.v-1'>fn <a href='#method.encode_client_bandwidth' class='fnname'>encode_client_bandwidth</a>(&amp;mut self, bandwidth: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, limit_type: <a class="enum" href="../../sheave/messages/enum.LimitType.html" title="enum sheave::messages::LimitType">LimitType</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#855-858' title='goto source code'>[src]</a></h4><h4 id='method.encode_audio' class="method hidden"><code id='encode_audio.v-1'>fn <a href='#method.encode_audio' class='fnname'>encode_audio</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#860-862' title='goto source code'>[src]</a></h4><h4 id='method.encode_video' class="method hidden"><code id='encode_video.v-1'>fn <a href='#method.encode_video' class='fnname'>encode_video</a>(&amp;mut self, bytes: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#864-866' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_number' class="method hidden"><code id='encode_amf_number.v-1'>fn <a href='#method.encode_amf_number' class='fnname'>encode_amf_number</a>(&amp;mut self, number: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f64.html">f64</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#868-871' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_boolean' class="method hidden"><code id='encode_amf_boolean.v-1'>fn <a href='#method.encode_amf_boolean' class='fnname'>encode_amf_boolean</a>(&amp;mut self, boolean: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#873-876' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_string' class="method hidden"><code id='encode_amf_string.v-1'>fn <a href='#method.encode_amf_string' class='fnname'>encode_amf_string</a>(&amp;mut self, string: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#878-882' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_object' class="method hidden"><code id='encode_amf_object.v-1'>fn <a href='#method.encode_amf_object' class='fnname'>encode_amf_object</a>(&amp;mut self, object: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#884-894' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_null' class="method hidden"><code id='encode_amf_null.v-1'>fn <a href='#method.encode_amf_null' class='fnname'>encode_amf_null</a>(&amp;mut self)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#896-898' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_mixed_array' class="method hidden"><code id='encode_amf_mixed_array.v-1'>fn <a href='#method.encode_amf_mixed_array' class='fnname'>encode_amf_mixed_array</a>(&amp;mut self, mixed_array: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#900-911' title='goto source code'>[src]</a></h4><h4 id='method.encode_amf_data' class="method hidden"><code id='encode_amf_data.v-1'>fn <a href='#method.encode_amf_data' class='fnname'>encode_amf_data</a>(&amp;mut self, data: <a class="enum" href="../../sheave/messages/enum.AmfData.html" title="enum sheave::messages::AmfData">AmfData</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#913-925' title='goto source code'>[src]</a></h4><h4 id='method.encode_notify' class="method hidden"><code id='encode_notify.v-1'>fn <a href='#method.encode_notify' class='fnname'>encode_notify</a>(&amp;mut self, notify_command: <a class="enum" href="../../sheave/messages/enum.NotifyCommand.html" title="enum sheave::messages::NotifyCommand">NotifyCommand</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#927-941' title='goto source code'>[src]</a></h4><h4 id='method.encode_invoke_net_connection' class="method hidden"><code id='encode_invoke_net_connection.v-1'>fn <a href='#method.encode_invoke_net_connection' class='fnname'>encode_invoke_net_connection</a>(&amp;mut self, net_connection: <a class="enum" href="../../sheave/messages/enum.NetConnectionCommand.html" title="enum sheave::messages::NetConnectionCommand">NetConnectionCommand</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#943-1002' title='goto source code'>[src]</a></h4><h4 id='method.encode_invoke_net_stream' class="method hidden"><code id='encode_invoke_net_stream.v-1'>fn <a href='#method.encode_invoke_net_stream' class='fnname'>encode_invoke_net_stream</a>(&amp;mut self, net_stream: <a class="enum" href="../../sheave/messages/enum.NetStreamCommand.html" title="enum sheave::messages::NetStreamCommand">NetStreamCommand</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#1004-1029' title='goto source code'>[src]</a></h4><h4 id='method.encode_invoke_fc_publish' class="method hidden"><code id='encode_invoke_fc_publish.v-1'>fn <a href='#method.encode_invoke_fc_publish' class='fnname'>encode_invoke_fc_publish</a>(&amp;mut self, fc_publish: <a class="enum" href="../../sheave/messages/enum.FcPublishCommand.html" title="enum sheave::messages::FcPublishCommand">FcPublishCommand</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#1031-1048' title='goto source code'>[src]</a></h4><h4 id='method.encode_invoke' class="method hidden"><code id='encode_invoke.v-1'>fn <a href='#method.encode_invoke' class='fnname'>encode_invoke</a>(&amp;mut self, invoke: <a class="enum" href="../../sheave/messages/enum.InvokeCommand.html" title="enum sheave::messages::InvokeCommand">InvokeCommand</a>)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#1050-1059' title='goto source code'>[src]</a></h4><h4 id='method.encode_unknown' class="method hidden"><code id='encode_unknown.v-1'>fn <a href='#method.encode_unknown' class='fnname'>encode_unknown</a>(&amp;mut self, unknown: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#1061-1063' title='goto source code'>[src]</a></h4><h4 id='method.encode_chunk_data' class="method hidden"><code id='encode_chunk_data.v-1'>fn <a href='#method.encode_chunk_data' class='fnname'>encode_chunk_data</a>(&amp;mut self, chunk_data: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../../sheave/messages/enum.ChunkData.html" title="enum sheave::messages::ChunkData">ChunkData</a>&gt;)</code><a class='srclink' href='../../src/sheave/encoders.rs.html#1065-1084' title='goto source code'>[src]</a></h4></div></div><span class='loading-content'>Loading content...</span><script type="text/javascript">window.inlined_types=new Set([]);</script><script type="text/javascript" async
+                         src="../../implementors/sheave/encoders/trait.RtmpEncoder.js">
+                 </script></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

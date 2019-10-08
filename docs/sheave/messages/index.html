@@ -1,0 +1,262 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `messages` mod in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, messages"><title>sheave::messages - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module messages</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class='location'><a href='../index.html'>sheave</a></p><script>window.sidebarCurrent = {name: 'messages', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/messages.rs.html#1-4921' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>sheave</a>::<wbr><a class="mod" href=''>messages</a></span></h1><div class='docblock'><h1 id="the-chunk-message-patterns" class="section-header"><a href="#the-chunk-message-patterns">The chunk message patterns</a></h1>
+<p>After doing the handshake, the server/the client will send actual messages each other.
+The message consists of following respectively:</p>
+<ol>
+<li>The chunk basic header</li>
+<li>The chunk message header</li>
+<li>The extended timestamp</li>
+<li>The chunk data</li>
+</ol>
+<h2 id="the-chunk-basic-header" class="section-header"><a href="#the-chunk-basic-header">The chunk basic header</a></h2>
+<p>This will indicate the chunk stream id and the format of the chunk message header.
+This will hold following values respectively:</p>
+<ol>
+<li>The format of the chunk message header (2 bits)</li>
+<li>The chunk stream id (6 bits, 1 byte or 2 bytes)</li>
+</ol>
+<h3 id="the-format-of-the-chunk-message-header" class="section-header"><a href="#the-format-of-the-chunk-message-header">The format of the chunk message header</a></h3>
+<p>The chunk message header will rely on this field for its length.
+The correspondence of the number to the chunk message header is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="right">Length (in bytes)</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="right">11</td></tr>
+<tr><td align="right">1</td><td align="right">7</td></tr>
+<tr><td align="right">2</td><td align="right">3</td></tr>
+<tr><td align="right">3</td><td align="right">0</td></tr>
+</tbody></table>
+<h3 id="the-chunk-stream-id" class="section-header"><a href="#the-chunk-stream-id">The chunk stream id</a></h3>
+<p>This will be used to store last chunks every this id.
+Note following points:</p>
+<ul>
+<li>When this is below 64, input following the format bits as 6 bits.</li>
+<li>When this is above 64, this will be input in next 1 byte.
+<ul>
+<li>Both (the server and the client) will regard this as what lessened just 64.</li>
+<li>If this is 64 to 319, input <strong>0</strong> as 6 bits following the format bits.<br />
+This is <strong>Big Endian</strong>.</li>
+<li>If this is 319 to 65599, input <strong>1</strong> as as 6 bits following the format bits.<br />
+This is <strong>Little Endian</strong>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="the-chunk-message-header" class="section-header"><a href="#the-chunk-message-header">The chunk message header</a></h2>
+<p>This will indicate the way to handle the chunk data.
+This will hold following values respectively:</p>
+<ol>
+<li>Timestamp (3 bytes)</li>
+<li>Message length (3 bytes)</li>
+<li>Message type (1 byte)</li>
+<li>Chunk message id (4 bytes)</li>
+</ol>
+<h3 id="timestamp" class="section-header"><a href="#timestamp">Timestamp</a></h3>
+<p>The timestamp when this chunk is sent.
+Note following points:</p>
+<ul>
+<li>If this will exceed 3 bytes, input this to the extended timestamp field instead.
+<ul>
+<li>In this case, input <code>0xFFFFFF</code> (just the maximum value of 3 bytes) in this.</li>
+</ul>
+</li>
+<li>This can be 0 in some cases.</li>
+</ul>
+<h3 id="message-length" class="section-header"><a href="#message-length">Message length</a></h3>
+<p>The length of the chunk data.
+Note following points:</p>
+<ul>
+<li>This won't mean that is the total length of the chunk data.
+<ul>
+<li>This won't be considered to count the chunk header of format 3 contained in the chunk data.</li>
+<li>We will be required to remove or to ignore it because it is contained at 1 byte after specified chunk size.</li>
+<li>If we input total size contained the chunk header of format 3, many of products will output the error probably. </li>
+</ul>
+</li>
+</ul>
+<h3 id="message-type" class="section-header"><a href="#message-type">Message type</a></h3>
+<p>The type of the chunk data.
+The correspondence of the number to the chunk data is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Message Type</th><th align="right">Length (in byte)</th></tr></thead><tbody>
+<tr><td align="right">1</td><td align="left">Chunk size</td><td align="right">4</td></tr>
+<tr><td align="right">2</td><td align="left">Abort</td><td align="right">4</td></tr>
+<tr><td align="right">3</td><td align="left">Bytes read</td><td align="right">4</td></tr>
+<tr><td align="right">4</td><td align="left">Ping</td><td align="right">Variable</td></tr>
+<tr><td align="right">5</td><td align="left">Server bandwidth</td><td align="right">4</td></tr>
+<tr><td align="right">6</td><td align="left">Client bandwidth</td><td align="right">5</td></tr>
+<tr><td align="right">8</td><td align="left">Audio</td><td align="right">Variable</td></tr>
+<tr><td align="right">9</td><td align="left">Video</td><td align="right">Variable</td></tr>
+<tr><td align="right">15</td><td align="left">Notify (AMF3)</td><td align="right">Variable</td></tr>
+<tr><td align="right">16</td><td align="left">Shared object (AMF3)</td><td align="right">Variable</td></tr>
+<tr><td align="right">17</td><td align="left">Invoke (AMF3)</td><td align="right">Variable</td></tr>
+<tr><td align="right">18</td><td align="left">Notify (AMF0)</td><td align="right">Variable</td></tr>
+<tr><td align="right">19</td><td align="left">Shared object (AMF0)</td><td align="right">Variable</td></tr>
+<tr><td align="right">20</td><td align="left">Invoke (AMF0)</td><td align="right">Variable</td></tr>
+<tr><td align="right">22</td><td align="left">Metadata</td><td align="right">Variable</td></tr>
+</tbody></table>
+<h3 id="chunk-message-id" class="section-header"><a href="#chunk-message-id">Chunk message id</a></h3>
+<p>The id to identify the user who sent this chunk.
+Note following points:</p>
+<ul>
+<li>This can be 0 in some cases.</li>
+<li>This must be emitted by the server when received <code>Invoke(createStream)</code>.</li>
+<li>This is <strong>Little Endian</strong>.</li>
+</ul>
+<p>The patterns of the chunk message header every the format are following:</p>
+<table><thead><tr><th align="left">Field</th><th align="center">Format 0</th><th align="center">Format 1</th><th align="center">Format 2</th><th align="center">Format 3</th></tr></thead><tbody>
+<tr><td align="left">Timestamp</td><td align="center">:heavy_check_mark:</td><td align="center">:heavy_check_mark:</td><td align="center">:heavy_check_mark:</td><td align="center">-</td></tr>
+<tr><td align="left">Message length</td><td align="center">:heavy_check_mark:</td><td align="center">:heavy_check_mark:</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="left">Message type</td><td align="center">:heavy_check_mark:</td><td align="center">:heavy_check_mark:</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="left">Chunk message id</td><td align="center">:heavy_check_mark:</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+</tbody></table>
+<h2 id="the-extended-timestamp-4-bytes" class="section-header"><a href="#the-extended-timestamp-4-bytes">The extended timestamp (4 bytes)</a></h2>
+<p>When the timestamp has exceeded 3 bytes, input it in this field instead.
+Note that mustn't input if it hasn't exceeded 3 bytes. If input in its case, the program can misunderstand as the chunk data.</p>
+<h2 id="the-chunk-data" class="section-header"><a href="#the-chunk-data">The chunk data</a></h2>
+<p>The content of this chunk.
+The patterns are following:</p>
+<h3 id="chunk-size" class="section-header"><a href="#chunk-size">Chunk size</a></h3>
+<p>This will indicate the size what will split the chunk data.
+The server/the client will be required to insert the chunk header of format 3 per who specified chunk size.
+In the official specification paper, this is specified that the most significant bit must be 0. (However we won't be required to care this normally because the message length will be represented at most 3 bytes.)</p>
+<h3 id="abort" class="section-header"><a href="#abort">Abort</a></h3>
+<p>This will be input the chunk stream id which will abort to send/receive.
+When we received this chunk data, we are required to stop to send/receive the chunk data related to this chunk stream id.
+However in the FFmpeg and in the Open Broadcaster Software, both have never used this chunk data yet.</p>
+<h3 id="bytes-read" class="section-header"><a href="#bytes-read">Bytes read</a></h3>
+<p>This will be input the total message length which has receive until now.
+The server/the client must send this chunk data each other whenever read byte size reached specified server bandwidth/client baandwidth.</p>
+<h3 id="ping" class="section-header"><a href="#ping">Ping</a></h3>
+<p>This will be used to confirm current state for the server/the client each other.
+The values to be required to input are following respectively:</p>
+<ol>
+<li>Event type (2 bytes)</li>
+</ol>
+<p>This will indicate the kinds of data following this bytes.
+The correspondence of the number to actual event data is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Event type</th><th align="right">Length (in byte)</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left">Stream begin</td><td align="right">4</td></tr>
+<tr><td align="right">1</td><td align="left">Stream EOF</td><td align="right">4</td></tr>
+<tr><td align="right">2</td><td align="left">Stream dry</td><td align="right">4</td></tr>
+<tr><td align="right">3</td><td align="left">Buffer length</td><td align="right">8</td></tr>
+<tr><td align="right">4</td><td align="left">Stream is recorded</td><td align="right">4</td></tr>
+<tr><td align="right">6</td><td align="left">Ping</td><td align="right">4</td></tr>
+<tr><td align="right">7</td><td align="left">Pong</td><td align="right">4</td></tr>
+<tr><td align="right">26</td><td align="left">SWF verification request</td><td align="right">0</td></tr>
+<tr><td align="right">27</td><td align="left">SWF verification response</td><td align="right">42</td></tr>
+<tr><td align="right">31</td><td align="left">Buffer empty</td><td align="right">4</td></tr>
+<tr><td align="right">32</td><td align="left">Buffer ready</td><td align="right">4</td></tr>
+</tbody></table>
+<ol start="2">
+<li>Event data</li>
+</ol>
+<p>This will be input actual ping data.</p>
+<ul>
+<li>Stream begin, Stream EOF, Stream dry, Stream is recorded, Buffer empty and Buffer ready.</li>
+</ul>
+<p>This will be input only the chunk message id (4 bytes).
+In the phase of the application connection, the chunk message id will be 0 inevitably.</p>
+<ul>
+<li>Buffer length</li>
+</ul>
+<p>This will be input the chunk message id (4 bytes) and the <em>buffer</em> length (4 bytes).
+Note that this has differed from the chunk size.
+This has indicated the size to send/to receive the data in millisecond.</p>
+<ul>
+<li>Ping and Pong</li>
+</ul>
+<p>This will be input the timestamp when the server emitted this event.</p>
+<ul>
+<li>SWF verification request</li>
+</ul>
+<p>This will be input no data.</p>
+<ul>
+<li>SWF verification response</li>
+</ul>
+<p>This will be input the HMAC-SHA256 signature what generated from the SWF data.
+Note that we will be required to input following bytes respectively before its signature:</p>
+<ol>
+<li>1 (1 byte)</li>
+<li>
+<ol>
+<li>(1 byte)</li>
+</ol>
+</li>
+<li>the size of raw SWF data. (4 bytes)</li>
+<li>the size of raw SWF data. (4 bytes)</li>
+</ol>
+<h3 id="server-bandwidth" class="section-header"><a href="#server-bandwidth">Server bandwidth</a></h3>
+<p>This will be input the limit of the server side bandwidth.</p>
+<h3 id="client-bandwidth" class="section-header"><a href="#client-bandwidth">Client bandwidth</a></h3>
+<p>This will be input the limit of the client side bandwidth and the limit type.
+The limit type is following:</p>
+<ul>
+<li>Hard</li>
+<li>Soft</li>
+<li>Dynamic</li>
+</ul>
+<h4 id="hard" class="section-header"><a href="#hard">Hard</a></h4>
+<p>This indicates that the receiver should limit the bandwidth to this.</p>
+<h4 id="soft" class="section-header"><a href="#soft">Soft</a></h4>
+<p>This indicates that the receiver should limit the bandwidth to either this value or already received one, whichever is smaller.</p>
+<h4 id="dynamic" class="section-header"><a href="#dynamic">Dynamic</a></h4>
+<p>This indicates that the receiver should regard this as the limit type of hard if the previous limit type was hard, otherwise ignore this message.</p>
+<p>The correspondence of the number to the limit type is following:</p>
+<table><thead><tr><th align="right">Number</th><th align="left">Limit type</th></tr></thead><tbody>
+<tr><td align="right">0</td><td align="left">Hard</td></tr>
+<tr><td align="right">1</td><td align="left">Soft</td></tr>
+<tr><td align="right">2</td><td align="left">Dynamic</td></tr>
+</tbody></table>
+<h3 id="audio" class="section-header"><a href="#audio">Audio</a></h3>
+<p>This will be input the audio data.</p>
+<h3 id="video" class="section-header"><a href="#video">Video</a></h3>
+<p>This will be input the video data.</p>
+<p>Note: the format for audio/video has differed every codec.</p>
+<h3 id="notify" class="section-header"><a href="#notify">Notify</a></h3>
+<p>Currently, this will be input the metadata of audio/video data.</p>
+<h3 id="shared-object" class="section-header"><a href="#shared-object">Shared Object</a></h3>
+<p>This will be input the information to share with the client or other server instances.
+However the client side applications published as the OSS haven't implemented this chunk data yet.</p>
+<h3 id="invoke" class="section-header"><a href="#invoke">Invoke</a></h3>
+<p>This will be input the information to need what the server/the client application each will succeed to connect.</p>
+<h3 id="metadata" class="section-header"><a href="#metadata">Metadata</a></h3>
+<p>This will be input the data to aggregate the audio, the video, or the notify(metadata) chunks.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.Argument.html" title='sheave::messages::Argument struct'>Argument</a></td><td class='docblock-short'><p>This is the optional argumeent in the connect of the NetConnection command.
+This hasn't been checked its exsitence yet.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.BasicHeader.html" title='sheave::messages::BasicHeader struct'>BasicHeader</a></td><td class='docblock-short'><p>The chunk basic header</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.ByteBuffer.html" title='sheave::messages::ByteBuffer struct'>ByteBuffer</a></td><td class='docblock-short'><p>The byte buffer to encode/decode the Rust's data/the bytes</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Chunk.html" title='sheave::messages::Chunk struct'>Chunk</a></td><td class='docblock-short'><p>The chunk</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.CommandObject.html" title='sheave::messages::CommandObject struct'>CommandObject</a></td><td class='docblock-short'><p>The command object</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.InfoObject.html" title='sheave::messages::InfoObject struct'>InfoObject</a></td><td class='docblock-short'><p>The information object</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.MetaData.html" title='sheave::messages::MetaData struct'>MetaData</a></td><td class='docblock-short'><p>The metadata of FLV</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.AmfData.html" title='sheave::messages::AmfData enum'>AmfData</a></td><td class='docblock-short'><p>The AMF data</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.AmfDataType.html" title='sheave::messages::AmfDataType enum'>AmfDataType</a></td><td class='docblock-short'><p>The AMF types</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.AudioCodec.html" title='sheave::messages::AudioCodec enum'>AudioCodec</a></td><td class='docblock-short'><p>The audio codec patterns</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.ChunkData.html" title='sheave::messages::ChunkData enum'>ChunkData</a></td><td class='docblock-short'><p>The chunk data</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.ChunkId.html" title='sheave::messages::ChunkId enum'>ChunkId</a></td><td class='docblock-short'><p>The chunk stream id</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.ConnectStatus.html" title='sheave::messages::ConnectStatus enum'>ConnectStatus</a></td><td class='docblock-short'><p>The status of the connect of the NetConnection command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.FcPublishCommand.html" title='sheave::messages::FcPublishCommand enum'>FcPublishCommand</a></td><td class='docblock-short'><p>The FCPublish command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.InfoLevel.html" title='sheave::messages::InfoLevel enum'>InfoLevel</a></td><td class='docblock-short'><p>The information lebel for InfoObject</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.InvokeCommand.html" title='sheave::messages::InvokeCommand enum'>InvokeCommand</a></td><td class='docblock-short'><p>The command of the invoke chunk</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.LimitType.html" title='sheave::messages::LimitType enum'>LimitType</a></td><td class='docblock-short'><p>The client bandwidth limit type</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.MessageFormat.html" title='sheave::messages::MessageFormat enum'>MessageFormat</a></td><td class='docblock-short'><p>The format of the chunk message header</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.MessageHeader.html" title='sheave::messages::MessageHeader enum'>MessageHeader</a></td><td class='docblock-short'><p>The chunk message header</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.MessageType.html" title='sheave::messages::MessageType enum'>MessageType</a></td><td class='docblock-short'><p>The message types of the chunk message header</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.NetConnectionCommand.html" title='sheave::messages::NetConnectionCommand enum'>NetConnectionCommand</a></td><td class='docblock-short'><p>The NetConnection command.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.NetConnectionResult.html" title='sheave::messages::NetConnectionResult enum'>NetConnectionResult</a></td><td class='docblock-short'><p>The result of the NetConnection command.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.NetConnectionStatus.html" title='sheave::messages::NetConnectionStatus enum'>NetConnectionStatus</a></td><td class='docblock-short'><p>The status of the NetConnection command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.NetStreamCommand.html" title='sheave::messages::NetStreamCommand enum'>NetStreamCommand</a></td><td class='docblock-short'><p>The NetStream command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.NetStreamStatus.html" title='sheave::messages::NetStreamStatus enum'>NetStreamStatus</a></td><td class='docblock-short'><p>The status of the NetStream command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.NotifyCommand.html" title='sheave::messages::NotifyCommand enum'>NotifyCommand</a></td><td class='docblock-short'><p>The notify command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.ObjectEncoding.html" title='sheave::messages::ObjectEncoding enum'>ObjectEncoding</a></td><td class='docblock-short'><p>The object encoding pattern</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.PingData.html" title='sheave::messages::PingData enum'>PingData</a></td><td class='docblock-short'><p>The ping event data</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.PingType.html" title='sheave::messages::PingType enum'>PingType</a></td><td class='docblock-short'><p>The ping event type</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.PlayType.html" title='sheave::messages::PlayType enum'>PlayType</a></td><td class='docblock-short'><p>The publish pattern</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.PublishStatus.html" title='sheave::messages::PublishStatus enum'>PublishStatus</a></td><td class='docblock-short'><p>The status of the publish of the NetStream command</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.Status.html" title='sheave::messages::Status enum'>Status</a></td><td class='docblock-short'><p>The status code</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.VideoCodec.html" title='sheave::messages::VideoCodec enum'>VideoCodec</a></td><td class='docblock-short'><p>The video codec patterns</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.VideoFunction.html" title='sheave::messages::VideoFunction enum'>VideoFunction</a></td><td class='docblock-short'><p>The video function pattern</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.convert_audio_codecs_into_flags.html" title='sheave::messages::convert_audio_codecs_into_flags fn'>convert_audio_codecs_into_flags</a></td><td class='docblock-short'><p>Converts the audio codecs into the 16 bits flags.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.convert_video_codecs_into_flags.html" title='sheave::messages::convert_video_codecs_into_flags fn'>convert_video_codecs_into_flags</a></td><td class='docblock-short'><p>Converts the video codecs into the 8 bits flags.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.detect_audio_codecs.html" title='sheave::messages::detect_audio_codecs fn'>detect_audio_codecs</a></td><td class='docblock-short'><p>Converts the 16 bits flags for the audio codecs into the <code>Vec&lt;AudioCodec&gt;</code>.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.detect_video_codecs.html" title='sheave::messages::detect_video_codecs fn'>detect_video_codecs</a></td><td class='docblock-short'><p>Converts the 8 bits flags for the video codecs into the <code>Vec&lt;VideoCodec&gt;</code>.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

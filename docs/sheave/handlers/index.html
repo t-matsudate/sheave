@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `handlers` mod in crate `sheave`."><meta name="keywords" content="rust, rustlang, rust-lang, handlers"><title>sheave::handlers - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../sheave/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a><p class='location'>Module handlers</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></div><p class='location'><a href='../index.html'>sheave</a></p><script>window.sidebarCurrent = {name: 'handlers', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/sheave/handlers.rs.html#1-1361' title='goto source code'>[src]</a></span><span class='in-band'>Module <a href='../index.html'>sheave</a>::<wbr><a class="mod" href=''>handlers</a></span></h1><div class='docblock'><h1 id="the-struct-to-handle-rtmp" class="section-header"><a href="#the-struct-to-handle-rtmp">The struct to handle RTMP</a></h1>
+<p>The RTMP will be required to exchange several chunks beforehand for streaming with audio/video data.
+Their exchanging chunks are following:</p>
+<ol>
+<li>The RTMP handshake</li>
+<li>The connect invocation</li>
+<li>The releaseStream invocation</li>
+<li>The FCPublish invocation</li>
+<li>The createStream invocation</li>
+<li>The publish invocation</li>
+<li>Publishing audio/video data</li>
+</ol>
+<h2 id="the-rtmp-handshake" class="section-header"><a href="#the-rtmp-handshake">The RTMP handshake</a></h2>
+<p>See the handshake.rs.</p>
+<h2 id="the-connect-invocation" class="section-header"><a href="#the-connect-invocation">The connect invocation</a></h2>
+<p>We will exchange the information of the application each other.
+At this momennt, the server must send following responses respectively before sending its result:</p>
+<ol>
+<li>The server-side bandwidth limit</li>
+<li>The client-side bandwidth limit</li>
+<li>The ping event (Stream Begin)</li>
+<li>The chunk size limit</li>
+</ol>
+<p>Note that somehow the server will be required to send a result of the connect invocation twice to FFmpeg.
+See the <code>InvokeCommand</code> and the <code>NetConnectionCommand</code> for more detail about the connect invocation.
+And see messages.rs for more detail about the server-side bandwidth limit, the client-side bandwidth limit, the ping event and the chunk size limit.</p>
+<h2 id="the-releasestream-invocation" class="section-header"><a href="#the-releasestream-invocation">The releaseStream invocation</a></h2>
+<p>The client will send the identifier to indicate audio/video data, then the server will respond its result to the client.
+See the <code>InvokeCommand</code> and the <code>NetConnectionCommand</code> for more detail about the releaseStream invocation.</p>
+<h2 id="the-fcpublish-invocation" class="section-header"><a href="#the-fcpublish-invocation">The FCPublish invocation</a></h2>
+<p>The client will send the same identifier as releaseStream, then the server will respond its result to the client.
+See the <code>InvokeCommand</code> and the <code>FcPublishCommand</code> for more detail about the FCPublish invocation.</p>
+<h2 id="the-createstream-invocation" class="section-header"><a href="#the-createstream-invocation">The createStream invocation</a></h2>
+<p>The client will send a request to emit the message stream id, then the server will respond its result contained emitted message stream id to the client.
+See the <code>InvokeCommand</code> and the <code>NetConnectionCommand</code> for more detail about the createStream invocation.</p>
+<h2 id="the-publish-invocation" class="section-header"><a href="#the-publish-invocation">The publish invocation</a></h2>
+<p>The client will send a message to tell starting to publish audio/video data, then the server will respond its result contained the server status to the client.
+At this moment, the server must send the ping event (Stream Begin) before sending its result.
+See the <code>InvokeCommand</code> and the <code>NetStreamCommand</code> for more detail about the publish invocation.
+And see messages.rs for more detail about the ping event.</p>
+<h2 id="publishing-audiovideo-data" class="section-header"><a href="#publishing-audiovideo-data">Publishing audio/video data</a></h2>
+<p>The client will start to publish the audio/video data.
+At this moment, the server will receive a metadata of their audio/video data as the Notify chunk from the client at the first.
+See flv.rs for more detail about their auido/video data.
+And see the <code>Metadata</code> for more detail about the metadata.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.LastChunk.html" title='sheave::handlers::LastChunk struct'>LastChunk</a></td><td class='docblock-short'><p>The last sent/received chunk information</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.RtmpHandler.html" title='sheave::handlers::RtmpHandler struct'>RtmpHandler</a></td><td class='docblock-short'><p>The RTMP handler</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.RtmpState.html" title='sheave::handlers::RtmpState enum'>RtmpState</a></td><td class='docblock-short'><p>The patterns of RTMP</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "sheave";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>
