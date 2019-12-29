@@ -1296,7 +1296,7 @@ impl RtmpHandler {
     ///
     /// When you got the `SignatureDoesNotMatchError`:
     ///
-    /// * The HMAC-SHA256 signature in the C2 chunk didn't match with stored one the server.
+    /// * The HMAC-SHA256 signature in the C2 chunk didn't match with stored one in the server.
     ///
     /// When you got the `ChunkFormatError`:
     ///
