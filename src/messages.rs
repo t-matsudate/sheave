@@ -4849,7 +4849,7 @@ pub struct ByteBuffer {
 }
 
 impl ByteBuffer {
-    /// Constructs a new ByteBuffer.
+    /// Constructs a new `ByteBuffer`.
     ///
     /// # Parameters
     ///
