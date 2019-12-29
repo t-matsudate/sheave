@@ -379,7 +379,7 @@ impl BasicHeader {
     /// The remaining length of the chunk basic header when the chunk stream id is 320 to 65599.
     pub(crate) const LEN_TWO_BYTES: usize = 2;
 
-    /// Constructs a new BasicHeader.
+    /// Constructs a new `BasicHeader`.
     ///
     /// # Parameters
     ///
