@@ -104,12 +104,12 @@
 //!
 //! The patterns of the chunk message header every the format are following:
 //!
-//! |Field            |Format 0          |Format 1          |Format 2          |Format 3|
-//! | :-------------- | :--------------: | :--------------: | :--------------: | :----: |
-//! |Timestamp        |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|-       |
-//! |Message length   |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |
-//! |Message type     |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |
-//! |Message stream id|:heavy_check_mark:|-                 |-                 |-       |
+//! |Field            |Format 0|Format 1|Format 2|Format 3|
+//! | :-------------- | :----: | :----: | :----: | :----: |
+//! |Timestamp        |✔       |✔       |✔       |-       |
+//! |Message length   |✔       |✔       |-       |-       |
+//! |Message type     |✔       |✔       |-       |-       |
+//! |Message stream id|✔       |-       |-       |-       |
 //!
 //! ## The extended timestamp (4 bytes)
 //!
