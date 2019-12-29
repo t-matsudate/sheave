@@ -178,7 +178,7 @@ pub struct RtmpHandshake {
 }
 
 impl RtmpHandshake {
-    /// Constructs a new RtmpHandshake.
+    /// Constructs a new `RtmpHandshake`.
     ///
     /// # Parameters
     ///
