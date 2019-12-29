@@ -19,7 +19,7 @@ fn main() -> IOResult<()> {
 
 ## Documentation
 
-[GitHub](https://t-matsudate.github.io/sheave)
+[GitHub](https://t-matsudate.github.io/sheave/sheave)
 
 ## Abilities
 
