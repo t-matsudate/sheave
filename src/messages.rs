@@ -4866,7 +4866,7 @@ impl ByteBuffer {
     }
 
     /// Clear this byte buffer.
-    /// This sets 0 to the offset, sets 0 to the len, and constructs a new Vec to the bytes again.
+    /// This sets 0 to the offset, sets 0 to the len, and constructs a new `Vec` to the bytes again.
     pub fn clear(&mut self) {
         self.offset = 0;
         self.len = 0;
