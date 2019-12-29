@@ -4311,10 +4311,12 @@ impl From<HashMap<String, AmfData>> for MetaData {
     ///  * This will print following format:
     ///  * MetaData {
     ///  *     stereo: Some(true),
+    ///  *     can_seek_to_end: None,
     ///  *     audio_codec_id: Some(2),
     ///  *     audio_data_rate: Some(320),
     ///  *     audio_sample_rate: Some(44100),
     ///  *     audio_sample_size: Some(16),
+    ///  *     audio_delay: None,
     ///  *     video_codec_id: Some(2),
     ///  *     video_data_rate: Some(3000),
     ///  *     frame_rate: Some(30),
@@ -4325,7 +4327,8 @@ impl From<HashMap<String, AmfData>> for MetaData {
     ///  *     major_brand: Some(""),
     ///  *     minor_version: Some(""),
     ///  *     compatible_brands: Some(""),
-    ///  *     encoder: Some("")
+    ///  *     encoder: Some(""),
+    ///  *     creation_date: None
     ///  * }
     /// */
     /// println!("{:?}", meta_data);
