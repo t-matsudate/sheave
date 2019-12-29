@@ -4774,7 +4774,7 @@ pub struct Chunk {
 }
 
 impl Chunk {
-    /// Constructs a new Chunk.
+    /// Constructs a new `Chunk`.
     ///
     /// # Parameters
     ///
