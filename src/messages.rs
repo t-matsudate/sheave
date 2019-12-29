@@ -2525,7 +2525,7 @@ impl From<Status> for String {
 ///
 /// * object\_encoding
 ///
-/// In just the onStatus of the connect of the NetStream command:
+/// In just the onStatus of the publish of the NetStream command:
 ///
 /// * details
 ///
