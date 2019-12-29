@@ -191,7 +191,7 @@
 //! Note that we will be required to input following bytes respectively before its signature:
 //!
 //! 1. 1 (1 byte)
-//! 2. 1. (1 byte)
+//! 2. 1 (1 byte)
 //! 3. the size of raw SWF data. (4 bytes)
 //! 4. the size of raw SWF data. (4 bytes)
 //!
