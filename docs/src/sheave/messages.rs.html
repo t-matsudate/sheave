@@ -4919,6 +4919,8 @@
 <span id="4919">4919</span>
 <span id="4920">4920</span>
 <span id="4921">4921</span>
+<span id="4922">4922</span>
+<span id="4923">4923</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # The chunk message patterns</span>
 <span class="doccomment">//!</span>
@@ -5015,7 +5017,7 @@
 <span class="doccomment">//! |20    |Invoke (AMF0)       |Variable        |</span>
 <span class="doccomment">//! |22    |Metadata            |Variable        |</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ### Chunk message id</span>
+<span class="doccomment">//! ### Message stream id</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The id to identify the user who sent this chunk.</span>
 <span class="doccomment">//! Note following points:</span>
@@ -5026,12 +5028,12 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The patterns of the chunk message header every the format are following:</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! |Field           |Format 0          |Format 1          |Format 2          |Format 3|</span>
-<span class="doccomment">//! | :------------- | :--------------: | :--------------: | :--------------: | :----: |</span>
-<span class="doccomment">//! |Timestamp       |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|-|</span>
-<span class="doccomment">//! |Message length  |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |</span>
-<span class="doccomment">//! |Message type    |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |</span>
-<span class="doccomment">//! |Chunk message id|:heavy_check_mark:|-                 |-                 |-       |</span>
+<span class="doccomment">//! |Field            |Format 0|Format 1|Format 2|Format 3|</span>
+<span class="doccomment">//! | :-------------- | :----: | :----: | :----: | :----: |</span>
+<span class="doccomment">//! |Timestamp        |✔       |✔       |✔       |-       |</span>
+<span class="doccomment">//! |Message length   |✔       |✔       |-       |-       |</span>
+<span class="doccomment">//! |Message type     |✔       |✔       |-       |-       |</span>
+<span class="doccomment">//! |Message stream id|✔       |-       |-       |-       |</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## The extended timestamp (4 bytes)</span>
 <span class="doccomment">//!</span>
@@ -5113,7 +5115,7 @@
 <span class="doccomment">//! Note that we will be required to input following bytes respectively before its signature:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! 1. 1 (1 byte)</span>
-<span class="doccomment">//! 2. 1. (1 byte)</span>
+<span class="doccomment">//! 2. 1 (1 byte)</span>
 <span class="doccomment">//! 3. the size of raw SWF data. (4 bytes)</span>
 <span class="doccomment">//! 4. the size of raw SWF data. (4 bytes)</span>
 <span class="doccomment">//!</span>
@@ -5301,7 +5303,7 @@
     <span class="doccomment">/// The remaining length of the chunk basic header when the chunk stream id is 320 to 65599.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">LEN_TWO_BYTES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>;
 
-    <span class="doccomment">/// Constructs a new BasicHeader.</span>
+    <span class="doccomment">/// Constructs a new `BasicHeader`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Parameters</span>
     <span class="doccomment">///</span>
@@ -7447,7 +7449,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// * object\_encoding</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// In just the onStatus of the connect of the NetStream command:</span>
+<span class="doccomment">/// In just the onStatus of the publish of the NetStream command:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * details</span>
 <span class="doccomment">///</span>
@@ -8746,8 +8748,7 @@
 <span class="doccomment">/// |encoder            |`Option&lt;String&gt;`|</span>
 <span class="doccomment">/// |creation\_date     |`Option&lt;String&gt;`|</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// We can check that the metadata has all value of above.</span>
-<span class="doccomment">/// However all field has been contained in the `Option` type because the metadata will be passed as the AMF0&#39;s `MixedArray` type, that is, this must be converted from the `HashMap&lt;String, AmfData&gt;`.</span>
+<span class="doccomment">/// All field has been contained in the `Option` type because the metadata will be passed as the AMF0&#39;s `MixedArray` type, that is, this must be converted from the `HashMap&lt;String, AmfData&gt;`.</span>
 <span class="doccomment">/// The number fields have kept their types the `u64` type to consider that will lessen the overhead to convert Rust&#39;s number types into AMF&#39;s number types.</span>
 <span class="doccomment">/// See the flv.rs about more details of above fields.</span>
 <span class="doccomment">///</span>
@@ -9234,10 +9235,12 @@
     <span class="doccomment">///  * This will print following format:</span>
     <span class="doccomment">///  * MetaData {</span>
     <span class="doccomment">///  *     stereo: Some(true),</span>
+    <span class="doccomment">///  *     can_seek_to_end: None,</span>
     <span class="doccomment">///  *     audio_codec_id: Some(2),</span>
     <span class="doccomment">///  *     audio_data_rate: Some(320),</span>
     <span class="doccomment">///  *     audio_sample_rate: Some(44100),</span>
     <span class="doccomment">///  *     audio_sample_size: Some(16),</span>
+    <span class="doccomment">///  *     audio_delay: None,</span>
     <span class="doccomment">///  *     video_codec_id: Some(2),</span>
     <span class="doccomment">///  *     video_data_rate: Some(3000),</span>
     <span class="doccomment">///  *     frame_rate: Some(30),</span>
@@ -9248,7 +9251,8 @@
     <span class="doccomment">///  *     major_brand: Some(&quot;&quot;),</span>
     <span class="doccomment">///  *     minor_version: Some(&quot;&quot;),</span>
     <span class="doccomment">///  *     compatible_brands: Some(&quot;&quot;),</span>
-    <span class="doccomment">///  *     encoder: Some(&quot;&quot;)</span>
+    <span class="doccomment">///  *     encoder: Some(&quot;&quot;),</span>
+    <span class="doccomment">///  *     creation_date: None</span>
     <span class="doccomment">///  * }</span>
     <span class="doccomment">/// */</span>
     <span class="doccomment">/// println!(&quot;{:?}&quot;, meta_data);</span>
@@ -9696,7 +9700,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Chunk</span> {
-    <span class="doccomment">/// Constructs a new Chunk.</span>
+    <span class="doccomment">/// Constructs a new `Chunk`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Parameters</span>
     <span class="doccomment">///</span>
@@ -9771,7 +9775,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">ByteBuffer</span> {
-    <span class="doccomment">/// Constructs a new ByteBuffer.</span>
+    <span class="doccomment">/// Constructs a new `ByteBuffer`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Parameters</span>
     <span class="doccomment">///</span>
@@ -9788,7 +9792,7 @@
     }
 
     <span class="doccomment">/// Clear this byte buffer.</span>
-    <span class="doccomment">/// This sets 0 to the offset, sets 0 to the len, and constructs a new Vec to the bytes again.</span>
+    <span class="doccomment">/// This sets 0 to the offset, sets 0 to the len, and constructs a new `Vec` to the bytes again.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="self">self</span>.<span class="ident">offset</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="self">self</span>.<span class="ident">len</span> <span class="op">=</span> <span class="number">0</span>;

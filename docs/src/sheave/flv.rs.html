@@ -3561,8 +3561,8 @@
     <span class="doccomment">/// /*</span>
     <span class="doccomment">///  * The first byte consists of following formats respectively:</span>
     <span class="doccomment">///  *</span>
-    <span class="doccomment">///  * * Frame type (4 **bits**)</span>
-    <span class="doccomment">///  * * Codec id (4 **bits**)</span>
+    <span class="doccomment">///  * 1. Frame type (4 **bits**)</span>
+    <span class="doccomment">///  * 2. Codec id (4 **bits**)</span>
     <span class="doccomment">/// */</span>
     <span class="doccomment">/// let frame_type = (FrameType::DisposableInter as u8) &lt;&lt; 4;</span>
     <span class="doccomment">/// let codec_id = Codec::SorensonH263 as u8;</span>

@@ -31,8 +31,8 @@ See the <code>VideoTagHeader</code> for more detail about the video tag header.<
 <span class="comment">/*
  * The first byte consists of following formats respectively:
  *
- * * Frame type (4 **bits**)
- * * Codec id (4 **bits**)
+ * 1. Frame type (4 **bits**)
+ * 2. Codec id (4 **bits**)
 */</span>
 <span class="kw">let</span> <span class="ident">frame_type</span> <span class="op">=</span> (<span class="ident">FrameType</span>::<span class="ident">DisposableInter</span> <span class="kw">as</span> <span class="ident">u8</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>;
 <span class="kw">let</span> <span class="ident">codec_id</span> <span class="op">=</span> <span class="ident">Codec</span>::<span class="ident">SorensonH263</span> <span class="kw">as</span> <span class="ident">u8</span>;
