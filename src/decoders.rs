@@ -1,4 +1,4 @@
-//! # The traits to encode the chunk messages.
+//! # The traits to decode the chunk messages.
 //!
 //! First, we will receive the chunk as bytes (that is, `Vec<u8>`).
 //! Therefore we must decode their bytes into the data types.
