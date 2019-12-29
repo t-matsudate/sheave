@@ -93,7 +93,7 @@
 //! |20    |Invoke (AMF0)       |Variable        |
 //! |22    |Metadata            |Variable        |
 //!
-//! ### Chunk message id
+//! ### Message stream id
 //!
 //! The id to identify the user who sent this chunk.
 //! Note following points:
@@ -104,12 +104,12 @@
 //!
 //! The patterns of the chunk message header every the format are following:
 //!
-//! |Field           |Format 0          |Format 1          |Format 2          |Format 3|
-//! | :------------- | :--------------: | :--------------: | :--------------: | :----: |
-//! |Timestamp       |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|-|
-//! |Message length  |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |
-//! |Message type    |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |
-//! |Chunk message id|:heavy_check_mark:|-                 |-                 |-       |
+//! |Field            |Format 0          |Format 1          |Format 2          |Format 3|
+//! | :-------------- | :--------------: | :--------------: | :--------------: | :----: |
+//! |Timestamp        |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark:|-       |
+//! |Message length   |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |
+//! |Message type     |:heavy_check_mark:|:heavy_check_mark:|-                 |-       |
+//! |Message stream id|:heavy_check_mark:|-                 |-                 |-       |
 //!
 //! ## The extended timestamp (4 bytes)
 //!
