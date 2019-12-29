@@ -3824,8 +3824,7 @@ pub enum PingData {
 /// |encoder            |`Option<String>`|
 /// |creation\_date     |`Option<String>`|
 ///
-/// We can check that the metadata has all value of above.
-/// However all field has been contained in the `Option` type because the metadata will be passed as the AMF0's `MixedArray` type, that is, this must be converted from the `HashMap<String, AmfData>`.
+/// All field has been contained in the `Option` type because the metadata will be passed as the AMF0's `MixedArray` type, that is, this must be converted from the `HashMap<String, AmfData>`.
 /// The number fields have kept their types the `u64` type to consider that will lessen the overhead to convert Rust's number types into AMF's number types.
 /// See the flv.rs about more details of above fields.
 ///
