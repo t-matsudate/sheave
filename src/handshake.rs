@@ -212,7 +212,7 @@ impl RtmpHandshake {
         Ok(self.s1 = chunk)
     }
 
-    /// Decodes the C0 chunk and the C1 chunk, then imprints the signature in the client chunk.
+    /// Decodes the C0 chunk and the C1 chunk, then imprints the signature into the client chunk.
     ///
     /// # Parameters
     ///
