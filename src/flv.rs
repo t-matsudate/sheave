@@ -1566,8 +1566,8 @@ impl From<Vec<u8>> for VideoTag {
     /// /*
     ///  * The first byte consists of following formats respectively:
     ///  *
-    ///  * * Frame type (4 **bits**)
-    ///  * * Codec id (4 **bits**)
+    ///  * 1. Frame type (4 **bits**)
+    ///  * 2. Codec id (4 **bits**)
     /// */
     /// let frame_type = (FrameType::DisposableInter as u8) << 4;
     /// let codec_id = Codec::SorensonH263 as u8;
