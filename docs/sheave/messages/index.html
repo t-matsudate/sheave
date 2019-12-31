@@ -33,7 +33,7 @@ Note following points:</p>
 <li>Both (the server and the client) will regard this as what lessened just 64.</li>
 <li>If this is 64 to 319, input <strong>0</strong> as 6 bits following the format bits.<br />
 This is <strong>Big Endian</strong>.</li>
-<li>If this is 319 to 65599, input <strong>1</strong> as as 6 bits following the format bits.<br />
+<li>If this is 319 to 65599, input <strong>1</strong> as 6 bits following the format bits.<br />
 This is <strong>Little Endian</strong>.</li>
 </ul>
 </li>
@@ -53,7 +53,7 @@ Note following points:</p>
 <ul>
 <li>If this will exceed 3 bytes, input this to the extended timestamp field instead.
 <ul>
-<li>In this case, input <code>0xFFFFFF</code> (just the maximum value of 3 bytes) in this.</li>
+<li>In this case, input <code>0xFFFFFF</code> (just the maximum value of 3 bytes) into this.</li>
 </ul>
 </li>
 <li>This can be 0 in some cases.</li>
@@ -106,7 +106,7 @@ Note following points:</p>
 <tr><td align="left">Message stream id</td><td align="center">✔</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
 </tbody></table>
 <h2 id="the-extended-timestamp-4-bytes" class="section-header"><a href="#the-extended-timestamp-4-bytes">The extended timestamp (4 bytes)</a></h2>
-<p>When the timestamp has exceeded 3 bytes, input it in this field instead.
+<p>When the timestamp has exceeded 3 bytes, input it into this field instead.
 Note that mustn't input if it hasn't exceeded 3 bytes. If input in its case, the program can misunderstand as the chunk data.</p>
 <h2 id="the-chunk-data" class="section-header"><a href="#the-chunk-data">The chunk data</a></h2>
 <p>The content of this chunk.
@@ -150,12 +150,12 @@ The correspondence of the number to actual event data is following:</p>
 <ul>
 <li>Stream begin, Stream EOF, Stream dry, Stream is recorded, Buffer empty and Buffer ready.</li>
 </ul>
-<p>This will be input only the chunk message id (4 bytes).
+<p>This will be input only the message stream id (4 bytes).
 In the phase of the application connection, the chunk message id will be 0 inevitably.</p>
 <ul>
 <li>Buffer length</li>
 </ul>
-<p>This will be input the chunk message id (4 bytes) and the <em>buffer</em> length (4 bytes).
+<p>This will be input the message stream id (4 bytes) and the <em>buffer</em> length (4 bytes).
 Note that this has differed from the chunk size.
 This has indicated the size to send/to receive the data in millisecond.</p>
 <ul>
