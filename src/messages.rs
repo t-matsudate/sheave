@@ -38,7 +38,7 @@
 //!   * Both (the server and the client) will regard this as what lessened just 64.
 //!   * If this is 64 to 319, input **0** as 6 bits following the format bits.  
 //!   This is **Big Endian**.
-//!   * If this is 319 to 65599, input **1** as as 6 bits following the format bits.  
+//!   * If this is 319 to 65599, input **1** as 6 bits following the format bits.  
 //!   This is **Little Endian**.
 //!
 //! ## The chunk message header
@@ -57,7 +57,7 @@
 //! Note following points:
 //!
 //! * If this will exceed 3 bytes, input this to the extended timestamp field instead.
-//!   * In this case, input `0xFFFFFF` (just the maximum value of 3 bytes) in this.
+//!   * In this case, input `0xFFFFFF` (just the maximum value of 3 bytes) into this.
 //! * This can be 0 in some cases.
 //!
 //! ### Message length
@@ -113,7 +113,7 @@
 //!
 //! ## The extended timestamp (4 bytes)
 //!
-//! When the timestamp has exceeded 3 bytes, input it in this field instead.
+//! When the timestamp has exceeded 3 bytes, input it into this field instead.
 //! Note that mustn't input if it hasn't exceeded 3 bytes. If input in its case, the program can misunderstand as the chunk data.
 //!
 //! ## The chunk data
@@ -168,12 +168,12 @@
 //!
 //! * Stream begin, Stream EOF, Stream dry, Stream is recorded, Buffer empty and Buffer ready.
 //!
-//! This will be input only the chunk message id (4 bytes).
+//! This will be input only the message stream id (4 bytes).
 //! In the phase of the application connection, the chunk message id will be 0 inevitably.
 //!
 //! * Buffer length
 //!
-//! This will be input the chunk message id (4 bytes) and the *buffer* length (4 bytes).
+//! This will be input the message stream id (4 bytes) and the *buffer* length (4 bytes).
 //! Note that this has differed from the chunk size.
 //! This has indicated the size to send/to receive the data in millisecond.
 //!
@@ -1173,7 +1173,7 @@ impl From<u8> for VideoCodec {
     ///
     /// # Panics
     ///
-    /// This will emit the `panic!` if is turned plural bits.
+    /// This will emit the `panic!` if is turned plural bits expect meaning `All`.
     ///
     /// # Examples
     ///
@@ -1443,19 +1443,19 @@ impl From<u8> for ObjectEncoding {
 ///
 /// This consists of following data:
 ///
-/// |Field           |Type                    |
-/// | :------------- | :--------------------- |
-/// |fpad            |`Option<bool>`          |
-/// |object\_encoding|`Option<ObjectEncoding>`|
-/// |video\_function |`Option<VideoFunction>` |
-/// |video\_codec    |`Option<VideoCodec>`    |
-/// |audio\_codec    |`Option<AudioCodec>`    |
-/// |app             |`Option<String>`        |
-/// |command\_type   |`Option<String>`        |
-/// |flash\_ver      |`Option<String>`        |
-/// |swf\_url        |`Option<String>`        |
-/// |tc\_url         |`Option<String>`        |
-/// |page\_url       |`Option<String>`        |
+/// |Field           |Type                     |
+/// | :------------- | :---------------------- |
+/// |fpad            |`Option<bool>`           |
+/// |object\_encoding|`Option<ObjectEncoding>` |
+/// |video\_function |`Option<VideoFunction>`  |
+/// |video\_codec    |`Option<Vec<VideoCodec>>`|
+/// |audio\_codec    |`Option<Vec<AudioCodec>>`|
+/// |app             |`Option<String>`         |
+/// |command\_type   |`Option<String>`         |
+/// |flash\_ver      |`Option<String>`         |
+/// |swf\_url        |`Option<String>`         |
+/// |tc\_url         |`Option<String>`         |
+/// |page\_url       |`Option<String>`         |
 ///
 /// These fields won't be contained all necessarily.
 /// Actually, the command object to be sent from the FFmpeg will be contained just following fields:
@@ -2508,8 +2508,8 @@ impl From<Status> for String {
 /// |Field           |Type                    |
 /// | :------------- | :--------------------- |
 /// |object\_encoding|`Option<ObjectEncoding>`|
+/// |level           |`Option<InfoLevel>`     |
 /// |code            |`Option<Status>`        |
-/// |level           |`Option<String>`        |
 /// |details         |`Option<String>`        |
 /// |description     |`Option<String>`        |
 ///
