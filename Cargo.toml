@@ -11,7 +11,7 @@ edition = "2018"
 readme = "README.md"
 
 [badges]
-circle-ci = { repository = "https://github.com/t-matsudate/sheave", branch = "v0.x" }
+github-actions = { repository = "t-matsudate/sheave", workflow = "Testing" }
 
 [dependencies]
 # hyper = "0.10"
