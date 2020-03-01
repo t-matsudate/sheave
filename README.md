@@ -2,7 +2,7 @@
 
 An RTMP Server implementation for Rust.
 
-[![CircleCI](https://circleci.com/gh/t-matsudate/sheave.svg?style=svg)](https://circleci.com/gh/t-matsudate/sheave)
+![Testing](https://github.com/t-matsudate/sheave/workflows/Testing/badge.svg?branch=v0.x)
 
 ## Usage
 
