@@ -11,6 +11,12 @@ jobs:
     - name: Installing Rust 1.41 Image
       id: installing-latest-image
       uses: docker://rust:latest
+    - name: Cloning My Repository
+      id: cloning-my-repository
+      uses: actions/checkout@v2
+      with:
+        repository: t-matsudate/sheave
+        ref: v0.x
     - name: Running Tests
       id: running-tests
       run: cargo test
