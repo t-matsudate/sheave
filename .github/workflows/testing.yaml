@@ -2,7 +2,7 @@ name: Testing
 on: [push]
 jobs:
   testing:
-    name: Testing Sourc Codes
+    name: Testing Source Codes
     runs-on: ubuntu-latest
     steps:
     - name: Installing Rust 1.41 Image
