@@ -1,0 +1,13 @@
+name: Testing
+on: [push]
+jobs:
+  testing:
+    name: Testing Sourc Codes
+    runs-on: ubuntu-lates
+    steps:
+    - name: Installing Rust 1.41 Image
+      id: installing-latest-image
+      uses: docker://rust:latest
+    - name: Running Tests
+      id: running-tests
+      run: cargo test
