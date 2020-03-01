@@ -3,7 +3,7 @@ on: [push]
 jobs:
   testing:
     name: Testing Sourc Codes
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     steps:
     - name: Installing Rust 1.41 Image
       id: installing-latest-image
