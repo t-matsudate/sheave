@@ -1,5 +1,8 @@
 name: Testing
-on: [push]
+on:
+  push:
+    branches:
+    - v0.x
 jobs:
   testing:
     name: Testing Source Codes
