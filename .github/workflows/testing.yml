@@ -1,0 +1,21 @@
+name: Testing
+on: push
+jobs:
+  testing:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v3
+      - id: setup
+        name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - id: test
+        name: Run test
+        run: |
+          cargo update
+          cargo test
