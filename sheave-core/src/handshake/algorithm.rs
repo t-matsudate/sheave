@@ -13,7 +13,7 @@
 /// Because of the design policy, the variant to be used actually will only be `NotEncrypted`.
 /// Other variants are prepared to keep their meaning of known numbers.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum EncryptionAlgorithm {
     #[default]
     NotEncrypted = 3,
