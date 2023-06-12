@@ -32,7 +32,7 @@ impl<R: AsyncRead> Future for EncryptionAlgorithmReader<'_, R> {
     }
 }
 
-/// Reads one byte to indicate the encryption algorithm into stream.
+/// Reads one byte to indicate the encryption algorithm from stream.
 ///
 /// # Examples
 ///
