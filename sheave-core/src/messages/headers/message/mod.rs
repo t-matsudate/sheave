@@ -1,9 +1,9 @@
-pub mod new;
-pub mod same_source;
-pub mod timer_change;
+mod new;
+mod same_source;
+mod timer_change;
 
 use std::time::Duration;
-use self::{
+pub use self::{
     new::New,
     same_source::SameSource,
     timer_change::TimerChange

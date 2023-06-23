@@ -43,9 +43,9 @@ impl<W: AsyncWrite> Future for HandshakeWriter<'_, W> {
 /// use sheave_core::{
 ///     handshake::{
 ///         Handshake,
-///         version::Version
+///         Version
 ///     },
-///     writers::handshake::write_handshake
+///     writers::write_handshake
 /// };
 ///
 /// #[tokio::main]
@@ -69,7 +69,7 @@ mod tests {
     };
     use crate::handshake::{
         Handshake,
-        version::Version
+        Version
     };
     use super::*;
 

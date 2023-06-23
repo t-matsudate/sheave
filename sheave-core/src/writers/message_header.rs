@@ -10,11 +10,11 @@ use std::{
 };
 use futures::ready;
 use tokio::io::AsyncWrite;
-use crate::messages::headers::message::{
+use crate::messages::headers::{
     MessageHeader,
-    new::New,
-    same_source::SameSource,
-    timer_change::TimerChange
+    New,
+    SameSource,
+    TimerChange
 };
 
 #[doc(hidden)]
@@ -98,13 +98,13 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 /// };
 /// use rand::random;
 /// use sheave_core::{
-///     messages::headers::message::{
+///     messages::headers::{
 ///         MessageHeader,
-///         new::New,
-///         same_source::SameSource,
-///         timer_change::TimerChange
+///         New,
+///         SameSource,
+///         TimerChange
 ///     },
-///     writers::message_header::write_message_header
+///     writers::write_message_header
 /// };
 ///
 /// #[tokio::main]

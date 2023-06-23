@@ -8,7 +8,7 @@ use std::{
     }
 };
 use tokio::io::AsyncWrite;
-use crate::messages::headers::basic::BasicHeader;
+use crate::messages::headers::BasicHeader;
 
 #[doc(hidden)]
 #[derive(Debug)]
@@ -52,10 +52,10 @@ impl<W: AsyncWrite> Future for BasicHeaderWriter<'_, W> {
 /// };
 /// use sheave_core::{
 ///     messages::headers::{
-///         basic::BasicHeader,
-///         message_format::MessageFormat::*
+///         BasicHeader,
+///         MessageFormat::*
 ///     },
-///     writers::basic_header::write_basic_header
+///     writers::write_basic_header
 /// };
 ///
 /// #[tokio::main]
@@ -111,11 +111,11 @@ mod tests {
         }
     };
     use rand::random;
-    use super::*;
     use crate::messages::headers::{
-        basic::BasicHeader,
-        message_format::MessageFormat
+        BasicHeader,
+        MessageFormat
     };
+    use super::*;
 
     #[tokio::test]
     async fn write_one_byte() {

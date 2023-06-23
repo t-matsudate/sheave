@@ -1,4 +1,6 @@
-use super::message_format::MessageFormat;
+mod message_format;
+
+pub use self::message_format::MessageFormat;
 
 /// Indicates the chunk stream and message header's format.
 /// This header has 3 types.

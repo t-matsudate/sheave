@@ -8,7 +8,7 @@ use std::{
     }
 };
 use tokio::io::AsyncWrite;
-use crate::handshake::algorithm::EncryptionAlgorithm;
+use crate::handshake::EncryptionAlgorithm;
 
 #[doc(hidden)]
 #[derive(Debug)]
@@ -40,8 +40,8 @@ impl<W: AsyncWrite> Future for EncryptionAlgorithmWriter<'_, W> {
 ///     }
 /// };
 /// use sheave_core::{
-///     handshake::algorithm::EncryptionAlgorithm::*,
-///     writers::encryption_algorithm::write_encryption_algorithm
+///     handshake::EncryptionAlgorithm::*,
+///     writers::write_encryption_algorithm
 /// };
 ///
 /// #[tokio::main]
@@ -59,7 +59,7 @@ pub fn write_encryption_algorithm<W: AsyncWrite>(writer: Pin<&mut W>, encryption
 #[cfg(test)]
 mod tests {
     use std::pin::pin;
-    use crate::handshake::algorithm::EncryptionAlgorithm::*;
+    use crate::handshake::EncryptionAlgorithm::*;
     use super::*;
 
     #[tokio::test]

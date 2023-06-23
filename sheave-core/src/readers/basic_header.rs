@@ -13,8 +13,8 @@ use tokio::io::{
     ReadBuf
 };
 use crate::messages::headers::{
-    basic::BasicHeader,
-    message_format::MessageFormat
+    BasicHeader,
+    MessageFormat
 };
 
 #[doc(hidden)]
@@ -62,10 +62,10 @@ impl<R: AsyncRead> Future for BasicHeaderReader<'_, R> {
 /// };
 /// use sheave_core::{
 ///     messages::headers::{
-///         basic::BasicHeader,
-///         message_format::MessageFormat::*
+///         BasicHeader,
+///         MessageFormat::*
 ///     },
-///     readers::basic_header::read_basic_header
+///     readers::read_basic_header
 /// };
 ///
 /// #[tokio::main]
@@ -105,8 +105,8 @@ mod tests {
         pin::pin
     };
     use rand::random;
+    use crate::messages::headers::MessageFormat;
     use super::*;
-    use crate::messages::headers::message_format::MessageFormat;
 
     #[tokio::test]
     async fn read_one_byte() {

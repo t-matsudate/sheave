@@ -12,7 +12,7 @@ use tokio::io::{
     AsyncRead,
     ReadBuf
 };
-use crate::handshake::algorithm::EncryptionAlgorithm;
+use crate::handshake::EncryptionAlgorithm;
 
 #[doc(hidden)]
 #[derive(Debug)]
@@ -45,8 +45,8 @@ impl<R: AsyncRead> Future for EncryptionAlgorithmReader<'_, R> {
 ///     }
 /// };
 /// use sheave_core::{
-///     handshake::algorithm::EncryptionAlgorithm::*,
-///     readers::encryption_algorithm::read_encryption_algorithm
+///     handshake::EncryptionAlgorithm::*,
+///     readers::read_encryption_algorithm
 /// };
 ///
 /// #[tokio::main]
@@ -64,7 +64,7 @@ pub fn read_encryption_algorithm<R: AsyncRead>(reader: Pin<&mut R>) -> Encryptio
 #[cfg(test)]
 mod tests {
     use std::pin::pin;
-    use crate::handshake::algorithm::EncryptionAlgorithm::*;
+    use crate::handshake::EncryptionAlgorithm::*;
     use super::*;
 
     #[tokio::test]

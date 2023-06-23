@@ -14,13 +14,11 @@ use tokio::io::{
     ReadBuf
 };
 use crate::messages::headers::{
-    message::{
-        MessageHeader,
-        new::New,
-        same_source::SameSource,
-        timer_change::TimerChange
-    },
-    message_format::MessageFormat
+    MessageHeader,
+    New,
+    SameSource,
+    TimerChange,
+    MessageFormat
 };
 
 #[doc(hidden)]
@@ -107,10 +105,10 @@ impl<R: AsyncRead> Future for MessageHeaderReader<'_, R> {
 /// use rand::random;
 /// use sheave_core::{
 ///     messages::headers::{
-///         message::MessageHeader,
-///         message_format::MessageFormat::*
+///         MessageHeader,
+///         MessageFormat::*
 ///     },
-///     readers::message_header::read_message_header
+///     readers::read_message_header
 /// };
 ///
 /// #[tokio::main]
@@ -168,8 +166,8 @@ pub fn read_message_header<R: AsyncRead>(reader: Pin<&mut R>, message_format: Me
 mod tests {
     use std::pin::pin;
     use rand::random;
+    use crate::messages::headers::MessageFormat::*;
     use super::*;
-    use crate::messages::headers::message_format::MessageFormat::*;
 
     #[tokio::test]
     async fn read_new() {

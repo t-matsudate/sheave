@@ -34,7 +34,7 @@
 //! use std::time::Duration;
 //! use sheave_core::handshake::{
 //!     Handshake,
-//!     version::Version
+//!     Version
 //! };
 //!
 //! let handshake = Handshake::new(Duration::default(), Version::UNSIGNED);
@@ -46,8 +46,8 @@
 //! use std::time::Duration;
 //! use sheave_core::handshake::{
 //!     Handshake,
-//!     version::Version,
-//!     algorithm::EncryptionAlgorithm
+//!     Version,
+//!     EncryptionAlgorithm
 //! };
 //!
 //! // In a case of exchanging client-side request with server-side response.
@@ -77,8 +77,8 @@
 //! 2. If chunk encryption is implemented on RTMPTS, To decrypt chunk/socket takes both sides time in no small way. This is inefficient for real-time communications.
 //! 3. Therefore I'm thinking we should leave encryption to only HTTPS.
 
-pub mod version;
-pub mod algorithm;
+mod version;
+mod encryption_algorithm;
 
 use std::time::Duration;
 use rand::{
@@ -94,9 +94,9 @@ use hmac::{
     Hmac,
     Mac
 };
-use self::{
+pub use self::{
     version::Version,
-    algorithm::EncryptionAlgorithm
+    encryption_algorithm::EncryptionAlgorithm
 };
 
 type HmacSha256 = Hmac<Sha256>;
@@ -131,8 +131,8 @@ impl Handshake {
     /// use std::time::Duration;
     /// use sheave_core::handshake::{
     ///     Handshake,
-    ///     version::Version,
-    ///     algorithm::EncryptionAlgorithm
+    ///     Version,
+    ///     EncryptionAlgorithm
     /// };
     ///
     /// // If you are a client.
@@ -213,8 +213,8 @@ impl Handshake {
     /// use std::time::Duration;
     /// use sheave_core::handshake::{
     ///     Handshake,
-    ///     version::Version,
-    ///     algorithm::EncryptionAlgorithm
+    ///     Version,
+    ///     EncryptionAlgorithm
     /// };
     ///
     /// // In a case of sending client-side request.
@@ -239,8 +239,8 @@ impl Handshake {
     /// use std::time::Duration;
     /// use sheave_core::handshake::{
     ///     Handshake,
-    ///     version::Version,
-    ///     algorithm::EncryptionAlgorithm
+    ///     Version,
+    ///     EncryptionAlgorithm
     /// };
     ///
     /// // In a case of checking server-side request.
@@ -293,8 +293,8 @@ impl Handshake {
     /// use std::time::Duration;
     /// use sheave_core::handshake::{
     ///     Handshake,
-    ///     version::Version,
-    ///     algorithm::EncryptionAlgorithm
+    ///     Version,
+    ///     EncryptionAlgorithm
     /// };
     ///
     /// // In a case of exchanging client-side request with server-side response.
@@ -327,8 +327,8 @@ impl Handshake {
     /// use std::time::Duration;
     /// use sheave_core::handshake::{
     ///     Handshake,
-    ///     version::Version,
-    ///     algorithm::EncryptionAlgorithm
+    ///     Version,
+    ///     EncryptionAlgorithm
     /// };
     ///
     /// // In a case of checking client-side response.

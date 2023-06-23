@@ -50,8 +50,8 @@ impl<R: AsyncRead> Future for HandshakeReader<'_, R> {
 ///     thread_rng
 /// };
 /// use sheave_core::{
-///     handshake::version::Version,
-///     readers::handshake::read_handshake
+///     handshake::Version,
+///     readers::read_handshake
 /// };
 ///
 /// #[tokio::main]
@@ -80,7 +80,7 @@ mod tests {
         Fill,
         thread_rng
     };
-    use crate::handshake::version::Version;
+    use crate::handshake::Version;
     use super::*;
 
     #[tokio::test]

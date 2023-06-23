@@ -1,3 +1,15 @@
-pub mod message_format;
-pub mod basic;
-pub mod message;
+mod basic;
+mod message;
+
+pub use self::{
+    basic::{
+        BasicHeader,
+        MessageFormat
+    },
+    message::{
+        MessageHeader,
+        New,
+        SameSource,
+        TimerChange
+    }
+};

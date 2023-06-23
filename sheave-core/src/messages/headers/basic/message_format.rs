@@ -28,7 +28,7 @@ impl From<u8> for MessageFormat {
     ///
     /// ```rust
     /// use std::panic::catch_unwind;
-    /// use sheave_core::messages::headers::message_format::{
+    /// use sheave_core::messages::headers::{
     ///     MessageFormat,
     ///     MessageFormat::*
     /// };
