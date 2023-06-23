@@ -18,6 +18,18 @@ impl Version {
     pub const LATEST_SERVER: Self = Self(5, 0, 17, 0);
 
     /// Gets a number of major version either Flash Player or Flash Media Server.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handshake::Version;
+    ///
+    /// assert_eq!(0, Version::UNSIGNED.get_major_version());
+    /// assert_eq!(32, Version::LATEST_CLIENT.get_major_version());
+    /// assert_eq!(5, Version::LATEST_SERVER.get_major_version())
+    /// ```
+    ///
+    /// The well-known RTMP applications check just this version to decide whether they do handshake with HMAC-SHA256.
     pub fn get_major_version(&self) -> u8 {
         self.0
     }
