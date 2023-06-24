@@ -92,6 +92,52 @@ impl MessageHeader {
         }
     }
 
+    /// Gets a message length.
+    /// 0 bytes type and 3 bytes type return `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::time::Duration;
+    /// use sheave_core::messages::headers::{
+    ///     MessageHeader,
+    ///     New,
+    ///     SameSource,
+    ///     TimerChange
+    /// };
+    ///
+    /// // In case of 11 bytes type.
+    /// let new = MessageHeader::New(
+    ///     New {
+    ///         timestamp: Duration::default(),
+    ///         message_length: u32::default(),
+    ///         message_type: u8::default(),
+    ///         message_id: u32::default()
+    ///     }
+    /// );
+    /// assert!(new.get_message_length().is_some());
+    ///
+    /// // In case of 7 bytes type.
+    /// let same_source = MessageHeader::SameSource(
+    ///     SameSource {
+    ///         timestamp: Duration::default(),
+    ///         message_length: u32::default(),
+    ///         message_type: u8::default()
+    ///     }
+    /// );
+    /// assert!(same_source.get_message_length().is_some());
+    ///
+    /// // In case of 3 bytes type.
+    /// let timer_change = MessageHeader::TimerChange(
+    ///     TimerChange {
+    ///         timestamp: Duration::default()
+    ///     }
+    /// );
+    /// assert!(timer_change.get_message_length().is_none());
+    ///
+    /// // In case of 0 bytes type.
+    /// assert!(MessageHeader::Continue.get_message_length().is_none())
+    /// ```
     pub fn get_message_length(&self) -> Option<u32> {
         match *self {
             New(new) => Some(new.message_length),
