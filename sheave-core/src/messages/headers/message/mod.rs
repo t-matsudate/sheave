@@ -10,6 +10,24 @@ pub use self::{
 };
 use MessageHeader::*;
 
+/// Indicates a chunk datum format and which stream is it into.
+/// This header has 4 types.
+///
+/// |Total Length|Timestamp|Message Length|Message Type|Message ID|
+/// | ---------: | ------: | -----------: | ---------: | -------: |
+/// |11          |3        |3             |1           |4         |
+/// |7           |3        |3             |1           |          |
+/// |3           |3        |              |            |          |
+/// |0           |         |              |            |          |
+///
+/// Unit of every item is bytes.
+///
+/// * 11 bytes type is required when a new message ID is necessary, that is, communicating with a partner on a new message stream.
+/// * 7 bytes type is required when a message which is different either type or length, sends/receives on same message stream.
+/// * 3 bytes type is required when a message which is same both type and length, sends/receives on same message stream.
+/// * 0 bytes type is required when concatenates a message which is same but exceeding the chunk size on same message stream.
+///
+/// Note that 0 bytes type is required to consider of the message length becuase is inside its chunk datum.
 #[derive(Debug, Clone, Copy)]
 pub enum MessageHeader {
     New(New),
@@ -19,6 +37,52 @@ pub enum MessageHeader {
 }
 
 impl MessageHeader {
+    /// Gets a timestamp.
+    /// Only 0 bytes type returns `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::time::Duration;
+    /// use sheave_core::messages::headers::{
+    ///     MessageHeader,
+    ///     New,
+    ///     SameSource,
+    ///     TimerChange
+    /// };
+    ///
+    /// // In case of 11 bytes type.
+    /// let new = MessageHeader::New(
+    ///     New {
+    ///         timestamp: Duration::default(),
+    ///         message_length: u32::default(),
+    ///         message_type: u8::default(),
+    ///         message_id: u32::default()
+    ///     }
+    /// );
+    /// assert!(new.get_timestamp().is_some());
+    ///
+    /// // In case of 7 bytes type.
+    /// let same_source = MessageHeader::SameSource(
+    ///     SameSource {
+    ///         timestamp: Duration::default(),
+    ///         message_length: u32::default(),
+    ///         message_type: u8::default()
+    ///     }
+    /// );
+    /// assert!(same_source.get_timestamp().is_some());
+    ///
+    /// // In case of 3 bytes type.
+    /// let timer_change = MessageHeader::TimerChange(
+    ///     TimerChange {
+    ///         timestamp: Duration::default()
+    ///     }
+    /// );
+    /// assert!(timer_change.get_timestamp().is_some());
+    /// 
+    /// // In case of 0 bytes type.
+    /// assert!(MessageHeader::Continue.get_timestamp().is_none())
+    /// ```
     pub fn get_timestamp(&self) -> Option<Duration> {
         match *self {
             New(new) => Some(new.timestamp),
