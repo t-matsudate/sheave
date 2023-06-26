@@ -62,19 +62,19 @@ impl<R: AsyncRead> MessageHeaderReader<'_, R> {
         let message_length = ready!(self.read_message_length(cx))?;
         let message_type = ready!(self.read_message_type(cx))?;
         let message_id = ready!(self.read_message_id(cx))?;
-        Poll::Ready(Ok(New { timestamp, message_length, message_type, message_id }))
+        Poll::Ready(Ok((timestamp, message_length, message_type, message_id).into()))
     }
 
     fn read_same_source(&mut self, cx: &mut FutureContext<'_>) -> Poll<IOResult<SameSource>> {
         let timestamp = ready!(self.read_timestamp(cx))?;
         let message_length = ready!(self.read_message_length(cx))?;
         let message_type = ready!(self.read_message_type(cx))?;
-        Poll::Ready(Ok(SameSource { timestamp, message_length, message_type }))
+        Poll::Ready(Ok((timestamp, message_length, message_type).into()))
     }
 
     fn read_timer_change(&mut self, cx: &mut FutureContext<'_>) -> Poll<IOResult<TimerChange>> {
         let timestamp = ready!(self.read_timestamp(cx))?;
-        Poll::Ready(Ok(TimerChange { timestamp }))
+        Poll::Ready(Ok(timestamp.into()))
     }
 }
 

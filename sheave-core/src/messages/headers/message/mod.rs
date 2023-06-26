@@ -28,6 +28,33 @@ use MessageHeader::*;
 /// * 0 bytes type is required when concatenates a message which is same but exceeding the chunk size on same message stream.
 ///
 /// Note that 0 bytes type is required to consider of the message length becuase is inside its chunk datum.
+///
+/// Headers and tuples are convertible into each other.
+///
+/// |Headers                     |Tuples                    |
+/// | :------------------------- | :----------------------- |
+/// |`MessageHeader::New`        |`(Duration, u32, u8, u32)`|
+/// |`MessageHeader::SameSource` |`(Duration, u32, u8)`     |
+/// |`MessageHeader::TimerChange`|`Duration`                |
+///
+/// # Examples
+///
+/// ```rust
+/// use std::time::Duration;
+/// use sheave_core::messages::headers::MessageHeader;
+///
+/// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
+/// assert!(new.get_message_id().is_some());
+///
+/// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
+/// assert!(same_source.get_message_id().is_none());
+///
+/// let timer_change = MessageHeader::TimerChange(Duration::default().into());
+/// assert!(timer_change.get_message_length().is_none());
+/// assert!(timer_change.get_message_type().is_none());
+/// ```
+///
+/// Because of no field, The Continue header isn't implemented `From<T>`.
 #[derive(Debug, Clone, Copy)]
 pub enum MessageHeader {
     New(New),
@@ -44,40 +71,18 @@ impl MessageHeader {
     ///
     /// ```rust
     /// use std::time::Duration;
-    /// use sheave_core::messages::headers::{
-    ///     MessageHeader,
-    ///     New,
-    ///     SameSource,
-    ///     TimerChange
-    /// };
+    /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New(
-    ///     New {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default(),
-    ///         message_id: u32::default()
-    ///     }
-    /// );
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
     /// assert!(new.get_timestamp().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource(
-    ///     SameSource {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default()
-    ///     }
-    /// );
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
     /// assert!(same_source.get_timestamp().is_some());
     ///
     /// // In case of 3 bytes type.
-    /// let timer_change = MessageHeader::TimerChange(
-    ///     TimerChange {
-    ///         timestamp: Duration::default()
-    ///     }
-    /// );
+    /// let timer_change = MessageHeader::TimerChange(Duration::default().into());
     /// assert!(timer_change.get_timestamp().is_some());
     /// 
     /// // In case of 0 bytes type.
@@ -99,40 +104,18 @@ impl MessageHeader {
     ///
     /// ```rust
     /// use std::time::Duration;
-    /// use sheave_core::messages::headers::{
-    ///     MessageHeader,
-    ///     New,
-    ///     SameSource,
-    ///     TimerChange
-    /// };
+    /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New(
-    ///     New {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default(),
-    ///         message_id: u32::default()
-    ///     }
-    /// );
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
     /// assert!(new.get_message_length().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource(
-    ///     SameSource {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default()
-    ///     }
-    /// );
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
     /// assert!(same_source.get_message_length().is_some());
     ///
     /// // In case of 3 bytes type.
-    /// let timer_change = MessageHeader::TimerChange(
-    ///     TimerChange {
-    ///         timestamp: Duration::default()
-    ///     }
-    /// );
+    /// let timer_change = MessageHeader::TimerChange(Duration::default().into());
     /// assert!(timer_change.get_message_length().is_none());
     ///
     /// // In case of 0 bytes type.
@@ -153,40 +136,18 @@ impl MessageHeader {
     ///
     /// ```rust
     /// use std::time::Duration;
-    /// use sheave_core::messages::headers::{
-    ///     MessageHeader,
-    ///     New,
-    ///     SameSource,
-    ///     TimerChange
-    /// };
+    /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New(
-    ///     New {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default(),
-    ///         message_id: u32::default()
-    ///     }
-    /// );
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
     /// assert!(new.get_message_type().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource(
-    ///     SameSource {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default()
-    ///     }
-    /// );
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
     /// assert!(same_source.get_message_type().is_some());
     ///
     /// // In case of 3 bytes type.
-    /// let timer_change = MessageHeader::TimerChange(
-    ///     TimerChange {
-    ///         timestamp: Duration::default()
-    ///     }
-    /// );
+    /// let timer_change = MessageHeader::TimerChange(Duration::default().into());
     /// assert!(timer_change.get_message_type().is_none());
     ///
     /// // In case of 0 bytes type.
@@ -201,46 +162,24 @@ impl MessageHeader {
     }
 
     /// Gets a message ID.
-    /// All but 11 byte type returns `None`
+    /// All but 11 bytes type returns `None`.
     ///
     /// # Examples
     ///
     /// ```rust
     /// use std::time::Duration;
-    /// use sheave_core::messages::headers::{
-    ///     MessageHeader,
-    ///     New,
-    ///     SameSource,
-    ///     TimerChange
-    /// };
+    /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New(
-    ///     New {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default(),
-    ///         message_id: u32::default()
-    ///     }
-    /// );
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
     /// assert!(new.get_message_id().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource(
-    ///     SameSource {
-    ///         timestamp: Duration::default(),
-    ///         message_length: u32::default(),
-    ///         message_type: u8::default(),
-    ///     }
-    /// );
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
     /// assert!(same_source.get_message_id().is_none());
     ///
     /// // In case of 3 bytes type.
-    /// let timer_change = MessageHeader::TimerChange(
-    ///     TimerChange {
-    ///         timestamp: Duration::default()
-    ///     }
-    /// );
+    /// let timer_change = MessageHeader::TimerChange(Duration::default().into());
     /// assert!(timer_change.get_message_id().is_none());
     ///
     /// // In case of 0 bytes type.

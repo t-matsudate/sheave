@@ -44,22 +44,24 @@ impl<W: AsyncWrite> MessageHeaderWriter<'_, W> {
     }
 
     fn write_new(&mut self, cx: &mut FutureContext<'_>, new: &New) -> Poll<IOResult<()>> {
-        ready!(self.write_timestamp(cx, new.timestamp))?;
-        ready!(self.write_message_length(cx, new.message_length))?;
-        ready!(self.write_message_type(cx, new.message_type))?;
-        ready!(self.write_message_id(cx, new.message_id))?;
+        let (timestamp, message_length, message_type, message_id) = (*new).into();
+        ready!(self.write_timestamp(cx, timestamp))?;
+        ready!(self.write_message_length(cx, message_length))?;
+        ready!(self.write_message_type(cx, message_type))?;
+        ready!(self.write_message_id(cx, message_id))?;
         Poll::Ready(Ok(()))
     }
 
     fn write_same_source(&mut self, cx: &mut FutureContext<'_>, same_source: &SameSource) -> Poll<IOResult<()>> {
-        ready!(self.write_timestamp(cx, same_source.timestamp))?;
-        ready!(self.write_message_length(cx, same_source.message_length))?;
-        ready!(self.write_message_type(cx, same_source.message_type))?;
+        let (timestamp, message_length, message_type) = (*same_source).into();
+        ready!(self.write_timestamp(cx, timestamp))?;
+        ready!(self.write_message_length(cx, message_length))?;
+        ready!(self.write_message_type(cx, message_type))?;
         Poll::Ready(Ok(()))
     }
 
     fn write_timer_change(&mut self, cx: &mut FutureContext<'_>, timer_change: &TimerChange) -> Poll<IOResult<()>> {
-        ready!(self.write_timestamp(cx, timer_change.timestamp))?;
+        ready!(self.write_timestamp(cx, (*timer_change).into()))?;
         Poll::Ready(Ok(()))
     }
 }
@@ -98,12 +100,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 /// };
 /// use rand::random;
 /// use sheave_core::{
-///     messages::headers::{
-///         MessageHeader,
-///         New,
-///         SameSource,
-///         TimerChange
-///     },
+///     messages::headers::MessageHeader,
 ///     writers::write_message_header
 /// };
 ///
@@ -111,14 +108,11 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 /// async fn main() -> IOResult<()> {
 ///     // In case of 11 bytes.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-///     let message_header = MessageHeader::New(
-///         New {
-///             timestamp: Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64),
-///             message_length: min(0x00ffffff, random::<u32>()),
-///             message_type: random::<u8>(),
-///             message_id: random::<u32>()
-///         }
-///     );
+///     let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+///     let message_length = min(0x00ffffff, random::<u32>());
+///     let message_type = random::<u8>();
+///     let message_id = random::<u32>();
+///     let message_header = MessageHeader::New((timestamp, message_length, message_type, message_id).into());
 ///     write_message_header(writer.as_mut(), &message_header).await?;
 ///     let mut written: [u8; 4] = [0; 4];
 ///     written[1..].copy_from_slice(&writer[..3]);
@@ -137,13 +131,10 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///
 ///     // In case of 7 bytes.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-///     let message_header = MessageHeader::SameSource(
-///         SameSource {
-///             timestamp: Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64),
-///             message_length: min(0x00ffffff, random::<u32>()),
-///             message_type: random::<u8>()
-///         }
-///     );
+///     let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+///     let message_length = min(0x00ffffff, random::<u32>());
+///     let message_type = random::<u8>();
+///     let message_header = MessageHeader::SameSource((timestamp, message_length, message_type).into());
 ///     write_message_header(writer.as_mut(), &message_header).await?;
 ///     let mut written: [u8; 4] = [0; 4];
 ///     written[1..].copy_from_slice(&writer[..3]);
@@ -158,11 +149,8 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///
 ///     // In case of 3 bytes.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-///     let message_header = MessageHeader::TimerChange(
-///         TimerChange {
-///             timestamp: Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64)
-///         }
-///     );
+///     let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+///     let message_header = MessageHeader::TimerChange(timestamp.into());
 ///     write_message_header(writer.as_mut(), &message_header).await?;
 ///     let mut written: [u8; 4] = [0; 4];
 ///     written[1..].copy_from_slice(&writer[..3]);
@@ -194,14 +182,11 @@ mod tests {
     #[tokio::test]
     async fn write_new() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let message_header = MessageHeader::New(
-            New {
-                timestamp: Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64),
-                message_length: min(0x00ffffff, random::<u32>()),
-                message_type: random::<u8>(),
-                message_id: random::<u32>()
-            }
-        );
+        let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+        let message_length = min(0x00ffffff, random::<u32>());
+        let message_type = random::<u8>();
+        let message_id = random::<u32>();
+        let message_header = MessageHeader::New((timestamp, message_length, message_type, message_id).into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
         assert!(result.is_ok());
         let mut written: [u8; 4] = [0; 4];
@@ -223,13 +208,10 @@ mod tests {
     #[tokio::test]
     async fn write_same_source() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let message_header = MessageHeader::SameSource(
-            SameSource {
-                timestamp: Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64),
-                message_length: min(0x00ffffff, random::<u32>()),
-                message_type: random::<u8>()
-            }
-        );
+        let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+        let message_length = min(0x00ffffff, random::<u32>());
+        let message_type = random::<u8>();
+        let message_header = MessageHeader::SameSource((timestamp, message_length, message_type).into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
         assert!(result.is_ok());
         let mut written: [u8; 4] = [0; 4];
@@ -247,11 +229,8 @@ mod tests {
     #[tokio::test]
     async fn write_timer_change() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let message_header = MessageHeader::TimerChange(
-            TimerChange {
-                timestamp: Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64)
-            }
-        );
+        let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+        let message_header = MessageHeader::TimerChange(timestamp.into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
         assert!(result.is_ok());
         let mut written: [u8; 4] = [0; 4];
