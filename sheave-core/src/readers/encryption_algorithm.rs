@@ -39,10 +39,7 @@ impl<R: AsyncRead> Future for EncryptionAlgorithmReader<'_, R> {
 /// ```rust
 /// use std::{
 ///     io::Result as IOResult,
-///     pin::{
-///         Pin,
-///         pin
-///     }
+///     pin::pin
 /// };
 /// use sheave_core::{
 ///     handshake::EncryptionAlgorithm::*,

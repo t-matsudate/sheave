@@ -39,10 +39,7 @@ impl<R: AsyncRead> Future for HandshakeReader<'_, R> {
 /// ```rust
 /// use std::{
 ///     io::Result as IOResult,
-///     pin::{
-///         Pin,
-///         pin
-///     },
+///     pin::pin,
 ///     time::Duration,
 /// };
 /// use rand::{
