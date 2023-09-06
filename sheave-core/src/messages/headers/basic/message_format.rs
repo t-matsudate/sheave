@@ -1,6 +1,6 @@
 /// The first 2 bits to indicate a format of message header.
 ///
-/// Varitnats correspond to respectively formats:
+/// Variants correspond to respectively formats:
 ///
 /// |Pattern|Format(length)|
 /// | :- | :- |
