@@ -9,7 +9,7 @@
 /// |`TimerChange`|3 bytes|
 /// |`Continue`|0 bytes|
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageFormat {
     New,
     SameSource,
