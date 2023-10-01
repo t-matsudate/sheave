@@ -163,8 +163,8 @@ impl Decoder<Boolean> for ByteBuffer {
     /// assert!(Decoder::<Boolean>::decode(&mut buffer).is_err())
     /// ```
     ///
-    /// [`InsufficientBufferLength`]: crate::errors::InsufficientBufferLength
-    /// [`InconsistentMarker`]: crate::errors::InconsistentMarker
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
+    /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     fn decode(&mut self) -> IOResult<Boolean> {
         self.get_u8().and_then(
             |marker| ensure_marker(Marker::Boolean as u8, marker)

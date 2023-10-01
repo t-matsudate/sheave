@@ -122,10 +122,10 @@ impl Decoder<Connect> for ByteBuffer {
     /// assert!(Decoder::<Connect>::decode(&mut buffer).is_err())
     /// ```
     ///
-    /// [`InsufficientBufferLength`]: crate::errors::InsufficientBufferLength
-    /// [`InconsistentMarker`]: crate::errors::InconsistentMarker
-    /// [`InvalidString`]: crate::errors::InvalidString
-    /// [`InconsistentCommand`]: crate::errors::InconsistentCommand
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
+    /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
+    /// [`InvalidString`]: crate::messages::amf::InvalidString
+    /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<Connect> {
         Decoder::<AmfString>::decode(self).and_then(
             |command| ensure_command_name("connect", command)

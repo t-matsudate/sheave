@@ -252,8 +252,8 @@ impl Decoder<Number> for ByteBuffer {
     /// assert!(Decoder::<Number>::decode(&mut buffer).is_err())
     /// ```
     ///
-    /// [`InsufficientBufferLength`]: crate::errors::InsufficientBufferLength
-    /// [`InconsistentMarker`]: crate::errors::InconsistentMarker
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
+    /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     fn decode(&mut self) -> IOResult<Number> {
         self.get_u8().and_then(
             |marker| ensure_marker(Marker::Number as u8, marker)

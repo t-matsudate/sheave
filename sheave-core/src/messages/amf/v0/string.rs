@@ -237,9 +237,9 @@ impl Decoder<AmfString> for ByteBuffer {
     /// assert!(Decoder::<AmfString>::decode(&mut buffer).is_err())
     /// ```
     ///
-    /// [`InsufficientBufferLength`]: crate::errors::InsufficientBufferLength
-    /// [`InconsistentMarker`]: crate::errors::InconsistentMarker
-    /// [`InvalidString`]: crate::errors::InvalidString
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
+    /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
+    /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<AmfString> {
         self.get_u8().and_then(
             |marker| ensure_marker(Marker::AmfString as u8, marker)
