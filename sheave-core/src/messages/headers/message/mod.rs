@@ -1,9 +1,11 @@
+mod message_type;
 mod new;
 mod same_source;
 mod timer_change;
 
 use std::time::Duration;
 pub use self::{
+    message_type::MessageType,
     new::New,
     same_source::SameSource,
     timer_change::TimerChange
@@ -43,10 +45,10 @@ use MessageHeader::*;
 /// use std::time::Duration;
 /// use sheave_core::messages::headers::MessageHeader;
 ///
-/// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
+/// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default().into(), u32::default()).into());
 /// assert!(new.get_message_id().is_some());
 ///
-/// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
+/// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default().into()).into());
 /// assert!(same_source.get_message_id().is_none());
 ///
 /// let timer_change = MessageHeader::TimerChange(Duration::default().into());
@@ -74,11 +76,11 @@ impl MessageHeader {
     /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default().into(), u32::default()).into());
     /// assert!(new.get_timestamp().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default().into()).into());
     /// assert!(same_source.get_timestamp().is_some());
     ///
     /// // In case of 3 bytes type.
@@ -107,11 +109,11 @@ impl MessageHeader {
     /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default().into(), u32::default()).into());
     /// assert!(new.get_message_length().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default().into()).into());
     /// assert!(same_source.get_message_length().is_some());
     ///
     /// // In case of 3 bytes type.
@@ -139,11 +141,11 @@ impl MessageHeader {
     /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default().into(), u32::default()).into());
     /// assert!(new.get_message_type().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default().into()).into());
     /// assert!(same_source.get_message_type().is_some());
     ///
     /// // In case of 3 bytes type.
@@ -153,7 +155,7 @@ impl MessageHeader {
     /// // In case of 0 bytes type.
     /// assert!(MessageHeader::Continue.get_message_type().is_none())
     /// ```
-    pub fn get_message_type(&self) -> Option<u8> {
+    pub fn get_message_type(&self) -> Option<MessageType> {
         match *self {
             New(new) => Some(new.message_type),
             SameSource(same_source) => Some(same_source.message_type),
@@ -171,11 +173,11 @@ impl MessageHeader {
     /// use sheave_core::messages::headers::MessageHeader;
     ///
     /// // In case of 11 bytes type.
-    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default(), u32::default()).into());
+    /// let new = MessageHeader::New((Duration::default(), u32::default(), u8::default().into(), u32::default()).into());
     /// assert!(new.get_message_id().is_some());
     ///
     /// // In case of 7 bytes type.
-    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default()).into());
+    /// let same_source = MessageHeader::SameSource((Duration::default(), u32::default(), u8::default().into()).into());
     /// assert!(same_source.get_message_id().is_none());
     ///
     /// // In case of 3 bytes type.

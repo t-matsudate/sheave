@@ -18,7 +18,8 @@ use crate::messages::headers::{
     New,
     SameSource,
     TimerChange,
-    MessageFormat
+    MessageFormat,
+    MessageType
 };
 
 #[doc(hidden)]
@@ -43,11 +44,11 @@ impl<R: AsyncRead> MessageHeaderReader<'_, R> {
         Poll::Ready(Ok(u32::from_be_bytes(message_length_bytes)))
     }
 
-    fn read_message_type(&mut self, cx: &mut FutureContext<'_>) -> Poll<IOResult<u8>> {
+    fn read_message_type(&mut self, cx: &mut FutureContext<'_>) -> Poll<IOResult<MessageType>> {
         let mut message_type_byte: [u8; 1] = [0; 1];
         let mut buf = ReadBuf::new(&mut message_type_byte);
         ready!(self.reader.as_mut().poll_read(cx, &mut buf))?;
-        Poll::Ready(Ok(u8::from_be_bytes(message_type_byte)))
+        Poll::Ready(Ok(u8::from_be_bytes(message_type_byte).into()))
     }
 
     fn read_message_id(&mut self, cx: &mut FutureContext<'_>) -> Poll<IOResult<u32>> {
@@ -106,7 +107,8 @@ impl<R: AsyncRead> Future for MessageHeaderReader<'_, R> {
 /// use sheave_core::{
 ///     messages::headers::{
 ///         MessageHeader,
-///         MessageFormat::*
+///         MessageFormat::*,
+///         MessageType
 ///     },
 ///     readers::read_message_header
 /// };
@@ -126,7 +128,7 @@ impl<R: AsyncRead> Future for MessageHeaderReader<'_, R> {
 ///     let result = read_message_header(pin!(reader.as_slice()), New).await?;
 ///     assert_eq!(Duration::from_millis(timestamp as u64), result.get_timestamp().unwrap());
 ///     assert_eq!(message_length, result.get_message_length().unwrap());
-///     assert_eq!(message_type, result.get_message_type().unwrap());
+///     assert_eq!(MessageType::from(message_type), result.get_message_type().unwrap());
 ///     assert_eq!(message_id, result.get_message_id().unwrap());
 ///
 ///     // In case of 7 bytes.
@@ -140,7 +142,7 @@ impl<R: AsyncRead> Future for MessageHeaderReader<'_, R> {
 ///     let result = read_message_header(pin!(reader.as_slice()), SameSource).await?;
 ///     assert_eq!(Duration::from_millis(timestamp as u64), result.get_timestamp().unwrap());
 ///     assert_eq!(message_length, result.get_message_length().unwrap());
-///     assert_eq!(message_type, result.get_message_type().unwrap());
+///     assert_eq!(MessageType::from(message_type), result.get_message_type().unwrap());
 ///
 ///     // In case of 3 bytes.
 ///     let mut reader: [u8; 3] = [0; 3];
@@ -189,7 +191,7 @@ mod tests {
         assert!(message_header.get_message_id().is_some());
         assert_eq!(Duration::from_millis(timestamp as u64), message_header.get_timestamp().unwrap());
         assert_eq!(message_length, message_header.get_message_length().unwrap());
-        assert_eq!(message_type, message_header.get_message_type().unwrap());
+        assert_eq!(MessageType::from(message_type), message_header.get_message_type().unwrap());
         assert_eq!(message_id, message_header.get_message_id().unwrap())
     }
 
@@ -210,7 +212,7 @@ mod tests {
         assert!(message_header.get_message_type().is_some());
         assert_eq!(Duration::from_millis(timestamp as u64), message_header.get_timestamp().unwrap());
         assert_eq!(message_length, message_header.get_message_length().unwrap());
-        assert_eq!(message_type, message_header.get_message_type().unwrap())
+        assert_eq!(MessageType::from(message_type), message_header.get_message_type().unwrap())
     }
 
     #[tokio::test]

@@ -14,7 +14,8 @@ use crate::messages::headers::{
     MessageHeader,
     New,
     SameSource,
-    TimerChange
+    TimerChange,
+    MessageType
 };
 
 #[doc(hidden)]
@@ -35,8 +36,8 @@ impl<W: AsyncWrite> MessageHeaderWriter<'_, W> {
         self.writer.as_mut().poll_write(cx, &message_length.to_be_bytes()[1..]).map_ok(|_| ())
     }
 
-    fn write_message_type(&mut self, cx: &mut FutureContext<'_>, message_type: u8) -> Poll<IOResult<()>> {
-        self.writer.as_mut().poll_write(cx, &message_type.to_be_bytes()).map_ok(|_| ())
+    fn write_message_type(&mut self, cx: &mut FutureContext<'_>, message_type: MessageType) -> Poll<IOResult<()>> {
+        self.writer.as_mut().poll_write(cx, &u8::from(message_type).to_be_bytes()).map_ok(|_| ())
     }
 
     fn write_message_id(&mut self, cx: &mut FutureContext<'_>, message_id: u32) -> Poll<IOResult<()>> {
@@ -100,7 +101,10 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 /// };
 /// use rand::random;
 /// use sheave_core::{
-///     messages::headers::MessageHeader,
+///     messages::headers::{
+///         MessageHeader,
+///         MessageType
+///     },
 ///     writers::write_message_header
 /// };
 ///
@@ -110,7 +114,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
 ///     let message_length = min(0x00ffffff, random::<u32>());
-///     let message_type = random::<u8>();
+///     let message_type: MessageType = random::<u8>().into();
 ///     let message_id = random::<u32>();
 ///     let message_header = MessageHeader::New((timestamp, message_length, message_type, message_id).into());
 ///     write_message_header(writer.as_mut(), &message_header).await?;
@@ -122,7 +126,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///     written[1..].copy_from_slice(&writer[3..6]);
 ///     let message_length = u32::from_be_bytes(written);
 ///     assert_eq!(message_length, message_header.get_message_length().unwrap());
-///     let message_type = writer[6];
+///     let message_type: MessageType = writer[6].into();
 ///     assert_eq!(message_type, message_header.get_message_type().unwrap());
 ///     let mut written: [u8; 4] = [0; 4];
 ///     written.copy_from_slice(&writer[7..]);
@@ -133,7 +137,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
 ///     let message_length = min(0x00ffffff, random::<u32>());
-///     let message_type = random::<u8>();
+///     let message_type: MessageType = random::<u8>().into();
 ///     let message_header = MessageHeader::SameSource((timestamp, message_length, message_type).into());
 ///     write_message_header(writer.as_mut(), &message_header).await?;
 ///     let mut written: [u8; 4] = [0; 4];
@@ -144,7 +148,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///     written[1..].copy_from_slice(&writer[3..6]);
 ///     let message_length = u32::from_be_bytes(written);
 ///     assert_eq!(message_length, message_header.get_message_length().unwrap());
-///     let message_type = writer[6];
+///     let message_type: MessageType = writer[6].into();
 ///     assert_eq!(message_type, message_header.get_message_type().unwrap());
 ///
 ///     // In case of 3 bytes.
@@ -186,7 +190,7 @@ mod tests {
         let message_length = min(0x00ffffff, random::<u32>());
         let message_type = random::<u8>();
         let message_id = random::<u32>();
-        let message_header = MessageHeader::New((timestamp, message_length, message_type, message_id).into());
+        let message_header = MessageHeader::New((timestamp, message_length, message_type.into(), message_id).into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
         assert!(result.is_ok());
         let mut written: [u8; 4] = [0; 4];
@@ -198,7 +202,7 @@ mod tests {
         let message_length = u32::from_be_bytes(written);
         assert_eq!(message_length, message_header.get_message_length().unwrap());
         let message_type = writer[6];
-        assert_eq!(message_type, message_header.get_message_type().unwrap());
+        assert_eq!(MessageType::from(message_type), message_header.get_message_type().unwrap());
         let mut written: [u8; 4] = [0; 4];
         written.copy_from_slice(&writer[7..]);
         let message_id = u32::from_le_bytes(written);
@@ -211,7 +215,7 @@ mod tests {
         let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
         let message_length = min(0x00ffffff, random::<u32>());
         let message_type = random::<u8>();
-        let message_header = MessageHeader::SameSource((timestamp, message_length, message_type).into());
+        let message_header = MessageHeader::SameSource((timestamp, message_length, message_type.into()).into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
         assert!(result.is_ok());
         let mut written: [u8; 4] = [0; 4];
@@ -223,7 +227,7 @@ mod tests {
         let message_length = u32::from_be_bytes(written);
         assert_eq!(message_length, message_header.get_message_length().unwrap());
         let message_type = writer[6];
-        assert_eq!(message_type, message_header.get_message_type().unwrap())
+        assert_eq!(MessageType::from(message_type), message_header.get_message_type().unwrap())
     }
 
     #[tokio::test]

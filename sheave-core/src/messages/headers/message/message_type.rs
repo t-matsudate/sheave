@@ -1,0 +1,31 @@
+/// Representation of message type id byte of the Message header.
+///
+/// Variants correspond to respectively following numbers:
+///
+/// |Pattern|Number|
+/// | :- | :- |
+/// |`Command`|`20`|
+/// |`Other`|other numbers|
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MessageType {
+    Command = 20,
+    Other = 0xff
+}
+
+impl From<u8> for MessageType {
+    fn from(message_type: u8) -> Self {
+        use MessageType::*;
+
+        match message_type {
+            20 => Command,
+            _ => Other
+        }
+    }
+}
+
+impl From<MessageType> for u8 {
+    fn from(message_type: MessageType) -> Self {
+        message_type as u8
+    }
+}
