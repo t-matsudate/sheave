@@ -16,7 +16,7 @@
 //! |Transaction ID|`Number`|`1`|
 //! |Command Object|`Object`|See [Command Object](#command-object).|
 //!
-//! In the command message, we negotiate by using the Action Message Format (v0).
+//! In the command message, we negotiate by using [the Action Message Format (v0)].
 //!
 //! <h3><a id="command-object">Command Object</a></h3>
 //!
@@ -39,7 +39,7 @@
 //! Note: Something not in above can be exchanged.
 //!
 //! Every chunk has the chunk headers.
-//! See `sheave_core::messages::headers` about them.
+//! See [`sheave_core::messages::headers`] about them.
 //!
 //! [the Action Message Format (v0)]: amf::v0
 //! [`sheave_core::messages::headers`]: headers

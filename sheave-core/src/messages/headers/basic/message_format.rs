@@ -3,7 +3,7 @@
 /// Variants correspond to respectively formats:
 ///
 /// |Pattern|Format(length)|
-/// | :- | :- |
+/// | :- | -: |
 /// |`New`|11 bytes|
 /// |`SameSource`|7 bytes|
 /// |`TimerChange`|3 bytes|

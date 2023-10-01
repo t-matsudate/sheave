@@ -5,10 +5,10 @@
 //!
 //! |Marker|AMF Data Type|Description|
 //! | -: | :- | :- |
-//! |`0`|`Number`|The IEEE 754 double precision floating point number.|
+//! |`0`|[`Number`]|The IEEE 754 double precision floating point number.|
 //! |`1`|`Boolean`|The boolean that is represented as a 1 byte data. (C-like)|
-//! |`2`|`AmfString`|The string that is limited its length the range of 2 bytes.|
-//! |`3`|`Object`|The key/value-paired object that its value type is flexible.|
+//! |`2`|[`AmfString`]|The string that is limited its length the range of 2 bytes.|
+//! |`3`|[`Object`]|The key/value-paired object that its value type is flexible.|
 //! |`9`|Object End|Indicates a stream of object terminaites there.|
 //!
 //! These are checked whether matched its marker with an actual data, by the receiver-side.
@@ -16,25 +16,25 @@
 //! Note that a marker of the Object End must appear only in AMF's Object.
 //! Following descriptions are the actual formats of AMF.
 //!
-//! ## `Number`
+//! ## [`Number`]
 //!
-//! 1. `Marker` (1 byte)
+//! 1. [`Marker`] (1 byte)
 //! 2. An IEEE 754 double precision value (8 bytes)
 //!
-//! ## `Boolean`
+//! ## [`Boolean`]
 //!
 //! 1. `Marker` (1 byte)
 //! 2. A boolean value (1 byte)
 //!
-//! ## `String`
+//! ## [`String`]
 //!
-//! 1. `Marker` (1 byte)
+//! 1. [`Marker`] (1 byte)
 //! 2. Length (2 bytes)
 //! 3. UTF-8 characters (variable)
 //!
-//! ## `Object`
+//! ## [`Object`]
 //!
-//! 1. `Marker` (1 byte)
+//! 1. [`Marker`] (1 byte)
 //! 2. Arbitrary number key-value pairs (variable)
 //! 3. The Object End marker that is associated with an empty string.
 //!
@@ -44,15 +44,15 @@
 //! Next, values are limited just in the AMF data types.
 //! Currently, following AMF data types to be used in the RTMP are allowed to insert into the AMF Object type:
 //!
-//! * `Number`
-//! * `Boolean`
-//! * `AmfString`
-//! * `Object`
+//! * [`Number`]
+//! * [`Boolean`]
+//! * [`AmfString`]
+//! * [`Object`]
 //!
-//! [`Marker`]: Marker
-//! [`Number`]: Number
-//! [`Boolean`]: Boolean
-//! [`AmfString`]: AmfString
+//! [`Marker`]: self::Marker
+//! [`Number`]: self::Number
+//! [`Boolean`]: self::Boolean
+//! [`AmfString`]: self::AmfString
 
 mod number;
 mod boolean;

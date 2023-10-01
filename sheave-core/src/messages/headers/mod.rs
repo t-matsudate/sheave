@@ -24,7 +24,7 @@
 //!  This must be depended its format on a value in the basic header.
 //!  That is, the message header has following correspondence with the basic header:
 //!
-//!  |Value in the basic header|Format of the message header|
+//!  |Number|Expected Format|
 //!  | -: | -: |
 //!  |`0`|11 bytes|
 //!  |`1`|7 bytes|
