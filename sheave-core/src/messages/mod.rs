@@ -32,7 +32,7 @@
 //! |fpad|`Boolean`|Whether a proxy is used.|
 //! |audioCodecs|`Number`|Supported audio codecs.|
 //! |videoCodecs|`Number`|Supported video codecs.|
-//! |videoFunctions|[`Number`]|Supported video functions.|
+//! |videoFunctions|`Number`|Supported video functions.|
 //! |pageUrl|`String`|The URL of web page which SWF file is loaded.|
 //! |objectEncoding|`Number`|A version of the Action Message Format.|
 //!
