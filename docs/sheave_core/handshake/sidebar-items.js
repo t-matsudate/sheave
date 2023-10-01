@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["EncryptionAlgorithm"],"struct":["Handshake","Version"]};
