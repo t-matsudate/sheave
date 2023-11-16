@@ -200,7 +200,24 @@ impl Handshake {
         hmac.finalize()
     }
 
-    fn get_digest(&self, encryption_algorithm: EncryptionAlgorithm) -> &[u8] {
+    /// Gets a digest contained in this handshake bytes.
+    /// Note its place is different by whether encrypts handshake bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::time::Instant;
+    /// use sheave_core::handshake::{
+    ///     EncryptionAlgorithm,
+    ///     Handshake,
+    ///     Version
+    /// };
+    ///
+    /// let handshake = Handshake::new(Instant::now().duration(), Version::LATEST_CLIENT);
+    ///
+    /// assert_ne!(handshake.get_digest(EncryptionAlgorithm::NotEncrypted), handshake.get_digest(EncryptionAlgorithm::DiffieHellman))
+    /// ```
+    pub fn get_digest(&self, encryption_algorithm: EncryptionAlgorithm) -> &[u8] {
         let digest_position = self.get_digest_position(encryption_algorithm);
         &self.0[digest_position..(digest_position + HmacSha256::output_size())]
     }
@@ -279,7 +296,8 @@ impl Handshake {
         hmac.finalize()
     }
 
-    fn get_signature(&self) -> &[u8] {
+    /// Gets a signature contained into this handshake bytes.
+    pub fn get_signature(&self) -> &[u8] {
         let signature_position = self.get_signature_position();
         &self.0[signature_position..]
 
