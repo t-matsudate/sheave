@@ -1,2 +1,15 @@
 [workspace]
-members = ["sheave-core"]
+resolver = "2"
+members = [
+    "sheave-core",
+    "sheave-client",
+    "sheave-server",
+    "sheave-integration-tests"
+]
+
+[workspace.dependencies]
+bytes = "1.5.0"
+clap = { version = "4.4.8", features = ["derive"] }
+futures = "0.3.29"
+pin-project-lite = "0.2.13"
+tokio = {version = "1.34.0", features = ["full"]}
