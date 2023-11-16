@@ -239,6 +239,12 @@ impl TryFrom<StdStream> for RtmpStream {
     }
 }
 
+impl From<TokioStream> for RtmpStream {
+    fn from(tokio_stream: TokioStream) -> Self {
+        Self::new(tokio_stream)
+    }
+}
+
 impl AsyncRead for RtmpStream {
     /// Same as Tokio's TcpStream except awaits until gets something result.
     /// [Read more](https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html#tymethod.poll_read)
@@ -311,8 +317,8 @@ impl Debug for RtmpStream {
 
 #[cfg(unix)]
 mod sys {
-    use super::RtmpStream;
     use std::os::unix::prelude::*;
+    use super::RtmpStream;
 
     impl AsRawFd for RtmpStream {
         fn as_raw_fd(&self) -> RawFd {
@@ -320,7 +326,6 @@ mod sys {
         }
     }
 
-    #[cfg(not(tokio_no_as_fd))]
     impl AsFd for RtmpStream {
         fn as_fd(&self) -> BorrowedFd<'_> {
             self.tokio_stream.as_fd()
@@ -333,12 +338,9 @@ mod sys {
 mod sys {
     use tokio::os::windows::io::{
         AsRawSocket,
-        Rawsocket
-    };
-    #[cfg(not(tokio_no_as_fd))]
-    use tokio::os::windows::io::{
         AsSocket,
-        BorrowedSocket
+        BorrowedSocket,
+        Rawsocket
     };
     use super::RtmpStream;
 
@@ -348,7 +350,6 @@ mod sys {
         }
     }
 
-    #[cfg(not(tokio_no_as_fd))]
     impl AsSocket for RtmpStream {
         fn as_sokcet(&self) -> BorrowedSocket<'_> {
             self.tokio_stream.as_socket()
@@ -356,10 +357,10 @@ mod sys {
     }
 }
 
-#[cfg(all(tokio_unstable, tokio_wasi))]
+#[cfg(all(tokio_unstable, target_os = "wasi"))]
 mod sys {
-    use super::RtmpStream;
     use std::os::wasi::prelude::*;
+    use super::RtmpStream;
 
     impl AsRawFd for RtmpStream {
         fn as_raw_fd(&self) -> RawFd {
@@ -367,7 +368,6 @@ mod sys {
         }
     }
 
-    #[cfg(not(tokio_no_as_fd))]
     impl AsFd for RtmpStream {
         fn as_fd(&self) -> BorrowedFd<'_> {
             self.tokio_stream.as_fd()
