@@ -5,6 +5,7 @@ use std::{
         OsStr,
         OsString
     },
+    io::Error as IOError,
     str::FromStr
 };
 use clap::{
@@ -26,7 +27,7 @@ pub enum Protocol {
 }
 
 impl Protocol {
-    const AVAILABLE_PROTOCOLS: &[Self] = &[
+    const AVAILABLE_PROTOCOLS: &'static [Self] = &[
         Self::Rtmp
     ];
 }
