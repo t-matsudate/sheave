@@ -114,12 +114,12 @@ pub struct Handshake([u8; 1536]);
 
 impl Handshake {
     /// The key which is used to imprint ant client-side digest.
-    pub const CLIENT_KEY: &[u8] = b"Genuine Adobe Flash Player 001";
+    pub const CLIENT_KEY: &'static [u8] = b"Genuine Adobe Flash Player 001";
     /// The key which is used to imprint any server-side digest.
-    pub const SERVER_KEY: &[u8] = b"Genuine Adobe Flash Media Server 001";
+    pub const SERVER_KEY: &'static [u8] = b"Genuine Adobe Flash Media Server 001";
     /// The key which is used to imprint any signature.
     /// Both sides are required to contain this into a key of signature.
-    pub const COMMON_KEY: &[u8] = &[
+    pub const COMMON_KEY: &'static [u8] = &[
         0xF0, 0xEE, 0xC2, 0x4A, 0x80, 0x68, 0xBE, 0xE8, 0x2E, 0x00, 0xD0, 0xD1, 0x02, 0x9E, 0x7E, 0x57, 0x6E, 0xEC, 0x5D, 0x2D, 0x29, 0x80, 0x6F, 0xAB, 0x93, 0xB8, 0xE6, 0x36, 0xCF, 0xEB, 0x31, 0xAE
     ];
 
