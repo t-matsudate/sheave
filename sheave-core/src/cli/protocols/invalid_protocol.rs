@@ -30,9 +30,9 @@ impl Display for InvalidProtocol {
 impl Error for InvalidProtocol {}
 
 /// A utility funciton for wrapping the error `InvalidProtocol` into `::std::io::Error`.
-pub fn invalid_protocol(protocol: &str) -> IOError {
+pub fn invalid_protocol(protocol: String) -> IOError {
     IOError::new(
         ErrorKind::InvalidInput,
-        InvalidProtocol::new(protocol.to_string())
+        InvalidProtocol::new(protocol)
     )
 }
