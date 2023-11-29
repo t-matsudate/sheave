@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::handshake::{
     EncryptionAlgorithm,
     Handshake
@@ -26,6 +27,10 @@ pub struct RtmpContext {
 }
 
 impl RtmpContext {
+    pub fn make_weak_mut<'a>(self: &'a Arc<Self>) -> &'a mut Self {
+        unsafe { &mut *(Arc::downgrade(self).as_ptr() as *mut RtmpContext) }
+    }
+
     /// Stores a flag to mean this handshake is signed.
     pub fn set_signed(&mut self, signed: bool) {
         self.signed = signed;
