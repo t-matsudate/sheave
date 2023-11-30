@@ -1,0 +1,27 @@
+name: Testing
+on: push
+jobs:
+  testing:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.74.0
+      - id: test-core
+        name: Test the core crate
+        run: |
+          cargo update
+          cargo test -p sheave-core
+      - id: check-server
+        name: Cargo check to the server crate
+        run: cargo check -p sheave-server
+      - id: check-client
+        name: Cargo check to the client crate
+        run: cargo check -p sheave-client
+      - id: integration-tests
+        name: Integration Tests
+        run: cargo test -p sheave-integration-tests
