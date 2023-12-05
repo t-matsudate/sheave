@@ -52,16 +52,10 @@ impl RtmpContext {
     /// # Examples
     ///
     /// ```rust
-    /// use std::panic::catch_unwind;
+    /// use sheave_core::handlers::RtmpContext;
     ///
-    /// assert!(
-    ///     catch_unwind(
-    ///         || {
-    ///             use sheave_core::handlers::RtmpContext;
-    ///             RtmpContext::default().get_encryption_algorithm().unwrap()
-    ///         }
-    ///     ).is_err()
-    /// )
+    /// let rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_encryption_algorithm().is_none())
     /// ```
     pub fn get_encryption_algorithm(&self) -> Option<EncryptionAlgorithm> {
         self.encryption_algorithm
@@ -78,17 +72,10 @@ impl RtmpContext {
     /// # Examples
     ///
     /// ```rust
-    /// use std::panic::catch_unwind;
+    /// use sheave_core::handlers::RtmpContext;
     ///
-    /// assert!(
-    ///     catch_unwind(
-    ///         || {
-    ///             use sheave_core::handlers::RtmpContext;
-    ///
-    ///             RtmpContext::default().get_client_handshake().unwrap()
-    ///         }
-    ///     ).is_err()
-    /// )
+    /// let rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_client_handshake().is_none())
     /// ```
     pub fn get_client_handshake(&self) -> Option<&Handshake> {
         self.client_handshake.as_ref()
@@ -103,18 +90,10 @@ impl RtmpContext {
     /// # Examples
     ///
     /// ```rust
-    /// use std::panic::catch_unwind;
+    /// use sheave_core::handlers::RtmpContext;
     ///
-    /// assert!(
-    ///     catch_unwind(
-    ///         || {
-    ///             use sheave_core::handlers::RtmpContext;
-    ///
-    ///             let mut rtmp_context = RtmpContext::default();
-    ///             rtmp_context.get_client_handshake_mut().unwrap()
-    ///         }
-    ///     ).is_err()
-    /// )
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_client_handshake_mut().is_none())
     /// ```
     pub fn get_client_handshake_mut(&mut self) -> Option<&mut Handshake> {
         self.client_handshake.as_mut()
@@ -131,17 +110,10 @@ impl RtmpContext {
     /// # Examples
     ///
     /// ```rust
-    /// use std::panic::catch_unwind;
+    /// use sheave_core::handlers::RtmpContext;
     ///
-    /// assert!(
-    ///     catch_unwind(
-    ///         || {
-    ///             use sheave_core::handlers::RtmpContext;
-    ///
-    ///             RtmpContext::default().get_server_handshake().unwrap()
-    ///         }
-    ///     ).is_err()
-    /// )
+    /// let rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_server_handshake().is_none())
     /// ```
     pub fn get_server_handshake(&self) -> Option<&Handshake> {
         self.server_handshake.as_ref()
