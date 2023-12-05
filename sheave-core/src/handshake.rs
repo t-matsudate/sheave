@@ -213,7 +213,7 @@ impl Handshake {
     ///     Version
     /// };
     ///
-    /// let handshake = Handshake::new(Instant::now().duration(), Version::LATEST_CLIENT);
+    /// let handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
     ///
     /// assert_ne!(handshake.get_digest(EncryptionAlgorithm::NotEncrypted), handshake.get_digest(EncryptionAlgorithm::DiffieHellman))
     /// ```
