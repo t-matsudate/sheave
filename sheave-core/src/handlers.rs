@@ -71,16 +71,20 @@ pub use self::{
 /// #[tokio::main]
 /// async fn main() -> IOResult<()> {
 ///     // Consider this is Tokio's `JoinHandle` which is run on `main`.
-///     poll_fn::(
+///     poll_fn(
 ///         |cx| {
-///             use std::sync::Arc;
+///             use std::{
+///                 pin::pin,
+///                 sync::Arc
+///             };
 ///             use sheave_core::handlers::{
+///                 AsyncHandler,
 ///                 VecStream,
 ///                 StreamWrapper
 ///             };
 ///
 ///             let stream = Arc::new(StreamWrapper::new(VecStream::default()));
-///             SomethingHandler(stream.make_weak_pin()).poll_handle(cx, &mut RtmpContext::default())
+///             pin!(SomethingHandler(stream.make_weak_pin())).poll_handle(cx, &mut RtmpContext::default())
 ///         }
 ///     ).await
 /// }
@@ -117,11 +121,9 @@ pub trait AsyncHandlerExt: AsyncHandler {
     ///     AsyncRead,
     ///     AsyncWrite
     /// };
-    /// use sheave_core::{
-    ///     handlers::{
-    ///         AsyncHandler,
-    ///         RtmpContext
-    ///     }
+    /// use sheave_core::handlers::{
+    ///     AsyncHandler,
+    ///     RtmpContext
     /// };
     ///
     /// struct HandlerA<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
@@ -145,16 +147,21 @@ pub trait AsyncHandlerExt: AsyncHandler {
     /// async fn main() -> IOResult<()> {
     ///     poll_fn(
     ///         |cx| {
-    ///             use std::sync::Arc,
+    ///             use std::{
+    ///                 pin::pin,
+    ///                 sync::Arc
+    ///             };
     ///             use sheave_core::handlers::{
+    ///                 AsyncHandler,
     ///                 AsyncHandlerExt,
     ///                 StreamWrapper,
     ///                 VecStream
     ///             };
     ///
     ///             let stream = Arc::new(StreamWrapper::new(VecStream::default()));
-    ///             HandlerA(stream.make_weak_pin()).chain(
-    ///                 HandlerB(stream.make_weak_pin())
+    ///             pin!(
+    ///                 HandlerA(stream.make_weak_pin())
+    ///                     .chain(HandlerB(stream.make_weak_pin()))
     ///             ).poll_handle(cx, &mut RtmpContext::default())
     ///         }
     ///     ).await
