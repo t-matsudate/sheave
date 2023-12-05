@@ -60,7 +60,7 @@ impl Error for InconsistentSha {}
 ///     let mut handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
 ///     handshake.imprint_digest(EncryptionAlgorithm::NotEncrypted, Handshake::CLIENT_KEY);
 ///     if !handshake.did_digest_match(EncryptionAlgorithm::NotEncrypted, Handshake::CLIENT_KEY) {
-///         return Err(inconsistent_sha(handshake.get_digest().to_vec()))
+///         return Err(inconsistent_sha(handshake.get_digest(EncryptionAlgorithm::NotEncrypted).to_vec()))
 ///     }
 ///
 ///     Ok(())
