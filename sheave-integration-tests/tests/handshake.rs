@@ -85,7 +85,7 @@ async fn first_handshake_signed() {
             let stream = Arc::new(StreamWrapper::new(VecStream::default()));
 
             let mut client_rtmp_context = RtmpContext::default();
-            client_rtmp_context.set_get_signed(true);
+            client_rtmp_context.set_signed(true);
             let result = ready!(pin!(client::handle_first_handshake(stream.make_weak_pin())).poll_handle(cx, &mut client_rtmp_context));
             assert!(result.is_ok());
 
@@ -189,7 +189,7 @@ async fn second_handshake_signed() {
             let stream = Arc::new(StreamWrapper::new(VecStream::default()));
             let mut client_rtmp_context = RtmpContext::default();
             let mut server_rtmp_context = RtmpContext::default();
-            client_rtmp_context.set_get_signed(true);
+            client_rtmp_context.set_signed(true);
 
             ready!(pin!(client::handle_first_handshake(stream.make_weak_pin())).poll_handle(cx, &mut client_rtmp_context)).unwrap();
             ready!(pin!(server::handle_first_handshake(stream.make_weak_pin())).poll_handle(cx, &mut server_rtmp_context)).unwrap();
