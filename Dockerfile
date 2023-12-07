@@ -5,4 +5,4 @@ ENV PROTOCOL=rtmp
 ENV HOST=localhost
 ENV PORT=1935
 RUN cargo update && cargo build -p sheave-server --release --bins
-CMD sheave-server --protocol ${PROTOCOL} -h ${HOST} -p ${PORT}
+CMD ./target/release/sheave-server --protocol ${PROTOCOL} -h ${HOST} -p ${PORT}
