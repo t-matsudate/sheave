@@ -1,4 +1,4 @@
-FROM rust:1.74.0
+FROM rust:1.74.1
 ADD . /sheave
 WORKDIR /sheave
 ENV PROTOCOL=rtmp
