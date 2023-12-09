@@ -47,6 +47,9 @@ jobs:
           HOST: localhost
           PORT: 1935
     steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
       - id: update
         name: Updates Apt caches
         run: sudo apt update -y
