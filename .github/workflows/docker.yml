@@ -4,8 +4,8 @@ on:
     workflows: ["Testing"]
     types: ["completed"]
 jobs:
-  check:
-    name: Cargo Check
+  push:
+    name: Pushs into Docker Hub
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
@@ -33,3 +33,25 @@ jobs:
         with:
           push: true
           tags: tmatsudate/sheave-server:latest
+  ffmpeg:
+    name: Tests with FFmpeg
+    needs: push
+    runs-on: ubuntu-latest
+    services:
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports: 1935
+        env:
+          PROTOCOL: rtmp
+          HOST: localhost
+          PORT: 1935
+    steps:
+      - id: update
+        name: Updates Apt caches
+        run: apt update -y
+      - id: install
+        name: Installs FFmpeg
+        run: apt install -y ffmpeg
+      - id: run
+        name: Runs FFmpeg with examples
+        run: ffmpeg -i ./sheave-server/resources/test.mp4 -f flv rtmp://localhost
