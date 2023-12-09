@@ -49,10 +49,10 @@ jobs:
     steps:
       - id: update
         name: Updates Apt caches
-        run: apt update -y
+        run: sudo apt update -y
       - id: install
         name: Installs FFmpeg
-        run: apt install -y ffmpeg
+        run: sudo apt install -y ffmpeg
       - id: run
         name: Runs FFmpeg with examples
         run: ffmpeg -i ./sheave-server/resources/test.mp4 -f flv rtmp://localhost
