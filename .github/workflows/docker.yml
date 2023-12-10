@@ -41,7 +41,7 @@ jobs:
       sheave-server:
         image: tmatsudate/sheave-server:latest
         ports:
-          - 1935
+          - 1935:1935
         env:
           PROTOCOL: rtmp
           HOST: localhost
