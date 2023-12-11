@@ -44,7 +44,7 @@ jobs:
           - 1935:1935
         env:
           PROTOCOL: rtmp
-          HOST: localhost
+          HOST: 127.0.0.1
           PORT: 1935
     steps:
       - id: checkout
