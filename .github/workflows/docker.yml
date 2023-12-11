@@ -37,7 +37,7 @@ jobs:
     name: Tests with FFmpeg
     needs: push
     runs-on: ubuntu-latest
-    services:
+    container:
       sheave-server:
         image: tmatsudate/sheave-server:latest
         ports:
