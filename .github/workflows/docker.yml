@@ -37,14 +37,15 @@ jobs:
     name: Tests with FFmpeg
     needs: push
     runs-on: ubuntu-latest
-    container:
-      image: tmatsudate/sheave-server:latest
-      ports:
-        - 1935:1935
-      env:
-        PROTOCOL: rtmp
-        HOST: 127.0.0.1
-        PORT: 1935
+    services:
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+        env:
+          PROTOCOL: rtmp
+          HOST: 0.0.0.0
+          PORT: 1935
     steps:
       - id: checkout
         name: Checkout repository
