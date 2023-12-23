@@ -15,8 +15,8 @@ use self::client::Client;
 struct ClientOptions {
     #[arg(long, value_enum, default_value_t = Protocol::Rtmp)]
     protocol: Protocol,
-    #[arg(short, long, default_value = "localhost")]
-    host: String,
+    #[arg(short, long, default_value = "127.0.0.1")]
+    address: String,
     #[arg(short, long, default_value_t = 1935)]
     port: u16
 }
@@ -34,7 +34,7 @@ async fn main() -> IOResult<()> {
 
     let options = ClientOptions::parse();
     match options.protocol {
-        Rtmp => if let Err(e) = run_as_rtmp(options.host, options.port).await {
+        Rtmp => if let Err(e) = run_as_rtmp(options.address, options.port).await {
             println!("{e}")
         }
     }
