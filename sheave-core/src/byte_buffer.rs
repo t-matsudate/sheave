@@ -131,6 +131,18 @@ impl ByteBuffer {
         ).ok_or(insufficient_buffer_length(2, self.remained()))
     }
 
+    pub fn get_u32_be(&mut self) -> IOResult<u32> {
+        let offset = self.offset;
+        self.bytes.get(offset..(offset + 4)).map(
+            |bytes| {
+                self.offset += bytes.len();
+                let mut _bytes: [u8; 4] = [0; 4];
+                _bytes.copy_from_slice(bytes);
+                u32::from_be_bytes(_bytes)
+            }
+        ).ok_or(insufficient_buffer_length(4, self.remained()))
+    }
+
     /// Tries getting 8 bytes from buffer, as a 64 bits floating point number.
     ///
     /// # Errors
@@ -228,6 +240,10 @@ impl ByteBuffer {
     /// assert_eq!(n, buffer.get_u16_be().unwrap())
     /// ```
     pub fn put_u16_be(&mut self, n: u16) {
+        self.bytes.extend_from_slice(&n.to_be_bytes());
+    }
+
+    pub fn put_u32_be(&mut self, n: u32) {
         self.bytes.extend_from_slice(&n.to_be_bytes());
     }
 

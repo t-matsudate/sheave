@@ -1,5 +1,10 @@
 use std::io::Result as IOResult;
-use super::ensure_command_name;
+use super::{
+    Channel,
+    ChunkData,
+    ensure_command_name,
+    headers::MessageType
+};
 use crate::{
     Decoder,
     Encoder,
@@ -172,6 +177,11 @@ impl Encoder<Connect> for ByteBuffer {
         self.encode(&connect.get_transaction_id());
         self.encode(connect.get_command_object());
     }
+}
+
+impl ChunkData for Connect {
+    const CHANNEL: Channel = Channel::System;
+    const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
 #[cfg(test)]

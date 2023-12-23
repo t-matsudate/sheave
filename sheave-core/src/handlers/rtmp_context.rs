@@ -1,8 +1,17 @@
-use std::sync::Arc;
-use crate::handshake::{
-    EncryptionAlgorithm,
-    Handshake
+mod last_chunk;
+
+use std::{
+    collections::HashMap,
+    sync::Arc
 };
+use crate::{
+    handshake::{
+        EncryptionAlgorithm,
+        Handshake
+    },
+    messages::ChunkSize
+};
+pub use self::last_chunk::*;
 
 /// RTMP's common contexts.
 ///
@@ -21,9 +30,13 @@ use crate::handshake::{
 #[derive(Debug, Default)]
 pub struct RtmpContext {
     signed: bool,
+    receiving_chunk_size: ChunkSize,
+    sending_chunk_size: ChunkSize,
     encryption_algorithm: Option<EncryptionAlgorithm>,
     client_handshake: Option<Handshake>,
-    server_handshake: Option<Handshake>
+    server_handshake: Option<Handshake>,
+    last_received_chunks: HashMap<u16, LastChunk>,
+    last_sent_chunks: HashMap<u16, LastChunk>
 }
 
 impl RtmpContext {
@@ -39,6 +52,22 @@ impl RtmpContext {
     /// Indicates whether the handshake is signed.
     pub fn is_signed(&self) -> bool {
         self.signed
+    }
+
+    pub fn set_receiving_chunk_size(&mut self, chunk_size: ChunkSize) {
+        self.receiving_chunk_size = chunk_size;
+    }
+
+    pub fn get_receiving_chunk_size(&self) -> &ChunkSize {
+        &self.receiving_chunk_size
+    }
+
+    pub fn set_sending_chunk_size(&mut self, chunk_size: ChunkSize) {
+        self.sending_chunk_size = chunk_size;
+    }
+
+    pub fn get_sending_chunk_size(&self) -> &ChunkSize {
+        &self.sending_chunk_size
     }
 
     /// Stores the algorithm to encrypt this handshake.
@@ -117,5 +146,29 @@ impl RtmpContext {
     /// ```
     pub fn get_server_handshake(&self) -> Option<&Handshake> {
         self.server_handshake.as_ref()
+    }
+
+    pub fn insert_received_chunk(&mut self, chunk_id: u16, last_chunk: LastChunk) {
+        self.last_received_chunks.insert(chunk_id, last_chunk);
+    }
+
+    pub fn get_last_received_chunk(&self, chunk_id: &u16) -> Option<&LastChunk> {
+        self.last_received_chunks.get(chunk_id)
+    }
+
+    pub fn get_last_received_chunk_mut(&mut self, chunk_id: &u16) -> Option<&mut LastChunk> {
+        self.last_received_chunks.get_mut(chunk_id)
+    }
+
+    pub fn insert_sent_chunk(&mut self, chunk_id: u16, last_chunk: LastChunk) {
+        self.last_sent_chunks.insert(chunk_id, last_chunk);
+    }
+
+    pub fn get_last_sent_chunk(&self, chunk_id: &u16) -> Option<&LastChunk> {
+        self.last_sent_chunks.get(chunk_id)
+    }
+
+    pub fn get_last_sent_chunk_mut(&mut self, chunk_id: &u16) -> Option<&mut LastChunk> {
+        self.last_sent_chunks.get_mut(chunk_id)
     }
 }

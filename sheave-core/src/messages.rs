@@ -48,13 +48,43 @@ pub mod headers;
 pub mod amf;
 mod inconsistent_command;
 mod connect;
+mod chunk_size;
 
 use std::io::Result as IOResult;
-use self::amf::v0::AmfString;
-pub use self::inconsistent_command::*;
-pub use self::connect::*;
+use self::{
+    amf::v0::AmfString,
+    headers::MessageType
+};
+pub use self::{
+    chunk_size::*,
+    connect::*,
+    inconsistent_command::*
+};
 
 #[doc(hidden)]
 pub(self) fn ensure_command_name(expected: &str, actual: AmfString) -> IOResult<()> {
     (expected == actual).then_some(()).ok_or(inconsistent_command(expected, actual))
+}
+
+#[repr(u16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Channel {
+    System = 3,
+    Other = 0xffff
+}
+
+impl From<u16> for Channel {
+    fn from(channel: u16) -> Self {
+        use Channel::*;
+
+        match channel {
+            3 => System,
+            _ => Other
+        }
+    }
+}
+
+pub trait ChunkData {
+    const CHANNEL: Channel;
+    const MESSAGE_TYPE: MessageType;
 }

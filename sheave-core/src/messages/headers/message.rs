@@ -66,6 +66,8 @@ pub enum MessageHeader {
 }
 
 impl MessageHeader {
+    pub const U24_MAX: u32 = 0x00ffffff;
+
     /// Gets a timestamp.
     /// Only 0 bytes type returns `None`.
     ///
