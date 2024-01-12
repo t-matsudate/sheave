@@ -1,6 +1,10 @@
 use std::{
     cmp::Ordering,
-    io::Result as IOResult
+    io::Result as IOResult,
+    ops::{
+        Add,
+        AddAssign
+    }
 };
 use super::{
     Marker,
@@ -209,6 +213,34 @@ impl PartialOrd<Number> for f64 {
     /// ```
     fn partial_cmp(&self, other: &Number) -> Option<Ordering> {
         self.partial_cmp(&other.0)
+    }
+}
+
+impl Add for Number {
+    type Output = Number;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Number(self.0 + rhs.0)
+    }
+}
+
+impl Add<f64> for Number {
+    type Output = Number;
+
+    fn add(self, rhs: f64) -> Self::Output {
+        Number(self.0 + rhs)
+    }
+}
+
+impl AddAssign for Number {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+    }
+}
+
+impl AddAssign<f64> for Number {
+    fn add_assign(&mut self, rhs: f64) {
+        self.0 += rhs;
     }
 }
 
