@@ -278,6 +278,8 @@ impl PartialEq<Self> for Value {
 
 #[doc(hidden)]
 impl Eq for Value {}
+unsafe impl Send for Value {}
+unsafe impl Sync for Value {}
 
 #[doc(hidden)]
 impl Decoder<Value> for ByteBuffer {
