@@ -58,12 +58,14 @@ mod number;
 mod boolean;
 mod string;
 mod object;
+mod null;
 
 pub use self::{
     number::Number,
     boolean::Boolean,
     string::AmfString,
-    object::Object
+    object::Object,
+    null::Null
 };
 
 /// Representation of markers of the AMF data types.
@@ -85,6 +87,7 @@ pub enum Marker {
     Boolean,
     AmfString,
     Object,
+    Null = 0x05,
     ObjectEnd = 0x09,
     Other = 0xff
 }
@@ -98,6 +101,7 @@ impl From<u8> for Marker {
             1 => Boolean,
             2 => AmfString,
             3 => Object,
+            5 => Null,
             9 => ObjectEnd,
             _ => Other
         }
