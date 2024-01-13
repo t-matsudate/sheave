@@ -1,8 +1,10 @@
 mod negative_chunk_size;
 
-use std::{
-    cmp::Ordering,
-    io::Result as IOResult
+use std::io::Result as IOResult;
+use super::{
+    Channel,
+    ChunkData,
+    headers::MessageType
 };
 use crate::{
     Decoder,
@@ -11,7 +13,7 @@ use crate::{
 };
 pub use self::negative_chunk_size::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ChunkSize(u32);
 
 impl ChunkSize {
@@ -45,16 +47,9 @@ impl PartialEq<ChunkSize> for u32 {
     }
 }
 
-impl PartialOrd<u32> for ChunkSize {
-    fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
-        self.0.partial_cmp(other)
-    }
-}
-
-impl PartialOrd<ChunkSize> for u32 {
-    fn partial_cmp(&self, other: &ChunkSize) -> Option<Ordering> {
-        self.partial_cmp(&other.0)
-    }
+impl ChunkData for ChunkSize {
+    const CHANNEL: Channel = Channel::Network;
+    const MESSAGE_TYPE: MessageType = MessageType::ChunkSize;
 }
 
 impl Decoder<ChunkSize> for ByteBuffer {
