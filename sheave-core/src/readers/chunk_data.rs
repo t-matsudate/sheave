@@ -23,7 +23,7 @@ use super::read_basic_header;
 #[derive(Debug)]
 pub struct ChunkDataReader<'a, R: AsyncRead> {
     reader: Pin<&'a mut R>,
-    chunk_size: &'a ChunkSize,
+    chunk_size: ChunkSize,
     message_length: u32
 }
 
@@ -87,7 +87,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     // When it's just one chunk.
 ///     let mut reader: [u8; 128] = [0; 128];
 ///     reader.try_fill(&mut thread_rng()).unwrap();
-///     let result = read_chunk_data(pin!(reader.as_slice()), &chunk_size, 128).await?;
+///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 128).await?;
 ///     assert_eq!(128, result.len());
 ///
 ///     // When it has the one byte header.
@@ -97,7 +97,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     reader[..128].copy_from_slice(&part);
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6 | (random::<u8>() << 2 >> 2);
 ///     reader[129..].copy_from_slice(&part);
-///     let result = read_chunk_data(pin!(reader.as_slice()), &chunk_size, 256).await?;
+///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
 ///
 ///     // When it has the two bytes header.
@@ -108,7 +108,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6;
 ///     reader[129] = random::<u8>();
 ///     reader[130..].copy_from_slice(&part);
-///     let result = read_chunk_data(pin!(reader.as_slice()), &chunk_size, 256).await?;
+///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
 ///
 ///     // When it has the three bytes header.
@@ -119,13 +119,13 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
 ///     reader[129..131].copy_from_slice(&random::<u16>().to_le_bytes());
 ///     reader[131..].copy_from_slice(&part);
-///     let result = read_chunk_data(pin!(reader.as_slice()), &chunk_size, 256).await?;
+///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
 ///
 ///     Ok(())
 /// }
 /// ```
-pub fn read_chunk_data<'a, R: AsyncRead>(reader: Pin<&'a mut R>, chunk_size: &'a ChunkSize, message_length: u32) -> ChunkDataReader<'a, R> {
+pub fn read_chunk_data<'a, R: AsyncRead>(reader: Pin<&'a mut R>, chunk_size: ChunkSize, message_length: u32) -> ChunkDataReader<'a, R> {
     ChunkDataReader { reader, chunk_size, message_length }
 }
 
@@ -144,7 +144,7 @@ mod tests {
     async fn read_one_chunk() {
         let mut reader: [u8; 128] = [0; 128];
         reader.try_fill(&mut thread_rng()).unwrap();
-        let result = read_chunk_data(pin!(reader.as_slice()), &ChunkSize::default(), 128).await;
+        let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 128).await;
         assert!(result.is_ok());
         let bytes = result.unwrap();
         assert_eq!(128, bytes.len())
@@ -158,7 +158,7 @@ mod tests {
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6 | (random::<u8>() << 2 >> 2);
         reader[129..].copy_from_slice(&part);
-        let result = read_chunk_data(pin!(reader.as_slice()), &ChunkSize::default(), 256).await;
+        let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 256).await;
         assert!(result.is_ok());
         let bytes = result.unwrap();
         assert_eq!(256, bytes.len())
@@ -173,7 +173,7 @@ mod tests {
         reader[128] = u8::from(MessageFormat::Continue) << 6;
         reader[129] = random::<u8>();
         reader[130..].copy_from_slice(&part);
-        let result = read_chunk_data(pin!(reader.as_slice()), &ChunkSize::default(), 256).await;
+        let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 256).await;
         assert!(result.is_ok());
         let bytes = result.unwrap();
         assert_eq!(256, bytes.len())
@@ -188,7 +188,7 @@ mod tests {
         reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
         reader[129..131].copy_from_slice(&random::<u16>().to_le_bytes());
         reader[131..].copy_from_slice(&part);
-        let result = read_chunk_data(pin!(reader.as_slice()), &ChunkSize::default(), 256).await;
+        let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 256).await;
         assert!(result.is_ok());
         let bytes = result.unwrap();
         assert_eq!(256, bytes.len())

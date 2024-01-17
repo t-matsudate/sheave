@@ -28,7 +28,7 @@ use crate::{
 pub struct ChunkDataWriter<'a, W: AsyncWrite> {
     writer: Pin<&'a mut W>,
     chunk_id: u16,
-    chunk_size: &'a ChunkSize,
+    chunk_size: ChunkSize,
     chunk_data: &'a [u8],
 }
 
@@ -84,14 +84,14 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 128] = [0; 128];
 ///     chunk_data.try_fill(&mut thread_rng()).unwrap();
-///     write_chunk_data(writer.as_mut(), 2, &ChunkSize::default(), &chunk_data).await?;
+///     write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(128, writer.len());
 ///
 ///     // When it requires the one byte header.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 256] = [0; 256];
 ///     chunk_data.try_fill(&mut thread_rng()).unwrap();
-///     write_chunk_data(writer.as_mut(), 2, &ChunkSize::default(), &chunk_data).await?;
+///     write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(257, writer.len());
 ///     let message_format: MessageFormat = (writer[128] >> 6).into();
 ///     assert_eq!(MessageFormat::Continue, message_format);
@@ -102,7 +102,7 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 256] = [0; 256];
 ///     chunk_data.try_fill(&mut thread_rng()).unwrap();
-///     write_chunk_data(writer.as_mut(), 64, &ChunkSize::default(), &chunk_data).await?;
+///     write_chunk_data(writer.as_mut(), 64, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(258, writer.len());
 ///     let message_format: MessageFormat = (writer[128] >> 6).into();
 ///     assert_eq!(MessageFormat::Continue, message_format);
@@ -114,7 +114,7 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 256] = [0; 256];
 ///     chunk_data.try_fill(&mut thread_rng()).unwrap();
-///     write_chunk_data(writer.as_mut(), 320, &ChunkSize::default(), &chunk_data).await?;
+///     write_chunk_data(writer.as_mut(), 320, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(259, writer.len());
 ///     let message_format: MessageFormat = (writer[128] >> 6).into();
 ///     assert_eq!(MessageFormat::Continue, message_format);
@@ -127,7 +127,7 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     Ok(())
 /// }
 /// ```
-pub fn write_chunk_data<'a, W: AsyncWrite>(writer: Pin<&'a mut W>, chunk_id: u16, chunk_size: &'a ChunkSize, chunk_data: &'a [u8]) -> ChunkDataWriter<'a, W> {
+pub fn write_chunk_data<'a, W: AsyncWrite>(writer: Pin<&'a mut W>, chunk_id: u16, chunk_size: ChunkSize, chunk_data: &'a [u8]) -> ChunkDataWriter<'a, W> {
     ChunkDataWriter { writer, chunk_id, chunk_size, chunk_data }
 }
 
@@ -145,7 +145,7 @@ mod tests {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 128] = [0; 128];
         chunk_data.try_fill(&mut thread_rng()).unwrap();
-        let result = write_chunk_data(writer.as_mut(), 2, &ChunkSize::default(), &chunk_data).await;
+        let result = write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(128, writer.len())
     }
@@ -155,7 +155,7 @@ mod tests {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 256] = [0; 256];
         chunk_data.try_fill(&mut thread_rng()).unwrap();
-        let result = write_chunk_data(writer.as_mut(), 2, &ChunkSize::default(), &chunk_data).await;
+        let result = write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(257, writer.len())
     }
@@ -165,7 +165,7 @@ mod tests {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 256] = [0; 256];
         chunk_data.try_fill(&mut thread_rng()).unwrap();
-        let result = write_chunk_data(writer.as_mut(), 64, &ChunkSize::default(), &chunk_data).await;
+        let result = write_chunk_data(writer.as_mut(), 64, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(258, writer.len())
     }
@@ -175,10 +175,8 @@ mod tests {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 256] = [0; 256];
         chunk_data.try_fill(&mut thread_rng()).unwrap();
-        let result = write_chunk_data(writer.as_mut(), 320, &ChunkSize::default(), &chunk_data).await;
+        let result = write_chunk_data(writer.as_mut(), 320, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(259, writer.len());
     }
 }
-
-// TODO
