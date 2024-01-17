@@ -4,11 +4,13 @@
 ///
 /// |Pattern|Number|
 /// | :- | :- |
+/// |`ChunkSize`|`1`|
 /// |`Command`|`20`|
 /// |`Other`|other numbers|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageType {
+    ChunkSize = 1,
     Command = 20,
     Other = 0xff
 }
@@ -18,6 +20,7 @@ impl From<u8> for MessageType {
         use MessageType::*;
 
         match message_type {
+            1 => ChunkSize,
             20 => Command,
             _ => Other
         }
