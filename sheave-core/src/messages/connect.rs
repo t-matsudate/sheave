@@ -2,6 +2,7 @@ use std::io::Result as IOResult;
 use super::{
     Channel,
     ChunkData,
+    Command,
     ensure_command_name,
     headers::MessageType
 };
@@ -21,57 +22,23 @@ use crate::{
 pub struct Connect(Object);
 
 impl Connect {
+    const COMMAND_NAME: &'static str = "connect";
+    const TRANSACTION_ID: f64 = 1f64;
+
     /// Constructs a connect command.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::{
-    ///     Connect,
-    ///     amf::v0::Object
-    /// };
-    ///
-    /// Connect::new(Object::default());
-    /// ```
     pub fn new(command_object: Object) -> Self {
         Self(command_object)
     }
 
-    /// Gets the transaction id.
-    /// Note that must always be `1` in the Connect command.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::{
-    ///     Connect,
-    ///     amf::v0::Number
-    /// };
-    ///
-    /// let connect = Connect::default();
-    ///
-    /// assert_eq!(Number::from(1), connect.get_transaction_id())
-    /// ```
-    pub fn get_transaction_id(&self) -> Number {
-        Number::from(1)
-    }
-
-    /// Gets the command object.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::{
-    ///     Connect,
-    ///     amf::v0::Object
-    /// };
-    ///
-    /// let connect = Connect::default();
-    ///
-    /// assert_eq!(&Object::default(), connect.get_command_object());
-    /// ```
+    /// Gets the command object in this request.
     pub fn get_command_object(&self) -> &Object {
         &self.0
+    }
+}
+
+impl From<Connect> for Object {
+    fn from(connect: Connect) -> Self {
+        connect.0
     }
 }
 
@@ -136,7 +103,7 @@ impl Decoder<Connect> for ByteBuffer {
             |command| ensure_command_name("connect", command)
         )?;
 
-        // Skips because the transaction ID in the Connect command is fixed `1`.
+        // Skips because the transaction ID in the Connect command is fixed to `1`.
         Decoder::<Number>::decode(self)?;
         let command_object: Object = self.decode()?;
         Ok(Connect(command_object))
@@ -173,7 +140,7 @@ impl Encoder<Connect> for ByteBuffer {
     /// assert_eq!(Object::default(), command_object)
     /// ```
     fn encode(&mut self, connect: &Connect) {
-        self.encode(&AmfString::from("connect"));
+        self.encode(&AmfString::from(connect.get_command_name()));
         self.encode(&connect.get_transaction_id());
         self.encode(connect.get_command_object());
     }
@@ -182,6 +149,20 @@ impl Encoder<Connect> for ByteBuffer {
 impl ChunkData for Connect {
     const CHANNEL: Channel = Channel::System;
     const MESSAGE_TYPE: MessageType = MessageType::Command;
+}
+
+impl Command for Connect {
+    /// Gets the command name.
+    /// In this request, it's fixed to `"connect"`.
+    fn get_command_name(&self) -> &str {
+        Self::COMMAND_NAME
+    }
+
+    /// Gets the transaction ID.
+    /// In this request, it's fixed to `1`.
+    fn get_transaction_id(&self) -> Number {
+        Number::new(Self::TRANSACTION_ID)
+    }
 }
 
 #[cfg(test)]
