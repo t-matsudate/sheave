@@ -172,7 +172,7 @@ impl From<Channel> for u16 {
 ///
 /// When reading from streams or writing into streams, we are required to imprint a chunk ID and a message type ID into their headers.
 /// This makes you to reduce its cost.
-/// For example, `read_chunk` and `write_chunk` use this for reading/writing chunks correctly.
+/// For example, [`read_chunk`] and [`write_chunk`] use this for reading/writing chunks correctly.
 ///
 /// [`read_chunk`]: crate::readers::read_chunk
 /// [`write_chunk`]: crate::writers::write_chunk
@@ -184,8 +184,8 @@ pub trait ChunkData {
 /// The accessor for common fields in every command chunk.
 ///
 /// All command chunk but onFCPublish has its command name and identifier for the transaction (only onFCPublish has just its command name).
-/// This provides ways for accessing to their common fields of command chunks uniformly.
-/// For example, `decode` and `encode` which are implemented for them use this for reading them from streams or writing them into streams.
+/// This provide ways for accessing to their common fields of command chunks uniformly.
+/// For example, [`decode`] and [`encode`] which are implemented for them use this for reading them from streams or writing them into streams.
 ///
 /// [`decode`]: crate::Decoder
 /// [`encode`]: crate::Encoder
