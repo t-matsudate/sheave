@@ -22,45 +22,28 @@ impl ChunkSize {
     const DEFAULT: u32 = 128;
 
     /// Constructs a chunk size.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::ChunkSize;
-    ///
-    /// let chunk_size = ChunkSize::new(128);
-    /// ```
     pub fn new(chunk_size: u32) -> Self {
         Self(chunk_size)
     }
 
     /// Gets an internal value.
+    pub fn get_chunk_size(&self) -> u32 {
+        self.0
+    }
+}
+
+impl Default for ChunkSize {
+    /// Constructs a ChunkSize with its default value.
+    /// In RTMP, the default value of chunking size is defined to be 128.
     ///
     /// # Examples
     ///
     /// ```rust
     /// use sheave_core::messages::ChunkSize;
     ///
-    /// let chunk_size = ChunkSize::new(128);
-    /// assert_eq!(128, chunk_size.get_chunk_size())
+    /// let chunk_size = ChunkSize::default();
+    /// assert_eq!(128, chunk_size)
     /// ```
-    pub fn get_chunk_size(&self) -> u32 {
-        self.0
-    }
-}
-
-/// Constructs a ChunkSize with its default value.
-/// In RTMP, the default value of chunking size is defined to be 128.
-///
-/// # Examples
-///
-/// ```rust
-/// use sheave_core::messages::ChunkSize;
-///
-/// let chunk_size = ChunkSize::default();
-/// assert_eq!(128, chunk_size)
-/// ```
-impl Default for ChunkSize {
     fn default() -> Self {
         Self(Self::DEFAULT)
     }
