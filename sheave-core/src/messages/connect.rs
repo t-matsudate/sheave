@@ -25,7 +25,7 @@ impl Connect {
     const COMMAND_NAME: &'static str = "connect";
     const TRANSACTION_ID: f64 = 1f64;
 
-    /// Constructs a connect command.
+    /// Constructs a Connect command.
     pub fn new(command_object: Object) -> Self {
         Self(command_object)
     }
@@ -73,7 +73,6 @@ impl Decoder<Connect> for ByteBuffer {
     ///     messages::{
     ///         Connect,
     ///         amf::v0::{
-    ///             Marker,
     ///             Number,
     ///             AmfString,
     ///             Object
@@ -83,13 +82,13 @@ impl Decoder<Connect> for ByteBuffer {
     ///
     /// let mut buffer = ByteBuffer::default();
     /// buffer.encode(&AmfString::from("connect"));
-    /// buffer.encode(&Number::from(1));
+    /// buffer.encode(&Number::new(1f64));
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<Connect>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
     /// buffer.encode(&AmfString::from("something else"));
-    /// buffer.encode(&Number::from(1));
+    /// buffer.encode(&Number::new(1f64));
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<Connect>::decode(&mut buffer).is_err())
     /// ```
@@ -209,8 +208,8 @@ mod tests {
         );
         let expected = Connect::new(expected_command_object.clone());
         buffer.encode(&expected);
-        let command: AmfString = buffer.decode().unwrap();
-        assert_eq!("connect", command);
+        let command_name: AmfString = buffer.decode().unwrap();
+        assert_eq!("connect", command_name);
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id);
         let actual_command_object: Object = buffer.decode().unwrap();
