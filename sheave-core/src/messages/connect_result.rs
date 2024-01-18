@@ -227,4 +227,29 @@ mod tests {
         );
         assert_eq!(expected, actual)
     }
+
+    #[test]
+    fn encode_connect_result() {
+        let mut buffer = ByteBuffer::default();
+        let expected_transaction_id = 1f64;
+        let expected_properties = object!(
+            "fmsVer" => AmfString::from("FMS/5,0,17"),
+            "capabilities" => Number::new(31f64)
+        );
+        let expected_information = object!(
+            "level" => AmfString::from("status"),
+            "code" => AmfString::from("NetConnection.Connect.Success"),
+            "description" => AmfString::from("Connection succeeded."),
+            "objectEncoding" => Number::new(0f64)
+        );
+        buffer.encode(&ConnectResult::new("_result".into(), expected_properties.clone(), expected_information.clone()));
+        let command_name: AmfString = buffer.decode().unwrap();
+        assert_eq!("_result", command_name);
+        let actual_transaction_id: Number = buffer.decode().unwrap();
+        assert_eq!(expected_transaction_id, actual_transaction_id);
+        let actual_properties: Object = buffer.decode().unwrap();
+        assert_eq!(expected_properties, actual_properties);
+        let actual_information: Object = buffer.decode().unwrap();
+        assert_eq!(expected_information, actual_information)
+    }
 }
