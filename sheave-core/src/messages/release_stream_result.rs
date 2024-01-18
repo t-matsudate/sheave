@@ -17,7 +17,7 @@ use crate::{
     }
 };
 
-/// The response message for releaseStream requests.
+/// The response message for ReleaseStream requests.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReleaseStreamResult {
     result: AmfString,
