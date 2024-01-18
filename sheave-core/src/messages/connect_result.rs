@@ -17,7 +17,7 @@ use crate::{
     }
 };
 
-/// The response message for connect requests.
+/// The response message for Connect requests.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConnectResult {
     result: AmfString,
@@ -28,7 +28,7 @@ pub struct ConnectResult {
 impl ConnectResult {
     const TRANSACTION_ID: f64 = 1f64;
 
-    /// Constructs a connect result message.
+    /// Constructs a ConnectResult command.
     pub fn new(result: AmfString, properties: Object, information: Object) -> Self {
         Self { result, properties, information }
     }
@@ -109,7 +109,6 @@ impl Decoder<ConnectResult> for ByteBuffer {
     ///     messages::{
     ///         ConnectResult,
     ///         amf::v0::{
-    ///             Marker,
     ///             Number,
     ///             AmfString,
     ///             Object
