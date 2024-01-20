@@ -90,18 +90,17 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        sync::Arc,
-        time::Duration
-    };
+    use std::time::Duration;
     use crate::{
         Encoder,
-        handlers::{
-            StreamWrapper,
-            VecStream
-        },
+        handlers::VecStream,
         messages::{
             Connect,
+            ConnectResult,
+            ReleaseStream,
+            ReleaseStreamResult,
+            FcPublish,
+            OnFcPublish,
             headers::{
                 BasicHeader,
                 MessageFormat
@@ -118,26 +117,177 @@ mod tests {
         buffer.encode(&expected);
         let data: Vec<u8> = buffer.into();
 
-        let stream = Arc::new(StreamWrapper::new(VecStream::default()));
+        let mut stream = pin!(VecStream::default());
         let mut rtmp_context = RtmpContext::default();
         write_basic_header(
-            stream.make_weak_pin(),
+            stream.as_mut(),
             &BasicHeader::new(MessageFormat::New, Connect::CHANNEL as u16)
         ).await.unwrap();
         write_message_header(
-            stream.make_weak_pin(),
-            &MessageHeader::New((Duration::default(), data.len() as u32, Connect::MESSAGE_TYPE, u32::default()).into())
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, Connect::MESSAGE_TYPE, u32::default()).into()
+            )
         ).await.unwrap();
         write_chunk_data(
-            stream.make_weak_pin(),
+            stream.as_mut(),
             Connect::CHANNEL as u16,
             rtmp_context.get_sending_chunk_size(),
             &data
         ).await.unwrap();
 
-        let result: IOResult<Connect> = read_chunk(stream.make_weak_pin(), &mut rtmp_context).await;
+        let result: IOResult<Connect> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
         assert_eq!(expected, actual)
+    }
+
+    #[tokio::test]
+    async fn read_connect_result() {
+        let mut buffer = ByteBuffer::default();
+        let expected = ConnectResult::default();
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, ConnectResult::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, ConnectResult::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            ConnectResult::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<ConnectResult> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[tokio::test]
+    async fn read_release_stream() {
+        let mut buffer = ByteBuffer::default();
+        let expected = ReleaseStream::new(2u8.into(), "".into());
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, ReleaseStream::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, ReleaseStream::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            ReleaseStream::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<ReleaseStream> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[tokio::test]
+    async fn read_release_stream_result() {
+        let mut buffer = ByteBuffer::default();
+        let expected = ReleaseStreamResult::new("_result".into(), 2u8.into());
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, ReleaseStreamResult::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, ReleaseStreamResult::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            ReleaseStreamResult::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<ReleaseStreamResult> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[tokio::test]
+    async fn read_fc_publish() {
+        let mut buffer = ByteBuffer::default();
+        let expected = FcPublish::new(3u8.into(), "".into());
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, FcPublish::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, FcPublish::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            FcPublish::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<FcPublish> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[tokio::test]
+    async fn read_on_fc_publish() {
+        let mut buffer = ByteBuffer::default();
+        let expected = OnFcPublish;
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, OnFcPublish::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, OnFcPublish::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            OnFcPublish::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<OnFcPublish> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual);
     }
 }
