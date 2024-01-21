@@ -51,6 +51,54 @@ pub use self::{
     chunk_data::*
 };
 
+/// Writes a chunk into streams.
+///
+/// # Examples
+///
+/// ```rust
+/// use std::{
+///     io::Result as IOResult,
+///     pin::pin,
+///     time::Duration
+/// };
+/// use sheave_core::{
+///     ByteBuffer,
+///     Decoder,
+///     handlers::{
+///         RtmpContext,
+///         VecStream
+///     },
+///     messages::{
+///         ChunkData,
+///         ChunkSize,
+///         Command,
+///         Connect
+///     },
+///     readers::{
+///         read_basic_header,
+///         read_message_header,
+///         read_chunk_data
+///     },
+///     writers::write_chunk
+/// };
+///
+/// #[tokio::main]
+/// async fn main() -> IOResult<()> {
+///     let mut stream = pin!(VecStream::default());
+///
+///     write_chunk(stream.as_mut(), &mut RtmpContext::default(), Duration::default(), u32::default(), &Connect::default()).await?;
+///     let basic_header = read_basic_header(stream.as_mut()).await?;
+///     let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await?;
+///     let data = read_chunk_data(stream.as_mut(), ChunkSize::default(), message_header.get_message_length().unwrap()).await?;
+///     let mut buffer: ByteBuffer = data.into();
+///     let chunk: Connect = buffer.decode()?;
+///     assert_eq!(Connect::CHANNEL as u16, basic_header.get_chunk_id());
+///     assert_eq!(Connect::MESSAGE_TYPE, message_header.get_message_type().unwrap());
+///     assert_eq!("connect", chunk.get_command_name());
+///
+///     Ok(())
+/// }
+/// ```
 pub fn write_chunk<'a, W, T>(mut writer: Pin<&'a mut W>, rtmp_context: &'a mut RtmpContext, mut timestamp: Duration, message_id: u32, data: &'a T) -> PollFn<Box<dyn FnMut(&mut FutureContext) -> Poll<IOResult<()>> + 'a>>
 where
     W: AsyncWrite,

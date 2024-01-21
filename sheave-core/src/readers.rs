@@ -46,6 +46,71 @@ pub use self::{
     chunk_data::*
 };
 
+/// Reads a chunk from streams.
+///
+/// # Errors
+///
+/// This will be occured several errors in decoding.
+/// For examples:
+///
+/// * When streams didn't have enough data.
+/// * When data format is invalid.
+/// * When something value in data differed from what's expected.
+///
+/// Because this is expected receiving chunk data is correctly ready in streams.
+///
+/// # Examples
+///
+/// ```rust
+/// use std::{
+///     io::Result as IOResult,
+///     pin::pin,
+///     time::Duration
+/// };
+/// use sheave_core::{
+///     ByteBuffer,
+///     Encoder,
+///     handlers::{
+///         RtmpContext,
+///         VecStream
+///     },
+///     messages::{
+///         ChunkData,
+///         ChunkSize,
+///         Command,
+///         Connect,
+///         headers::{
+///             BasicHeader,
+///             MessageFormat,
+///             MessageHeader
+///         }
+///     },
+///     readers::read_chunk,
+///     writers::{
+///         write_basic_header,
+///         write_chunk_data,
+///         write_message_header
+///     }
+/// };
+///
+/// #[tokio::main]
+/// async fn main() -> IOResult<()> {
+///     let mut buffer = ByteBuffer::default();
+///     buffer.encode(&Connect::default());
+///     let data: Vec<u8> = buffer.into();
+///     let mut stream = pin!(VecStream::default());
+///     write_basic_header(stream.as_mut(), &BasicHeader::new(MessageFormat::New, Connect::CHANNEL as u16)).await?;
+///     write_message_header(stream.as_mut(), &MessageHeader::New((Duration::default(), data.len() as u32, Connect::MESSAGE_TYPE, u32::default()).into())).await?;
+///     write_chunk_data(stream.as_mut(), Connect::CHANNEL as u16, ChunkSize::default(), &data).await?;
+///     let result: IOResult<Connect> = read_chunk(stream.as_mut(), &mut RtmpContext::default()).await;
+///     assert!(result.is_ok());
+///
+///     let chunk = result.unwrap();
+///     assert_eq!("connect", chunk.get_command_name());
+///
+///     Ok(())
+/// }
+/// ```
 pub fn read_chunk<'a, R, T>(mut reader: Pin<&'a mut R>, rtmp_context: &'a mut RtmpContext) -> PollFn<Box<dyn FnMut(&mut FutureContext) -> Poll<IOResult<T>> + 'a>>
 where
     R: AsyncRead,
