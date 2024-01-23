@@ -40,9 +40,11 @@ use sheave_core::{
     }
 };
 
+#[doc(hidden)]
 #[derive(Debug)]
 pub struct FirstHandshakeHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
 
+#[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FirstHandshakeHandler<'_, RW> {
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let encryption_algorithm = ready!(pin!(read_encryption_algorithm(self.0.as_mut())).poll(cx))?;
@@ -89,6 +91,99 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FirstHandshakeHandler<
     }
 }
 
+/// Handles a handshake chunk of the first step as a server.
+/// This step performs:
+///
+/// 1. Receives a handshake chunk from a client.
+/// 2. Makes a handshake chunk which is a response as a server.
+/// 3. Sends it with received one to a client.  
+/// Note that can be required to imprint a digest as the HMAC(SHA-256).
+///
+/// # Examples
+///
+/// ```rust
+/// use std::io::Result as IOResult;
+/// use futures::future::poll_fn;
+///
+/// #[tokio::main]
+/// async fn main() -> IOResult<()> {
+///     let result: IOResult<()> = poll_fn(
+///         |cx| {
+///             use std::{
+///                 future::Future,
+///                 pin::pin,
+///                 task::Poll,
+///                 time::Duration
+///             };
+///             use futures::ready;
+///             use sheave_core::{
+///                 handlers::{
+///                     AsyncHandler,
+///                     RtmpContext,
+///                     VecStream
+///                 },
+///                 handshake::{
+///                     EncryptionAlgorithm,
+///                     Handshake,
+///                     Version
+///                 },
+///                 readers::{
+///                     read_encryption_algorithm,
+///                     read_handshake
+///                 },
+///                 writers::{
+///                     write_encryption_algorithm,
+///                     write_handshake
+///                 }
+///             };
+///             use sheave_server::handlers::handle_first_handshake;
+///
+///             // When without any digest.
+///             let mut stream = pin!(VecStream::default());
+///             let expected_encryption_algorithm = EncryptionAlgorithm::default();
+///             let expected_handshake = Handshake::new(Duration::default(), Version::UNSIGNED);
+///             ready!(pin!(write_encryption_algorithm(stream.as_mut(), expected_encryption_algorithm)).poll(cx))?;
+///             ready!(pin!(write_handshake(stream.as_mut(), &expected_handshake)).poll(cx))?;
+///
+///             ready!(pin!(handle_first_handshake(stream.as_mut())).poll_handle(cx, &mut RtmpContext::default()))?;
+///
+///             let actual_encryption_algorithm = ready!(pin!(read_encryption_algorithm(stream.as_mut())).poll(cx))?;
+///             assert_eq!(expected_encryption_algorithm, actual_encryption_algorithm);
+///             // In this case, server's handshake isn't required to verify because is without any digest.
+///             ready!(pin!(read_handshake(stream.as_mut())).poll(cx))?;
+///             let actual_handshake = ready!(pin!(read_handshake(stream.as_mut())).poll(cx))?;
+///             assert_eq!(expected_handshake.get_bytes(), actual_handshake.get_bytes());
+///
+///             // When with some digest/signature.
+///             let mut stream = pin!(VecStream::default());
+///             let expected_encryption_algorithm = EncryptionAlgorithm::default();
+///             let mut expected_handshake = Handshake::new(Duration::default(), Version::LATEST_CLIENT);
+///             expected_handshake.imprint_digest(EncryptionAlgorithm::default(), Handshake::CLIENT_KEY);
+///             ready!(pin!(write_encryption_algorithm(stream.as_mut(), expected_encryption_algorithm)).poll(cx))?;
+///             ready!(pin!(write_handshake(stream.as_mut(), &expected_handshake)).poll(cx))?;
+///
+///             ready!(pin!(handle_first_handshake(stream.as_mut())).poll_handle(cx, &mut RtmpContext::default()))?;
+///
+///             let actual_encryption_algorithm = ready!(pin!(read_encryption_algorithm(stream.as_mut())).poll(cx))?;
+///             assert_eq!(expected_encryption_algorithm, actual_encryption_algorithm);
+///             let server_handshake = ready!(pin!(read_handshake(stream.as_mut())).poll(cx))?;
+///             // If some digest is imprinted, it matches with server's one.
+///             assert!(server_handshake.did_digest_match(actual_encryption_algorithm, Handshake::SERVER_KEY));
+///             let actual_handshake = ready!(pin!(read_handshake(stream.as_mut())).poll(cx))?;
+///             let mut server_response_key: Vec<u8> = Vec::new();
+///             server_response_key.extend_from_slice(Handshake::SERVER_KEY);
+///             server_response_key.extend_from_slice(Handshake::COMMON_KEY);
+///             // Also a signature matches with server's one.
+///             assert!(actual_handshake.did_signature_match(actual_encryption_algorithm, &server_response_key));
+///
+///             Poll::Ready(Ok(()))
+///         }
+///     ).await;
+///     assert!(result.is_ok());
+///
+///     Ok(())
+/// }
+/// ```
 pub fn handle_first_handshake<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>) -> FirstHandshakeHandler<'a, RW> {
     FirstHandshakeHandler(stream)
 }
