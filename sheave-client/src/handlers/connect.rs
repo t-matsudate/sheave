@@ -115,6 +115,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for ConnectHandler<'_, RW>
 ///             let mut client_rtmp_context = RtmpContext::default();
 ///             let mut server_rtmp_context = RtmpContext::default();
 ///
+///             // Because client handlers read response messages after request sent.
 ///             ready!(pin!(write_chunk(stream.as_mut(), &mut RtmpContext::default(), Duration::default(), u32::default(), &ConnectResult::default())).poll(cx))?;
 ///
 ///             ready!(pin!(handle_connect(stream.as_mut())).poll_handle(cx, &mut client_rtmp_context))?;
