@@ -140,7 +140,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FirstHandshakeHandler<
 ///
 ///             // When without any digest.
 ///             let mut stream = pin!(VecStream::default());
-///             let expected_encryption_algorithm = EncryptionAlgorithm::default();
+///             let expected_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
 ///             let expected_handshake = Handshake::new(Duration::default(), Version::UNSIGNED);
 ///             ready!(pin!(write_encryption_algorithm(stream.as_mut(), expected_encryption_algorithm)).poll(cx))?;
 ///             ready!(pin!(write_handshake(stream.as_mut(), &expected_handshake)).poll(cx))?;
@@ -156,9 +156,9 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FirstHandshakeHandler<
 ///
 ///             // When with some digest/signature.
 ///             let mut stream = pin!(VecStream::default());
-///             let expected_encryption_algorithm = EncryptionAlgorithm::default();
+///             let expected_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
 ///             let mut expected_handshake = Handshake::new(Duration::default(), Version::LATEST_CLIENT);
-///             expected_handshake.imprint_digest(EncryptionAlgorithm::default(), Handshake::CLIENT_KEY);
+///             expected_handshake.imprint_digest(expected_encryption_algorithm, Handshake::CLIENT_KEY);
 ///             ready!(pin!(write_encryption_algorithm(stream.as_mut(), expected_encryption_algorithm)).poll(cx))?;
 ///             ready!(pin!(write_handshake(stream.as_mut(), &expected_handshake)).poll(cx))?;
 ///
