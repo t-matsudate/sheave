@@ -90,13 +90,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for ReleaseStreamHandler<'
 ///                 },
 ///                 messages::{
 ///                     ReleaseStream,
-///                     ReleaseStreamResult,
-///                     amf::v0::{
-///                         Number,
-///                         AmfString
-///                     }
+///                     ReleaseStreamResult
 ///                 },
-///                 object,
 ///                 readers::read_chunk,
 ///                 writers::write_chunk
 ///             };
