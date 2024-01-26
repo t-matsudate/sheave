@@ -95,9 +95,9 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FirstHandshakeHandler<
 /// This step performs:
 ///
 /// 1. Receives a handshake chunk from a client.
-/// 2. Makes a handshake chunk which is a response as a server.
-/// 3. Sends it with received one to a client.  
-/// Note that can be required to imprint a digest as the HMAC(SHA-256).
+/// 2. If it is imprinted some digest, validates it.
+/// 3. Makes a response chunk from a client's request. If it is imprinted some digest, also we are required to imprint our signature into it.
+/// 4. Sends it with a server's request to a client..
 ///
 /// # Examples
 ///
