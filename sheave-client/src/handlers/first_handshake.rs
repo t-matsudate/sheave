@@ -75,8 +75,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FirstHandshakeHandler<
 ///             use std::{
 ///                 future::Future,
 ///                 pin::pin,
-///                 task::Poll,
-///                 time::Duration
+///                 task::Poll
 ///             };
 ///             use futures::ready;
 ///             use sheave_core::{
