@@ -23,7 +23,10 @@ use sheave_core::handlers::{
 };
 use crate::handlers::{
     handle_first_handshake,
-    handle_second_handshake
+    handle_second_handshake,
+    handle_connect,
+    handle_release_stream,
+    handle_fc_publish
 };
 
 #[derive(Debug)]
@@ -48,6 +51,9 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Client<RW> {
         pin!(
             handle_first_handshake(self.stream.make_weak_pin())
                 .chain(handle_second_handshake(self.stream.make_weak_pin()))
+                .chain(handle_connect(self.stream.make_weak_pin()))
+                .chain(handle_release_stream(self.stream.make_weak_pin()))
+                .chain(handle_fc_publish(self.stream.make_weak_pin()))
         ).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }
 }
