@@ -1,6 +1,4 @@
-use futures::{
-    future::poll_fn
-};
+use futures::future::poll_fn;
 
 #[tokio::test]
 async fn first_handshake_unsigned() {
