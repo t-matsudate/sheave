@@ -104,6 +104,7 @@ mod release_stream;
 mod release_stream_result;
 mod fc_publish;
 mod on_fc_publish;
+mod create_stream;
 
 use std::io::Result as IOResult;
 use self::{
@@ -121,7 +122,8 @@ pub use self::{
     release_stream::*,
     release_stream_result::*,
     fc_publish::*,
-    on_fc_publish::*
+    on_fc_publish::*,
+    create_stream::*
 };
 
 #[doc(hidden)]
