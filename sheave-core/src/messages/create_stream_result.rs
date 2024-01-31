@@ -94,7 +94,7 @@ impl Decoder<CreateStreamResult> for ByteBuffer {
     ///             Number,
     ///             AmfString,
     ///             Null
-    ///         };
+    ///         }
     ///     }
     /// };
     ///
@@ -150,7 +150,7 @@ impl Encoder<CreateStreamResult> for ByteBuffer {
     /// let mut buffer = ByteBuffer::default();
     /// let expected_transaction_id = 4f64;
     /// let expected_message_id = f64::default();
-    /// buffer.encode(&CreateStreamResult::new(expected_transaction_id, Number::default()));
+    /// buffer.encode(&CreateStreamResult::new("_result".into(), Number::new(expected_transaction_id), Number::default()));
     /// let command_name: AmfString = buffer.decode().unwrap();
     /// let actual_transaction_id: Number = buffer.decode().unwrap();
     /// Decoder::<Null>::decode(&mut buffer).unwrap();
