@@ -104,7 +104,9 @@ impl LastChunk {
         if let Some(extended_timestamp) = extended_timestamp {
             self.timestamp = extended_timestamp;
         } else {
-            self.timestamp = message_header.get_timestamp().unwrap();
+            if let Some(timestamp) = message_header.get_timestamp() {
+                self.timestamp = timestamp;
+            }
         }
 
         message_header.get_message_length().map(
