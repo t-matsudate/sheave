@@ -23,7 +23,8 @@ use sheave_core::{
     },
     messages::{
         FcPublish,
-        OnFcPublish
+        OnFcPublish,
+        Command
     },
     readers::read_chunk,
     writers::write_chunk,
@@ -37,6 +38,7 @@ pub struct FcPublishHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut 
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for FcPublishHandler<'_, RW> {
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let fc_publish: FcPublish = ready!(pin!(read_chunk(self.0.as_mut(), rtmp_context)).poll(cx))?;
+        rtmp_context.set_transaction_id(fc_publish.get_transaction_id());
         let release_stream_play_path = rtmp_context.get_play_path().unwrap();
         let fc_publish_play_path = fc_publish.get_play_path();
 
