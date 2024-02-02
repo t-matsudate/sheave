@@ -1,3 +1,5 @@
+mod message_id_provider;
+
 use std::{
     future::Future,
     io::{
@@ -30,20 +32,24 @@ use crate::handlers::{
     handle_second_handshake,
     handle_connect,
     handle_release_stream,
-    handle_fc_publish
+    handle_fc_publish,
+    handle_create_stream
 };
+pub use self::message_id_provider::*;
 
 #[derive(Debug)]
 pub struct Server<RW: AsyncRead + AsyncWrite + Unpin> {
     stream: Arc<StreamWrapper<RW>>,
-    rtmp_context: Arc<RtmpContext>
+    rtmp_context: Arc<RtmpContext>,
+    message_id: u32
 }
 
 impl<RW: AsyncRead + AsyncWrite + Unpin> Server<RW> {
-    pub fn new(stream: RW) -> Self {
+    pub fn new(stream: RW, message_id: u32) -> Self {
         Self {
             stream: Arc::new(StreamWrapper::new(stream)),
-            rtmp_context: Arc::new(RtmpContext::default())
+            rtmp_context: Arc::new(RtmpContext::default()),
+            message_id
         }
     }
 }
@@ -58,6 +64,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Server<RW> {
                 .chain(handle_connect(self.stream.make_weak_pin()))
                 .chain(handle_release_stream(self.stream.make_weak_pin()))
                 .chain(handle_fc_publish(self.stream.make_weak_pin()))
+                .chain(handle_create_stream(self.stream.make_weak_pin(), self.message_id))
                 .chain(echo_next(self.stream.make_weak_pin()))
         ).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }
