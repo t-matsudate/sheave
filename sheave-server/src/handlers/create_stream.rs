@@ -90,10 +90,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_
 ///
 ///             ready!(pin!(write_chunk(stream.as_mut(), &mut client_rtmp_context, Duration::default(), u32::default(), &CreateStream::new(4.into()))).poll(cx))?;
 ///
-///             ready!(pin!(handle_create_stream(stream.as_mut(), u32::default())).poll_handle(cx, &mut server_rtmp_context))?;
+///             ready!(pin!(handle_create_stream(stream.as_mut())).poll_handle(cx, &mut server_rtmp_context))?;
 ///
 ///             let actual: CreateStreamResult = ready!(pin!(read_chunk(stream.as_mut(), &mut client_rtmp_context)).poll(cx))?;
-///             let expected = CreateStreamResult::new("_result".into(), 4.into(), u32::default().into());
+///             let expected = CreateStreamResult::new("_result".into(), 4.into(), Number::default());
 ///             assert_eq!(expected, actual);
 ///
 ///             Poll::Ready(Ok(()))
