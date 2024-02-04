@@ -47,6 +47,7 @@ pub struct RtmpContext {
     properties: Option<Object>,
     information: Option<Object>,
     play_path: Option<AmfString>,
+    message_id: Option<Number>,
     last_received_chunks: HashMap<u16, LastChunk>,
     last_sent_chunks: HashMap<u16, LastChunk>
 }
@@ -264,6 +265,16 @@ impl RtmpContext {
     /// ```
     pub fn get_play_path(&mut self) -> Option<&AmfString> {
         self.play_path.as_ref()
+    }
+
+    /// Sets a message ID of this stream.
+    pub fn set_message_id(&mut self, message_id: Number) {
+        self.message_id = Some(message_id);
+    }
+
+    /// Gets a message ID of this stream.
+    pub fn get_message_id(&mut self) -> Option<Number> {
+        self.message_id
     }
 
     /// Stores a last received chunk.
