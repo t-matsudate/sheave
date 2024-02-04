@@ -33,6 +33,12 @@ impl Number {
     pub fn new(number: f64) -> Self {
         Self(number)
     }
+
+    /// Gets an inner value as an integer.
+    /// This is prepared for converting any message ID to an integer from an AMF's number.
+    pub fn as_integer(&self) -> u64 {
+        self.0 as u64
+    }
 }
 
 impl From<bool> for Number {
