@@ -40,16 +40,14 @@ pub use self::message_id_provider::*;
 #[derive(Debug)]
 pub struct Server<RW: AsyncRead + AsyncWrite + Unpin> {
     stream: Arc<StreamWrapper<RW>>,
-    rtmp_context: Arc<RtmpContext>,
-    message_id: u32
+    rtmp_context: Arc<RtmpContext>
 }
 
 impl<RW: AsyncRead + AsyncWrite + Unpin> Server<RW> {
-    pub fn new(stream: RW, message_id: u32) -> Self {
+    pub fn new(stream: RW) -> Self {
         Self {
             stream: Arc::new(StreamWrapper::new(stream)),
-            rtmp_context: Arc::new(RtmpContext::default()),
-            message_id
+            rtmp_context: Arc::new(RtmpContext::default())
         }
     }
 }
@@ -64,7 +62,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Server<RW> {
                 .chain(handle_connect(self.stream.make_weak_pin()))
                 .chain(handle_release_stream(self.stream.make_weak_pin()))
                 .chain(handle_fc_publish(self.stream.make_weak_pin()))
-                .chain(handle_create_stream(self.stream.make_weak_pin(), self.message_id))
+                .chain(handle_create_stream(self.stream.make_weak_pin()))
                 .chain(echo_next(self.stream.make_weak_pin()))
         ).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }

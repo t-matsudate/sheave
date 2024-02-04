@@ -8,7 +8,7 @@ use tokio::spawn;
 use sheave_core::cli::*;
 use self::{
     net::rtmp::RtmpListener,
-    server::*
+    server::Server
 };
 
 #[derive(Debug, Parser)]
@@ -27,8 +27,7 @@ async fn run_as_rtmp(host: String, port: u16) -> IOResult<()> {
 
     loop {
         let (stream, _) = listener.accept().await?;
-        let message_id = provide_message_id().await;
-        let server = Server::new(stream, message_id);
+        let server = Server::new(stream);
         return spawn(server).await?;
     }
 }

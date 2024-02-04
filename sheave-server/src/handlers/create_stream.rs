@@ -29,18 +29,21 @@ use sheave_core::{
     readers::read_chunk,
     writers::write_chunk,
 };
+use crate::server::provide_message_id;
 
 #[doc(hidden)]
 #[derive(Debug)]
-pub struct CreateStreamHandler<'a, RW: AsyncRead + AsyncWrite>(Pin<&'a mut RW>, u32);
+pub struct CreateStreamHandler<'a, RW: AsyncRead + AsyncWrite>(Pin<&'a mut RW>);
 
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_, RW> {
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let create_stream: CreateStream = ready!(pin!(read_chunk(self.0.as_mut(), rtmp_context)).poll(cx))?;
+        let message_id = ready!(pin!(provide_message_id()).poll(cx));
         rtmp_context.set_transaction_id(create_stream.get_transaction_id());
-        let create_stream_result: CreateStreamResult = CreateStreamResult::new("_result".into(), rtmp_context.get_transaction_id(), self.1.into());
+        let create_stream_result: CreateStreamResult = CreateStreamResult::new("_result".into(), rtmp_context.get_transaction_id(), message_id.into());
         ready!(pin!(write_chunk(self.0.as_mut(), rtmp_context, Duration::default(), u32::default(), &create_stream_result)).poll(cx))?;
+        rtmp_context.set_message_id(message_id.into());
 
         Poll::Ready(Ok(()))
     }
@@ -101,6 +104,6 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_
 ///     Ok(())
 /// }
 /// ```
-pub fn handle_create_stream<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>, message_id: u32) -> CreateStreamHandler<'a, RW> {
-    CreateStreamHandler(stream, message_id)
+pub fn handle_create_stream<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>) -> CreateStreamHandler<'a, RW> {
+    CreateStreamHandler(stream)
 }
