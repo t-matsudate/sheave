@@ -27,6 +27,8 @@ async fn information_exchange_with_default() {
                     ConnectResult,
                     ReleaseStreamResult,
                     OnFcPublish,
+                    CreateStream,
+                    CreateStreamResult,
                     amf::v0::{
                         Number,
                         AmfString
@@ -53,7 +55,7 @@ async fn information_exchange_with_default() {
             let mut server_rtmp_context = RtmpContext::default();
 
             // Hnadling "connect".
-            // NOTE: Because of currently client-side handler receives a result message simultaneously with sending its request.
+            // NOTE: Because currently client-side handler receives a result message simultaneously with sending its request.
             let expected_connect_result = ConnectResult::new(
                 "_result".into(),
                 object!(
@@ -77,7 +79,7 @@ async fn information_exchange_with_default() {
             assert!(result.is_ok());
             let result = ready!(pin!(server::handle_connect(stream.make_weak_pin())).poll_handle(cx, &mut server_rtmp_context));
             assert!(result.is_ok());
-            let actual_connect_result: ConnectResult = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut server_rtmp_context)).poll(cx))?;
+            let actual_connect_result: ConnectResult = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
             assert_eq!(expected_connect_result, actual_connect_result);
 
             // Handling "releaseStream".
@@ -92,9 +94,10 @@ async fn information_exchange_with_default() {
             assert!(result.is_ok());
             let result = ready!(pin!(server::handle_release_stream(stream.make_weak_pin())).poll_handle(cx, &mut server_rtmp_context));
             assert!(result.is_ok());
-            let actual_release_stream_result: ReleaseStreamResult = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut server_rtmp_context)).poll(cx))?;
+            let actual_release_stream_result: ReleaseStreamResult = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
             assert_eq!(expected_release_stream_result, actual_release_stream_result);
 
+            // Handling "FCPublish".
             let expected_on_fc_publish = OnFcPublish;
             let mut buffer = ByteBuffer::default();
             buffer.encode(&expected_on_fc_publish);
@@ -106,8 +109,22 @@ async fn information_exchange_with_default() {
             assert!(result.is_ok());
             let result = ready!(pin!(server::handle_fc_publish(stream.make_weak_pin())).poll_handle(cx, &mut server_rtmp_context));
             assert!(result.is_ok());
-            let actual_on_fc_publish: OnFcPublish = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut server_rtmp_context)).poll(cx))?;
+            let actual_on_fc_publish: OnFcPublish = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
             assert_eq!(expected_on_fc_publish, actual_on_fc_publish);
+
+            let expected_create_stream_result = CreateStreamResult::new("_result".into(), 4u8.into(), Number::default());
+            let mut buffer = ByteBuffer::default();
+            buffer.encode(&expected_create_stream_result);
+            let data: Vec<u8> = buffer.into();
+            ready!(pin!(write_basic_header(stream.make_weak_pin(), &BasicHeader::new(MessageFormat::SameSource, CreateStreamResult::CHANNEL as u16))).poll(cx))?;
+            ready!(pin!(write_message_header(stream.make_weak_pin(), &MessageHeader::SameSource((Duration::default(), data.len() as u32, CreateStreamResult::MESSAGE_TYPE).into()))).poll(cx))?;
+            ready!(pin!(write_chunk_data(stream.make_weak_pin(), CreateStreamResult::CHANNEL as u16, client_rtmp_context.get_sending_chunk_size(), &data)).poll(cx))?;
+            let result = ready!(pin!(client::handle_create_stream(stream.make_weak_pin())).poll_handle(cx, &mut client_rtmp_context));
+            assert!(result.is_ok());
+            let result = ready!(pin!(server::handle_create_stream(stream.make_weak_pin())).poll_handle(cx, &mut server_rtmp_context));
+            assert!(result.is_ok());
+            let actual_create_stream_result: CreateStreamResult = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
+            assert_eq!(expected_create_stream_result, actual_create_stream_result);
 
             Poll::<IOResult<()>>::Ready(Ok(()))
         }
