@@ -18,10 +18,14 @@ jobs:
           cargo test -p sheave-core
       - id: check-server
         name: Cargo check to the server crate
-        run: cargo check -p sheave-server
+        run: |
+          cargo check -p sheave-server
+          cargo test -p sheave-server --doc
       - id: check-client
         name: Cargo check to the client crate
-        run: cargo check -p sheave-client
+        run: |
+          cargo check -p sheave-client
+          cargo test -p sheave-client --doc
       - id: integration-tests
         name: Integration Tests
         run: cargo test -p sheave-integration-tests
