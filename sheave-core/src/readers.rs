@@ -168,6 +168,7 @@ mod tests {
             OnFcPublish,
             CreateStream,
             CreateStreamResult,
+            Publish,
             amf::v0::Number,
             headers::{
                 BasicHeader,
@@ -236,7 +237,7 @@ mod tests {
         let result: IOResult<ConnectResult> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -266,7 +267,7 @@ mod tests {
         let result: IOResult<ReleaseStream> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -296,7 +297,7 @@ mod tests {
         let result: IOResult<ReleaseStreamResult> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -326,7 +327,7 @@ mod tests {
         let result: IOResult<FcPublish> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -356,7 +357,7 @@ mod tests {
         let result: IOResult<OnFcPublish> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -386,7 +387,7 @@ mod tests {
         let result: IOResult<CreateStream> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -416,6 +417,36 @@ mod tests {
         let result: IOResult<CreateStreamResult> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
+    }
+
+    #[tokio::test]
+    async fn read_publish() {
+        let mut buffer = ByteBuffer::default();
+        let expected = Publish::new(5u8.into(), "".into(), "live".into());
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, Publish::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, Publish::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            Publish::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<Publish> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual)
     }
 }

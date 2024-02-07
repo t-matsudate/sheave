@@ -179,6 +179,7 @@ mod tests {
             OnFcPublish,
             CreateStream,
             CreateStreamResult,
+            Publish,
             amf::v0::Number
         },
         readers::*
@@ -232,7 +233,7 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<ConnectResult>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -257,7 +258,7 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<ReleaseStream>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -282,7 +283,7 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<ReleaseStreamResult>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -307,7 +308,7 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<FcPublish>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -332,7 +333,7 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<OnFcPublish>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -357,7 +358,7 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<CreateStream>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
     }
 
     #[tokio::test]
@@ -382,6 +383,31 @@ mod tests {
         assert_eq!(u32::default(), message_header.get_message_id().unwrap());
 
         let actual = Decoder::<CreateStreamResult>::decode(&mut ByteBuffer::from(data)).unwrap();
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual)
+    }
+
+    #[tokio::test]
+    async fn write_publish() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        let expected = Publish::new(5u8.into(), "".into(), "live".into());
+
+        let result = write_chunk(stream.as_mut(), &mut rtmp_context, Duration::default(), u32::default(), &expected).await;
+        assert!(result.is_ok());
+        let basic_header = read_basic_header(stream.as_mut()).await.unwrap();
+        let message_format = basic_header.get_message_format();
+        let message_header = read_message_header(stream.as_mut(), message_format).await.unwrap();
+        let message_length = message_header.get_message_length().unwrap();
+        let chunk_size = rtmp_context.get_receiving_chunk_size();
+        let data = read_chunk_data(stream.as_mut(), chunk_size, message_length).await.unwrap();
+        assert_eq!(Publish::CHANNEL as u16, basic_header.get_chunk_id());
+        assert_eq!(MessageFormat::New, message_format);
+        assert_eq!(Duration::default(), message_header.get_timestamp().unwrap());
+        assert_eq!(message_length, data.len() as u32);
+        assert_eq!(Publish::MESSAGE_TYPE, message_header.get_message_type().unwrap());
+        assert_eq!(u32::default(), message_header.get_message_id().unwrap());
+
+        let actual = Decoder::<Publish>::decode(&mut ByteBuffer::from(data)).unwrap();
+        assert_eq!(expected, actual)
     }
 }
