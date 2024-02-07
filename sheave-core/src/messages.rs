@@ -106,6 +106,7 @@ mod fc_publish;
 mod on_fc_publish;
 mod create_stream;
 mod create_stream_result;
+mod publish;
 
 use std::io::Result as IOResult;
 use self::{
@@ -125,7 +126,8 @@ pub use self::{
     fc_publish::*,
     on_fc_publish::*,
     create_stream::*,
-    create_stream_result::*
+    create_stream_result::*,
+    publish::*
 };
 
 #[doc(hidden)]
@@ -151,6 +153,7 @@ pub(self) fn ensure_command_name(expected: &str, actual: AmfString) -> IOResult<
 pub enum Channel {
     Network = 2,
     System = 3,
+    Source = 8,
     Other = 0xffff
 }
 
@@ -161,6 +164,7 @@ impl From<u16> for Channel {
         match channel {
             2 => Network,
             3 => System,
+            8 => Source,
             _ => Other
         }
     }
