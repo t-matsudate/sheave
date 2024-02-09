@@ -107,6 +107,8 @@ mod on_fc_publish;
 mod create_stream;
 mod create_stream_result;
 mod publish;
+mod inconsistent_event_type;
+mod stream_begin;
 
 use std::io::Result as IOResult;
 use self::{
@@ -127,12 +129,19 @@ pub use self::{
     on_fc_publish::*,
     create_stream::*,
     create_stream_result::*,
-    publish::*
+    publish::*,
+    inconsistent_event_type::*,
+    stream_begin::*
 };
 
 #[doc(hidden)]
 pub(self) fn ensure_command_name(expected: &str, actual: AmfString) -> IOResult<()> {
     (expected == actual).then_some(()).ok_or(inconsistent_command(expected, actual))
+}
+
+#[doc(hidden)]
+pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()> {
+    (expected == EventType::from(actual)).then_some(()).ok_or(inconsistent_event_type(expected, actual))
 }
 
 /// The IDs which are assigned every roles of chunks.
@@ -142,8 +151,8 @@ pub(self) fn ensure_command_name(expected: &str, actual: AmfString) -> IOResult<
 ///
 /// |Patttern|Message Type|
 /// | :- | :- |
-/// |`Network`|`ChunkSize`|
-/// |`System`|`Command`|
+/// |`Network`|[`ChunkSize`]|
+/// |`System`|[`Command`]|
 /// |`Other`|other chunks|
 ///
 /// [`ChunkSize`]: ChunkSize
@@ -200,4 +209,46 @@ pub trait ChunkData {
 pub trait Command {
     fn get_command_name(&self) -> &str;
     fn get_transaction_id(&self) -> Number;
+}
+
+/// The IDs which are types of user control messages.
+///
+/// Variants correspond to respectively following events:
+///
+/// |Patttern|Message Type|
+/// | :- | :- |
+/// |`StreamBegin`|[`StreamBegin`]|
+/// |`Other`|other event type|
+///
+/// [`StreamBegin`]: StreamBegin
+#[repr(u16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EventType {
+    StreamBegin,
+    Other = 0xffff
+}
+
+impl From<u16> for EventType {
+    fn from(event_type: u16) -> Self {
+        use EventType::*;
+
+        match event_type {
+            0 => StreamBegin,
+            _ => Other
+        }
+    }
+}
+
+impl From<EventType> for u16 {
+    fn from(event_type: EventType) -> Self {
+        event_type as u16
+    }
+}
+
+/// Uniforms user control messages by an event type.
+///
+/// When reading from streams or writing into streams, we are required to imprint a event type ID into their messages.
+/// This makes you to reduce its cost.
+pub trait UserControl {
+    const EVENT_TYPE: EventType;
 }
