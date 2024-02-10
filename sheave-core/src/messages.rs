@@ -109,6 +109,7 @@ mod create_stream_result;
 mod publish;
 mod inconsistent_event_type;
 mod stream_begin;
+mod on_status;
 
 use std::io::Result as IOResult;
 use self::{
@@ -131,7 +132,8 @@ pub use self::{
     create_stream_result::*,
     publish::*,
     inconsistent_event_type::*,
-    stream_begin::*
+    stream_begin::*,
+    on_status::*
 };
 
 #[doc(hidden)]
