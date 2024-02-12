@@ -30,95 +30,35 @@ pub struct Boolean(u8);
 
 impl Boolean {
     /// Constructs an AMF's Boolean.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::Boolean;
-    ///
-    /// Boolean::new(0);
-    /// ```
     pub fn new(boolean: u8) -> Self {
         Self(boolean)
     }
 
     /// Gets an inner value as a boolean value.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::Boolean;
-    ///
-    /// let f = Boolean::new(0);
-    /// let t = Boolean::new(1);
-    ///
-    /// assert!(!f.as_boolean());
-    /// assert!(t.as_boolean())
-    /// ```
     pub fn as_boolean(&self) -> bool {
         self.0 > 0
     }
 }
 
 impl PartialEq<bool> for Boolean {
-    /// Checks whether this equals an other value, as the Boolean.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::Boolean;
-    ///
-    /// assert!(Boolean::new(0) == false);
-    /// assert!(Boolean::new(1) == true)
-    /// ```
     fn eq(&self, other: &bool) -> bool {
         self.as_boolean().eq(other)
     }
 }
 
 impl PartialEq<Boolean> for bool {
-    /// Makes two values commutative.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::Boolean;
-    ///
-    /// assert!(false == Boolean::new(0));
-    /// assert!(true == Boolean::new(1))
-    /// ```
     fn eq(&self, other: &Boolean) -> bool {
         self.eq(&other.as_boolean())
     }
 }
 
 impl PartialOrd<bool> for Boolean {
-    /// Compares this with an other value, as the Boolean.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::Boolean;
-    ///
-    /// assert!(Boolean::new(0) < true);
-    /// assert!(Boolean::new(1) > false)
-    /// ```
     fn partial_cmp(&self, other: &bool) -> Option<Ordering> {
         self.as_boolean().partial_cmp(other)
     }
 }
 
 impl PartialOrd<Boolean> for bool {
-    /// Makes two values commutative.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::Boolean;
-    ///
-    /// assert!(true > Boolean::new(0));
-    /// assert!(false < Boolean::new(1))
-    /// ```
     fn partial_cmp(&self, other: &Boolean) -> Option<Ordering> {
         self.partial_cmp(&other.as_boolean())
     }
@@ -176,26 +116,6 @@ impl Decoder<Boolean> for ByteBuffer {
 
 impl Encoder<Boolean> for ByteBuffer {
     /// Encodes an AMF's Boolean into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Encoder,
-    ///     messages::amf::v0::{
-    ///         Marker,
-    ///         Boolean
-    ///     }
-    /// };
-    ///
-    /// let b = 0;
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Boolean::new(b));
-    /// let bytes: Vec<u8> = buffer.into();
-    /// assert_eq!(Marker::Boolean as u8, bytes[0]);
-    /// assert_eq!(b, bytes[1])
-    /// ```
     fn encode(&mut self, boolean: &Boolean) {
         self.put_u8(Marker::Boolean as u8);
         self.put_u8(boolean.0);

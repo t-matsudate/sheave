@@ -113,33 +113,6 @@ impl Decoder<CreateStream> for ByteBuffer {
 
 impl Encoder<CreateStream> for ByteBuffer {
     /// Encodes a CreateSteam command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         CreateStream,
-    ///         amf::v0::{
-    ///             Number,
-    ///             AmfString,
-    ///             Null
-    ///         }
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// let expected_transaction_id = 4f64;
-    /// let expected = CreateStream::new(Number::new(expected_transaction_id));
-    /// buffer.encode(&expected);
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// let actual_transaction_id: Number = buffer.decode().unwrap();
-    /// assert_eq!("createStream", command_name);
-    /// assert_eq!(expected_transaction_id, actual_transaction_id)
-    /// ```
     fn encode(&mut self, create_stream: &CreateStream) {
         self.encode(&AmfString::from(create_stream.get_command_name()));
         self.encode(&create_stream.get_transaction_id());

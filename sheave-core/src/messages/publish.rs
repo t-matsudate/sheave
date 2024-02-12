@@ -160,36 +160,6 @@ impl Decoder<Publish> for ByteBuffer {
 
 impl Encoder<Publish> for ByteBuffer {
     /// Encodes a Publish command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         Publish,
-    ///         amf::v0::{
-    ///             Number,
-    ///             AmfString,
-    ///             Null
-    ///         }
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Publish::new(5.into(), AmfString::default(), "live".into()));
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// let transaction_id: Number = buffer.decode().unwrap();
-    /// Decoder::<Null>::decode(&mut buffer).unwrap();
-    /// let publishing_name: AmfString = buffer.decode().unwrap();
-    /// let publishing_type: AmfString = buffer.decode().unwrap();
-    /// assert_eq!("publish", command_name);
-    /// assert_eq!(5f64, transaction_id);
-    /// assert_eq!(AmfString::default(), publishing_name);
-    /// assert_eq!("live", publishing_type)
-    /// ```
     fn encode(&mut self, publish: &Publish) {
         self.encode(&AmfString::from(publish.get_command_name()));
         self.encode(&publish.get_transaction_id());

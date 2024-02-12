@@ -147,35 +147,6 @@ impl Decoder<ConnectResult> for ByteBuffer {
 
 impl Encoder<ConnectResult> for ByteBuffer {
     /// Encodes a ConnectResult command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         ConnectResult,
-    ///         amf::v0::{
-    ///             Number,
-    ///             AmfString,
-    ///             Object
-    ///         }
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&ConnectResult::default());
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// let transaction_id: Number = buffer.decode().unwrap();
-    /// let properties: Object = buffer.decode().unwrap();
-    /// let information: Object = buffer.decode().unwrap();
-    /// assert_eq!("_result", command_name);
-    /// assert_eq!(1f64, transaction_id);
-    /// assert_eq!(Object::default(), properties);
-    /// assert_eq!(Object::default(), information)
-    /// ```
     fn encode(&mut self, connect_result: &ConnectResult) {
         self.encode(&AmfString::from(connect_result.get_command_name()));
         self.encode(&connect_result.get_transaction_id());

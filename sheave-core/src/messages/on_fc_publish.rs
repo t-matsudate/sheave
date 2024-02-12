@@ -30,19 +30,17 @@ impl ChunkData for OnFcPublish {
 }
 
 impl Command for OnFcPublish {
-    /// Gets the result that's just "onFCPublish".
     fn get_command_name(&self) -> &str {
         Self::COMMAND_NAME
     }
 
-    /// Gets the transaction ID in this response.
     fn get_transaction_id(&self) -> Number {
         unimplemented!("onFCPublish has no transaction ID.")
     }
 }
 
 impl Decoder<OnFcPublish> for ByteBuffer {
-    /// Decodes bytes into a OnFcPublish command.
+    /// Decodes bytes into an OnFcPublish command.
     ///
     /// # Errors
     ///
@@ -98,26 +96,7 @@ impl Decoder<OnFcPublish> for ByteBuffer {
 }
 
 impl Encoder<OnFcPublish> for ByteBuffer {
-    /// Encodes a OnFcPublish command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         OnFcPublish,
-    ///         amf::v0::AmfString
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&OnFcPublish);
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// assert_eq!("onFCPublish", command_name)
-    /// ```
+    /// Encodes an OnFcPublish command into bytes.
     fn encode(&mut self, on_fc_publish: &OnFcPublish) {
         self.encode(&AmfString::from(on_fc_publish.get_command_name()));
     }

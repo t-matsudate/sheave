@@ -129,36 +129,6 @@ impl Decoder<CreateStreamResult> for ByteBuffer {
 
 impl Encoder<CreateStreamResult> for ByteBuffer {
     /// Encodes a CreateStreamResult command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         CreateStreamResult,
-    ///         amf::v0::{
-    ///             Number,
-    ///             AmfString,
-    ///             Null
-    ///         }
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// let expected_transaction_id = 4f64;
-    /// let expected_message_id = f64::default();
-    /// buffer.encode(&CreateStreamResult::new("_result".into(), Number::new(expected_transaction_id), Number::default()));
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// let actual_transaction_id: Number = buffer.decode().unwrap();
-    /// Decoder::<Null>::decode(&mut buffer).unwrap();
-    /// let actual_message_id: Number = buffer.decode().unwrap();
-    /// assert_eq!("_result", command_name);
-    /// assert_eq!(expected_transaction_id, actual_transaction_id);
-    /// assert_eq!(expected_message_id, actual_message_id)
-    /// ```
     fn encode(&mut self, create_stream_result: &CreateStreamResult) {
         self.encode(&AmfString::from(create_stream_result.get_command_name()));
         self.encode(&create_stream_result.get_transaction_id());

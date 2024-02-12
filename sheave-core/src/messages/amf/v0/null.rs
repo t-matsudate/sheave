@@ -63,25 +63,27 @@ impl Decoder<Null> for ByteBuffer {
 
 impl Encoder<Null> for ByteBuffer {
     /// Encodes an AMF's Null into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Encoder,
-    ///     messages::amf::v0::{
-    ///         Marker,
-    ///         Null
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Null);
-    /// let bytes: Vec<u8> = buffer.into();
-    /// assert_eq!(Marker::Null as u8, bytes[0]);
-    /// ```
     fn encode(&mut self, _: &Null) {
         self.put_u8(Marker::Null as u8);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decode_null() {
+        let mut buffer = ByteBuffer::default();
+        buffer.put_u8(Marker::Null as u8);
+        assert!(Decoder::<Null>::decode(&mut buffer).is_ok())
+    }
+
+    #[test]
+    fn encode_null() {
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&Null);
+        let result: Vec<u8> = buffer.into();
+        assert_eq!(Marker::Null as u8, result[0])
     }
 }

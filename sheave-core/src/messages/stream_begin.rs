@@ -95,29 +95,6 @@ impl Decoder<StreamBegin> for ByteBuffer {
 
 impl Encoder<StreamBegin> for ByteBuffer {
     /// Encodes a StreamBegin event into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         EventType,
-    ///         StreamBegin
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// let expected_message_id = u32::default();
-    /// let expected = StreamBegin::new(expected_message_id);
-    /// buffer.encode(&expected);
-    /// let event_type: EventType = buffer.get_u16_be().unwrap().into();
-    /// let actual_message_id = buffer.get_u32_be().unwrap();
-    /// assert_eq!(EventType::StreamBegin, event_type);
-    /// assert_eq!(expected_message_id, actual_message_id)
-    /// ```
     fn encode(&mut self, stream_begin: &StreamBegin) {
         self.put_u16_be(StreamBegin::EVENT_TYPE as u16);
         self.put_u32_be(stream_begin.get_message_id());

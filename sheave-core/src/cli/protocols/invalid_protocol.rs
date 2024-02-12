@@ -11,11 +11,12 @@ use std::{
     }
 };
 
-/// Tells that specified protocol via CLI is invalid.
+/// An error means that specified protocol via CLI is invalid.
 #[derive(Debug)]
 pub struct InvalidProtocol(String);
 
 impl InvalidProtocol {
+    /// Constructs this error.
     pub fn new(protocol: String) -> Self {
         Self(protocol)
     }
@@ -29,7 +30,7 @@ impl Display for InvalidProtocol {
 
 impl Error for InvalidProtocol {}
 
-/// A utility funciton for wrapping the error `InvalidProtocol` into `::std::io::Error`.
+/// A utility funciton of constructing an `InvalidProtocol` error.
 pub fn invalid_protocol(protocol: String) -> IOError {
     IOError::new(
         ErrorKind::InvalidInput,

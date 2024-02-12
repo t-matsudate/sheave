@@ -12,23 +12,6 @@ pub struct ByteBuffer {
 
 impl ByteBuffer {
     /// Computes remained length in this buffer.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
-    /// use sheave_core::ByteBuffer;
-    ///
-    /// let mut bytes: [u8; 128] = [0; 128];
-    /// bytes.try_fill(&mut thread_rng()).unwrap();
-    /// let mut buffer: ByteBuffer = bytes.to_vec().into();
-    /// assert_eq!(bytes.len(), buffer.remained());
-    /// buffer.get_u8().unwrap();
-    /// assert_eq!(bytes[1..].len(), buffer.remained())
-    /// ```
     pub fn remained(&self) -> usize {
         self.bytes.len() - self.offset
     }
@@ -38,7 +21,7 @@ impl ByteBuffer {
     ///
     /// # Errors
     ///
-    /// * `InSufficientBufferLength`
+    /// * [`InSufficientBufferLength`]
     ///
     /// When buffer isn't remained at least 1 byte.
     ///
@@ -69,7 +52,7 @@ impl ByteBuffer {
     ///
     /// # Errors
     ///
-    /// * `InsufficientBufferLength`
+    /// * [`InsufficientBufferLength`]
     ///
     /// When buffer isn't remained at least 1 byte.
     ///
@@ -101,7 +84,7 @@ impl ByteBuffer {
     ///
     /// # Errors
     ///
-    /// * `InsufficientBufferLength`
+    /// * [`InsufficientBufferLength`]
     ///
     /// When buffer isn't remained at least 2 bytes.
     ///
@@ -131,6 +114,28 @@ impl ByteBuffer {
         ).ok_or(insufficient_buffer_length(2, self.remained()))
     }
 
+    /// Tries getting 4 bytes from buffer, as the big endian.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When buffer isn't remained at least 4 bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use rand::random;
+    /// use sheave_core::ByteBuffer;
+    ///
+    /// let mut buffer: ByteBuffer = random::<u32>().to_be_bytes().to_vec().into();
+    /// assert!(buffer.get_u32_be().is_ok());
+    ///
+    /// let mut buffer: ByteBuffer = Vec::new().into();
+    /// assert!(buffer.get_u32_be().is_err());
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: InsufficientBufferLength
     pub fn get_u32_be(&mut self) -> IOResult<u32> {
         let offset = self.offset;
         self.bytes.get(offset..(offset + 4)).map(
@@ -147,7 +152,7 @@ impl ByteBuffer {
     ///
     /// # Errors
     ///
-    /// * `InsufficientBufferLength`
+    /// * [`InsufficientBufferLength`]
     ///
     /// When buffer isn't remained at least 8 bytes.
     ///
@@ -210,94 +215,32 @@ impl ByteBuffer {
     }
 
     /// Puts 1 byte into buffer.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use rand::random;
-    /// use sheave_core::ByteBuffer;
-    ///
-    /// let n = random::<u8>();
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_u8(n);
-    /// assert_eq!(n, buffer.get_u8().unwrap())
-    /// ```
     pub fn put_u8(&mut self, n: u8) {
         self.bytes.push(n);
     }
 
     /// Puts 2 bytes into buffer, as the big endian.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use rand::random;
-    /// use sheave_core::ByteBuffer;
-    ///
-    /// let n = random::<u16>();
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_u16_be(n);
-    /// assert_eq!(n, buffer.get_u16_be().unwrap())
-    /// ```
     pub fn put_u16_be(&mut self, n: u16) {
         self.bytes.extend_from_slice(&n.to_be_bytes());
     }
 
+    /// Puts 4 bytes into buffer, as the big endian.
     pub fn put_u32_be(&mut self, n: u32) {
         self.bytes.extend_from_slice(&n.to_be_bytes());
     }
 
     /// Puts 8 bytes into buffer, as a 64 bits floating point number.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use rand::random;
-    /// use sheave_core::ByteBuffer;
-    ///
-    /// let mut n = f64::from_bits(random::<u64>());
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_f64(n);
-    /// assert_eq!(n, buffer.get_f64().unwrap())
-    /// ```
     pub fn put_f64(&mut self, n: f64) {
         self.bytes.extend_from_slice(&n.to_be_bytes());
     }
 
     /// Puts arbitrary bytes into buffer.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::ByteBuffer;
-    ///
-    /// let s = "hello world!".as_bytes();
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_bytes(s);
-    /// assert_eq!(s, buffer.get_bytes(s.len()).unwrap())
-    /// ```
     pub fn put_bytes(&mut self, bytes: &[u8]) {
         self.bytes.extend_from_slice(bytes);
     }
 }
 
 impl From<Vec<u8>> for ByteBuffer {
-    /// Converts Vec into ByteBuffer.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
-    /// use sheave_core::ByteBuffer;
-    ///
-    /// let mut array: [u8; 128] = [0; 128];
-    /// array.try_fill(&mut thread_rng()).unwrap();
-    /// let mut buffer: ByteBuffer = array.to_vec().into();
-    /// assert_eq!(array.as_slice(), buffer.get_bytes(array.len()).unwrap())
-    /// ```
     fn from(bytes: Vec<u8>) -> Self {
         Self {
             bytes,

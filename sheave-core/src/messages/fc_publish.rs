@@ -131,34 +131,6 @@ impl Decoder<FcPublish> for ByteBuffer {
 
 impl Encoder<FcPublish> for ByteBuffer {
     /// Encodes a FcPublish command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         FcPublish,
-    ///         amf::v0::{
-    ///             Number,
-    ///             AmfString,
-    ///             Null
-    ///         }
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&FcPublish::new(3.into(), AmfString::default()));
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// let transaction_id: Number = buffer.decode().unwrap();
-    /// Decoder::<Null>::decode(&mut buffer).unwrap();
-    /// let play_path: AmfString = buffer.decode().unwrap();
-    /// assert_eq!("FCPublish", command_name);
-    /// assert_eq!(3f64, transaction_id);
-    /// assert_eq!(AmfString::default(), play_path)
-    /// ```
     fn encode(&mut self, fc_publish: &FcPublish) {
         self.encode(&AmfString::from(fc_publish.get_command_name()));
         self.encode(&fc_publish.get_transaction_id());

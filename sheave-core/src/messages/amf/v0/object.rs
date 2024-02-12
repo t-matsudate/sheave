@@ -327,32 +327,11 @@ pub struct Object(HashMap<UnmarkedString, Arc<Value>>);
 
 impl Object {
     /// Constrcuts a new object.
-    /// 
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::collections::HashMap;
-    /// use sheave_core::messages::amf::v0::Object;
-    ///
-    /// Object::new(HashMap::default());
-    /// ```
     pub fn new(object: HashMap<UnmarkedString, Arc<Value>>) -> Self {
         Self(object)
     }
 
     /// Insert a pair.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::{
-    ///     AmfString,
-    ///     Object
-    /// };
-    ///
-    /// let mut object = Object::default();
-    /// object.insert("app", AmfString::from("ondemand"))
-    /// ```
     pub fn insert<V: Into<Value>>(&mut self, key: &str, value: V) {
         self.0.insert(key.into(), Arc::new(value.into()));
     }
@@ -444,26 +423,6 @@ impl Decoder<Object> for ByteBuffer {
 
 impl Encoder<Object> for ByteBuffer {
     /// Encodes an AMF's Object into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Encoder,
-    ///     messages::amf::v0::{
-    ///         Marker,
-    ///         Object
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Object::default());
-    /// let bytes: Vec<u8> = buffer.into();
-    /// assert_eq!(Marker::Object as u8, bytes[0]);
-    /// assert_eq!(0u16.to_be_bytes().as_slice(), &bytes[1..3]);
-    /// assert_eq!(Marker::ObjectEnd as u8, bytes[3])
-    /// ```
     fn encode(&mut self, object: &Object) {
         self.put_u8(Marker::Object as u8);
         for (k, v) in &object.0 {

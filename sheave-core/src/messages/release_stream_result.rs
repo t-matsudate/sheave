@@ -114,32 +114,6 @@ impl Decoder<ReleaseStreamResult> for ByteBuffer {
 
 impl Encoder<ReleaseStreamResult> for ByteBuffer {
     /// Encodes a ReleaseStreamResult command into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Decoder,
-    ///     Encoder,
-    ///     messages::{
-    ///         ReleaseStreamResult,
-    ///         amf::v0::{
-    ///             Number,
-    ///             AmfString,
-    ///             Null
-    ///         }
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&ReleaseStreamResult::new("_result".into(), 2.into()));
-    /// let command_name: AmfString = buffer.decode().unwrap();
-    /// let transaction_id: Number = buffer.decode().unwrap();
-    /// Decoder::<Null>::decode(&mut buffer).unwrap();
-    /// assert_eq!("_result", command_name);
-    /// assert_eq!(2f64, transaction_id)
-    /// ```
     fn encode(&mut self, release_stream_result: &ReleaseStreamResult) {
         self.encode(&AmfString::from(release_stream_result.get_command_name()));
         self.encode(&release_stream_result.get_transaction_id());

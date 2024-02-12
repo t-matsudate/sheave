@@ -31,14 +31,6 @@ pub struct AmfString(StdString);
 
 impl AmfString {
     /// Constructs an AMF's String.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// AmfString::new(String::new());
-    /// ```
     pub fn new(string: StdString) -> Self {
         Self(string)
     }
@@ -58,126 +50,54 @@ impl DerefMut for AmfString {
 }
 
 impl<'a> PartialEq<&'a str> for AmfString {
-    /// Checks whether this equals an other UTF-8 string which differs its lifetime.
     fn eq(&self, other: &&'a str) -> bool {
         self.0.eq(other)
     }
 }
 
 impl<'a> PartialEq<Cow<'a, str>> for AmfString {
-    /// Checks whether this equals an other UTF-8 string as a Clone-On-Write object.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::borrow::Cow;
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// let s = "hello world!";
-    /// assert!(AmfString::new(s.to_string()) == Cow::Borrowed(s))
-    /// ```
     fn eq(&self, other: &Cow<'a, str>) -> bool {
         self.0.eq(other)
     }
 }
 
 impl<'a> PartialEq<AmfString> for &'a str {
-    /// Makes two values commutative.
     fn eq(&self, other: &AmfString) -> bool {
         self.eq(&other.0)
     }
 }
 
 impl<'a> PartialEq<AmfString> for Cow<'a, str> {
-    /// Makes two values commutative.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::borrow::Cow;
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// let s = "hello world!";
-    /// assert!(Cow::Borrowed(s) == AmfString::new(s.to_string()))
-    /// ```
     fn eq(&self, other: &AmfString) -> bool {
         self.eq(&other.0)
     }
 }
 
 impl PartialEq<AmfString> for str {
-    /// Checkes whether this equals an other AMF's String.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::AmfString;
-    /// let s = "hello world!";
-    /// assert!(s == AmfString::new(s.to_string()))
-    /// ```
     fn eq(&self, other: &AmfString) -> bool {
         self.eq(&other.0)
     }
 }
 
 impl PartialEq<StdString> for AmfString {
-    /// Checks whether this equals an other UTF-8 String.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// let s: String = "hello world!".into();
-    /// assert!(AmfString::new(s.clone()) == s)
-    /// ```
     fn eq(&self, other: &StdString) -> bool {
         self.0.eq(other)
     }
 }
 
 impl PartialEq<AmfString> for StdString {
-    /// Makes two values commutative.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// let s: String = "hello world!".into();
-    /// assert!(s == AmfString::new(s.clone()))
-    /// ```
     fn eq(&self, other: &AmfString) -> bool {
         self.eq(&other.0)
     }
 }
 
 impl From<&str> for AmfString {
-    /// Converts a UTF-8 string into an AMF String.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// let s = "hello world!";
-    /// assert_eq!(s, AmfString::from(s))
-    /// ```
     fn from(s: &str) -> Self {
         Self(s.into())
     }
 }
 
 impl Display for AmfString {
-    /// Formats the output for this as same as `::std::string::String`.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::AmfString;
-    ///
-    /// println!("{}", AmfString::from("hello world!"))
-    /// ```
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
         Display::fmt(&self.0, f)
     }

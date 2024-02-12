@@ -21,29 +21,12 @@ pub struct InconsistentCommand {
 
 impl InconsistentCommand {
     /// Constructs this error.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::InconsistentCommand;
-    ///
-    /// InconsistentCommand::new("connect".into(), "something bad".into());
-    /// ```
     pub fn new(expected: AmfString, actual: AmfString) -> Self {
         Self { expected, actual }
     }
 }
 
 impl Display for InconsistentCommand {
-    /// Displays this as a formatted string.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::InconsistentCommand;
-    ///
-    /// println!("{}", InconsistentCommand::new("connect".into(), "something bad".into()));
-    /// ```
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
         writeln!(f, "Command name is inconsistent. expected: {}, actual: {}", self.expected, self.actual)
     }
@@ -52,16 +35,6 @@ impl Display for InconsistentCommand {
 impl Error for InconsistentCommand {}
 
 /// A utility function of constructing an `InconsistentCommand` error.
-///
-/// # Examples
-///
-/// ```rust
-/// use sheave_core::messages::inconsistent_command;
-///
-/// println!("{}", inconsistent_command("connect".into(), "something bad".into()));
-/// ```
-///
-/// [`InconsistentMarker`]: InconsistentMarker
 pub fn inconsistent_command(expected: &str, actual: AmfString) -> IOError {
     IOError::new(
         ErrorKind::InvalidData,
