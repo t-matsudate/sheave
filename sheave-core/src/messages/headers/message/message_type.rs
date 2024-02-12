@@ -11,6 +11,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageType {
     ChunkSize = 1,
+    UserControl = 4,
     Command = 20,
     Other = 0xff
 }
@@ -21,6 +22,7 @@ impl From<u8> for MessageType {
 
         match message_type {
             1 => ChunkSize,
+            4 => UserControl,
             20 => Command,
             _ => Other
         }
