@@ -10,7 +10,7 @@ jobs:
         uses: actions/checkout@v4
       - id: setup
         name: Setup Rust
-        uses: docker://rust:1.75.0
+        uses: docker://rust:1.76.0
       - id: test-core
         name: Test the core crate
         run: |
