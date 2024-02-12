@@ -12,10 +12,12 @@ use std::{
 };
 use crate::messages::amf::v0::AmfString;
 
+/// An error means that some publishing type differs you expect.
 #[derive(Debug)]
 pub struct InvalidPublishingType(AmfString);
 
 impl InvalidPublishingType {
+    /// Constructs this error.
     pub fn new(actual: AmfString) -> Self {
         Self(actual)
     }
@@ -29,6 +31,7 @@ impl Display for InvalidPublishingType {
 
 impl Error for InvalidPublishingType {}
 
+/// A utility function of constructing an `InvalidPublishingType` error.
 pub fn invalid_publishing_type(actual: AmfString) -> IOError {
     IOError::new(
         ErrorKind::InvalidData,
