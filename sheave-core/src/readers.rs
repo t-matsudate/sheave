@@ -169,6 +169,8 @@ mod tests {
             CreateStream,
             CreateStreamResult,
             Publish,
+            StreamBegin,
+            OnStatus,
             amf::v0::Number,
             headers::{
                 BasicHeader,
@@ -445,6 +447,66 @@ mod tests {
         ).await.unwrap();
 
         let result: IOResult<Publish> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual)
+    }
+
+    #[tokio::test]
+    async fn read_stream_begin() {
+        let mut buffer = ByteBuffer::default();
+        let expected = StreamBegin::new(u32::default());
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, StreamBegin::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, StreamBegin::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            StreamBegin::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<StreamBegin> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
+        assert!(result.is_ok());
+        let actual = result.unwrap();
+        assert_eq!(expected, actual)
+    }
+
+    #[tokio::test]
+    async fn read_on_status() {
+        let mut buffer = ByteBuffer::default();
+        let expected = OnStatus::default();
+        buffer.encode(&expected);
+        let data: Vec<u8> = buffer.into();
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            &BasicHeader::new(MessageFormat::New, OnStatus::CHANNEL as u16)
+        ).await.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            &MessageHeader::New((Duration::default(), data.len() as u32, OnStatus::MESSAGE_TYPE, u32::default()).into())
+        ).await.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            OnStatus::CHANNEL as u16,
+            rtmp_context.get_sending_chunk_size(),
+            &data
+        ).await.unwrap();
+
+        let result: IOResult<OnStatus> = read_chunk(stream.as_mut(), &mut rtmp_context).await;
         assert!(result.is_ok());
         let actual = result.unwrap();
         assert_eq!(expected, actual)
