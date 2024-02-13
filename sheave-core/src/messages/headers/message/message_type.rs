@@ -5,6 +5,7 @@
 /// |Pattern|Number|
 /// | :- | :- |
 /// |`ChunkSize`|`1`|
+/// |`UserControl`|`4`|
 /// |`Command`|`20`|
 /// |`Other`|other numbers|
 #[repr(u8)]

@@ -3,18 +3,20 @@
 //! After handshake, both are required to negosiate what are needed for sending/receiving.
 //! It consists of following steps:
 //!
-//! 1. connect
-//! 2. releaseStream
-//! 3. FCPublish
+//! 1. [`connect`]
+//! 2. [`releaseStream`]
+//! 3. [`FCPublish`]
+//! 4. [`createStream`]
+//! 5. [`publish`]
 //!
-//! ## connect
+//! ## [`connect`]
 //!
 //! Exchanges informations about their applications each other.
 //! In this case, next format is required:
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |Command Name|`String`|`"connect"`.|
+//! |Command Name|`String`|`"connect"`|
 //! |Transaction ID|`Number`|`1`|
 //! |Command Object|`Object`|See [Command Object](#command-object).|
 //!
@@ -27,16 +29,16 @@
 //!
 //! |Key|AMF Type|Description|
 //! | :- | :- | :- |
-//! |app|`String`|Server application name.|
-//! |flashVer|`String`|Either a flash player version(client) or an FLV encoder version(server).|
-//! |swfUrl|`String`|The source SWF file URL.|
-//! |tcURL|`String`|The URL to connect server as the TCP. `app` value is included in this value.|
-//! |fpad|`Boolean`|Whether a proxy is used.|
-//! |audioCodecs|`Number`|Supported audio codecs.|
-//! |videoCodecs|`Number`|Supported video codecs.|
-//! |videoFunctions|`Number`|Supported video functions.|
-//! |pageUrl|`String`|The URL of web page which SWF file is loaded.|
-//! |objectEncoding|`Number`|A version of the Action Message Format.|
+//! |app|[`String`]|Server application name.|
+//! |flashVer|[`String`]|Either a flash player version(client) or an FLV encoder version(server).|
+//! |swfUrl|[`String`]|The source SWF file URL.|
+//! |tcURL|[`String`]|The URL to connect server as the TCP. `app` value is included in this value.|
+//! |fpad|[`Boolean`]|Whether a proxy is used.|
+//! |audioCodecs|[`Number`]|Supported audio codecs.|
+//! |videoCodecs|[`Number`]|Supported video codecs.|
+//! |videoFunctions|[`Number`]|Supported video functions.|
+//! |pageUrl|[`String`]|The URL of web page which SWF file is loaded.|
+//! |objectEncoding|[`Number`]|A version of the Action Message Format.|
 //!
 //! Note: Something not in above can be exchanged.
 //!
@@ -44,22 +46,22 @@
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |Command Name|`String`|`_result` or `_error`|
-//! |Transaction ID|`Number`|Same as the connect request|
-//! |Properties|`Object`|e.g. server-side informations.|
-//! |Information|`Object`|Contents for describing its response.|
+//! |Command Name|[`String`]|`"_result"` or `"_error"`|
+//! |Transaction ID|[`Number`]|Same as the connect request|
+//! |Properties|[`Object`]|e.g. server-side informations.|
+//! |Information|[`Object`]|Contents for describing its response.|
 //!
-//! ## releaseStream
+//! ## [`releaseStream`]
 //!
 //! Tells "Play Path" to the parter.
 //! In this case, next format is required:
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |Command Name|`String`|`releaseStream`|
-//! |Transaction ID|`Number`|A number which is next of the `Connect`.|
-//! ||`Null`|Nothing but an AMF's type marker is in.|
-//! |Play Path|`String`|Any string is in if it is specified.|
+//! |Command Name|[`String`]|`"releaseStream"`|
+//! |Transaction ID|[`Number`]|A number which is next of the connect.|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
+//! |Play Path|[`String`]|Any string is in if it is specified.|
 //!
 //! For example, Play Path is defined as some file name in [FFmpeg](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/rtmpproto.c#L2624-L2625).
 //!
@@ -67,32 +69,117 @@
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |Command Name|`String`|`_result` or `_error`|
-//! |Transaction ID|`Number`|Same as the releaseStream request.|
-//! ||`Null`|Nothing but an AMF's type marker is in.|
+//! |Command Name|[`String`]|`"_result"` or `"_error"`|
+//! |Transaction ID|[`Number`]|Same as the releaseStream request.|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
 //!
-//! ## FCPublish
+//! ## [`FCPublish`]
 //!
-//! Tells what is same as the releaseStream request to the partner.
+//! Tells to the partner what is same as the releaseStream request.
+//! In this case, next format is required:
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |Command Name|`String`|`FCPublish`|
-//! |Transaction ID|`Number`|Same as the FCPublish request.|
-//! ||`Null`|Nothing but an AMF's type marker is in.|
-//! |Play Path|`String`|(Probably) Same as the releaseStream request.|
+//! |Command Name|[`String`]|`"FCPublish"`|
+//! |Transaction ID|[`Number`]|A number which is next of the releaseStream.|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
+//! |Play Path|[`String`]|(Probably) Same as the releaseStream request.|
 //!
 //! Against, the result for FCPublish request is required to be next format:
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |Command Name|`String`|`onFCPublish`|
+//! |Command Name|[`String`]|`"onFCPublish"`|
+//!
+//! ## [`createStream`]
+//!
+//! Requests to create a new Message Stream ID to the partner.
+//! In this case, next format is required:
+//!
+//! |Field|AMF Type|Value|
+//! | :- | :- | :- |
+//! |Command Name|[`String`]|`"createStream"`|
+//! |Transaction ID|[`Number`]|A number which is next of the FCPublish.|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
+//!
+//! Against, the result for createStream request is required to be next format:
+//!
+//! |Field|AMF Type|Value|
+//! | :- | :- | :- |
+//! |Command Name|[`String`]|`"_result"` or `"_error"`|
+//! |Transaction ID|[`Number`]|Same as the createStream request.|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
+//! |Message ID|[`Number`]|A Message Stream ID which is assigned by the partner.|
+//!
+//! ## [`publish`]
+//!
+//! Tells to the partner what is an way to publish its stream.
+//! In this case, next format is required:
+//!
+//! |Field|AMF Type|Value|
+//! | :- | :- | :- |
+//! |Command Name|[`String`]|`"publish"`|
+//! |Transaction ID|[`Number`]|A number which is next of the createStream.|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
+//! |Publishing Name|[`String`]|A name for publishing its stream to the partner.|
+//! |Publishing Type|[`String`]|Either `"live"`, `"record"` or `"append"`. See [Publishing Type](#publishing-type).|
+//!
+//! Against, result**s** for publish request **are** required to be next format:
+//!
+//! 1. [`Stream Begin`]
+//! 2. [`onStatus`]
+//!
+//! ### [`Stream Begin`]
+//!
+//! This is an event message of the User Control Message.
+//! This has following data:
+//!
+//! 1. Event Type (2 bytes / `0`)
+//! 2. A Message ID (4 bytes.)
+//!
+//! ### [`onStatus`]
+//!
+//! |Field|AMF Type|Value|
+//! | :- | :- | :- |
+//! |Command Name|[`String`]|`"onStatus"`|
+//! |Transaction ID|[`Number`]|`0`|
+//! ||[`Null`]|Nothing but an AMF's type marker is in.|
+//! |Info Object|[`Object`]|Similar to the information of connect result.|
+//!
+//! <h3><a id="publishing-type">Publishing Type</a></h3>
+//!
+//! The publish command requires you to specify one of "Publishing Type" in its request.
+//! Publishing Type means:
+//!
+//! * `"live"`
+//!
+//! Only streaming. Media data will never be stored.
+//!
+//! * `"record"`
+//!
+//! Media data will be stored. If publishing name duplicated, it is rewritten as a new file.
+//!
+//! * `"append"`
+//!
+//! Same as `"record"` excepts is appended media data if publishing name duplicated.
 //!
 //! Every chunk has the chunk headers.
 //! See [`sheave_core::messages::headers`] about them.
 //!
 //! [the Action Message Format (v0)]: amf::v0
 //! [`sheave_core::messages::headers`]: headers
+//! [`Number`]: amf::v0::Number
+//! [`Boolean`]: amf::v0::Boolean
+//! [`String`]: amf::v0::AmfString
+//! [`Object`]: amf::v0::Object
+//! [`Null`]: amf::v0::Null
+//! [`connect`]: Connect
+//! [`releaseStream`]: ReleaseStream
+//! [`FCPublish`]: FcPublish
+//! [`createStream`]: CreateStream
+//! [`publish`]: Publish
+//! [`Stream Begin`]: StreamBegin
+//! [`onStatus`]: OnStatus
 
 pub mod headers;
 pub mod amf;
@@ -146,6 +233,7 @@ pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()>
     (expected == EventType::from(actual)).then_some(()).ok_or(inconsistent_event_type(expected, actual))
 }
 
+/// TODO
 /// The IDs which are assigned every roles of chunks.
 /// This is mainly used for the `BasicHeader`'s chunk ID.
 ///

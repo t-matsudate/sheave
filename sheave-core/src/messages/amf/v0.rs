@@ -9,6 +9,7 @@
 //! |`1`|`Boolean`|The boolean that is represented as a 1 byte data. (C-like)|
 //! |`2`|[`AmfString`]|The string that is limited its length the range of 2 bytes.|
 //! |`3`|[`Object`]|The key/value-paired object that its value type is flexible.|
+//! |`5`|[`Null`]|Only the marker. Any value doesn't contain.|
 //! |`9`|Object End|Indicates a stream of object terminaites there.|
 //!
 //! These are checked whether matched its marker with an actual data, by the receiver-side.
@@ -23,7 +24,7 @@
 //!
 //! ## [`Boolean`]
 //!
-//! 1. `Marker` (1 byte)
+//! 1. [`Marker`] (1 byte)
 //! 2. A boolean value (1 byte)
 //!
 //! ## [`String`]
@@ -48,11 +49,18 @@
 //! * [`Boolean`]
 //! * [`AmfString`]
 //! * [`Object`]
+//! * [`Null`]
 //!
-//! [`Marker`]: self::Marker
-//! [`Number`]: self::Number
-//! [`Boolean`]: self::Boolean
-//! [`AmfString`]: self::AmfString
+//! ## [`Null`]
+//!
+//! 1. [`Marker`] (1 byte)
+//!
+//! [`Marker`]: Marker
+//! [`Number`]: Number
+//! [`Boolean`]: Boolean
+//! [`AmfString`]: AmfString
+//! [`Object`]: Object
+//! [`Null`]: Null
 
 mod number;
 mod boolean;
@@ -78,8 +86,10 @@ pub use self::{
 /// |`Boolean`|`1`|
 /// |`AmfString`|`2`|
 /// |`Object`|`3`|
+/// |`Null`|`5`|
 /// |`ObjectEnd`|`9`|
 /// |`Other`|other numbers|
+///
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Marker {
