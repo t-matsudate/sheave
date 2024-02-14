@@ -22,11 +22,9 @@ use sheave_core::{
         RtmpContext
     },
     messages::{
-        Command,
         OnStatus,
         Publish,
         StreamBegin,
-        UserControl,
         amf::v0::AmfString
     },
     object,
