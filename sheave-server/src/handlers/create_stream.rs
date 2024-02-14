@@ -33,7 +33,7 @@ use crate::server::provide_message_id;
 
 #[doc(hidden)]
 #[derive(Debug)]
-pub struct CreateStreamHandler<'a, RW: AsyncRead + AsyncWrite>(Pin<&'a mut RW>);
+pub struct CreateStreamHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
 
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_, RW> {
