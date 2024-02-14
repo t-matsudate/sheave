@@ -36,6 +36,7 @@ use sheave_core::{
 #[derive(Debug)]
 pub struct PublishHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
 
+#[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for PublishHandler<'_, RW> {
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let publish: Publish = ready!(pin!(read_chunk(self.0.as_mut(), rtmp_context)).poll(cx))?;
