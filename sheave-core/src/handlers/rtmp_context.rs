@@ -48,6 +48,8 @@ pub struct RtmpContext {
     information: Option<Object>,
     play_path: Option<AmfString>,
     message_id: Option<Number>,
+    publishing_name: Option<AmfString>,
+    publishing_type: Option<AmfString>,
     last_received_chunks: HashMap<u16, LastChunk>,
     last_sent_chunks: HashMap<u16, LastChunk>
 }
@@ -273,8 +275,58 @@ impl RtmpContext {
     }
 
     /// Gets a message ID of this stream.
+    /// Note this can return `None`. e.g. When it is the default as is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_message_id().is_none());
+    /// ```
     pub fn get_message_id(&mut self) -> Option<Number> {
         self.message_id
+    }
+
+    /// Sets a publishing name of this stream.
+    pub fn set_publishing_name(&mut self, publishing_name: AmfString) {
+        self.publishing_name = Some(publishing_name);
+    }
+
+    /// Gets a publishing name of this stream.
+    /// Note this can return `None`. e.g. When it is the default as is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_publishing_name().is_none())
+    /// ```
+    pub fn get_publishing_name(&mut self) -> Option<&AmfString> {
+        self.publishing_name.as_ref()
+    }
+
+    /// Sets a publishing type of this stream.
+    pub fn set_publishing_type(&mut self, publishing_type: AmfString) {
+        self.publishing_type = Some(publishing_type);
+    }
+
+    /// Gets a publishing type of this stream.
+    /// Note this can return `None`. e.g. When it is the default as is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_publishing_type().is_none())
+    /// ```
+    pub fn get_publishing_type(&mut self) -> Option<&AmfString> {
+        self.publishing_type.as_ref()
     }
 
     /// Stores a last received chunk.

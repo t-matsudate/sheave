@@ -4,6 +4,7 @@ mod connect;
 mod release_stream;
 mod fc_publish;
 mod create_stream;
+mod publish;
 
 pub use self::{
     first_handshake::*,
@@ -11,5 +12,6 @@ pub use self::{
     connect::*,
     release_stream::*,
     fc_publish::*,
-    create_stream::*
+    create_stream::*,
+    publish::*
 };

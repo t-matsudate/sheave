@@ -2,7 +2,7 @@
 //!
 //! Every chunk has following headers:
 //!
-/// 1. [The Basic Header]
+//! 1. [The Basic Header]
 //! 2. [The Message Header]
 //! 3. [Extended Timestamp]
 //!
