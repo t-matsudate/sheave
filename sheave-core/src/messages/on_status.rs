@@ -1,3 +1,5 @@
+mod publishing_failure;
+
 use std::io::Result as IOResult;
 use crate::{
     ByteBuffer,
@@ -17,6 +19,7 @@ use crate::{
         headers::MessageType
     }
 };
+pub use self::publishing_failure::*;
 
 /// The response message for Publish requests.
 #[derive(Debug, Clone, Default, PartialEq)]
