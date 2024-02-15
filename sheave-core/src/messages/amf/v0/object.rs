@@ -165,6 +165,13 @@ impl Value {
         }
     }
 
+    fn as_null(&self) -> &Null {
+        unsafe {
+            assert_eq!(Marker::Null, self.marker);
+            &*self.ptr.cast::<Null>()
+        }
+    }
+
     fn as_object(&self) -> &Object {
         unsafe {
             assert_eq!(Marker::Object, self.marker);
@@ -221,6 +228,21 @@ impl From<AmfString> for Value {
     }
 }
 
+impl From<Null> for Value {
+    fn from(value: Null) -> Self {
+        unsafe {
+            let layout = Layout::new::<Null>();
+            let ptr = System.alloc(layout);
+            ptr.cast::<Null>().write(value);
+            Self {
+                layout,
+                ptr,
+                marker: Marker::Null
+            }
+        }
+    }
+}
+
 #[doc(hidden)]
 impl From<Object> for Value {
     fn from(value: Object) -> Self {
@@ -253,6 +275,7 @@ impl Debug for Value {
             Marker::Number => Debug::fmt(self.as_number(), f),
             Marker::Boolean => Debug::fmt(self.as_boolean(), f),
             Marker::AmfString => Debug::fmt(self.as_string(), f),
+            Marker::Null => Debug::fmt(self.as_null(), f),
             Marker::Object => Debug::fmt(self.as_object(), f),
             _ => unimplemented!("Debugging other types.")
         }
@@ -269,6 +292,7 @@ impl PartialEq<Self> for Value {
                 Marker::Number => PartialEq::eq(self.as_number(), other.as_number()),
                 Marker::Boolean => PartialEq::eq(self.as_number(), other.as_number()),
                 Marker::AmfString => PartialEq::eq(self.as_string(), other.as_string()),
+                Marker::Null => PartialEq::eq(self.as_null(), other.as_null()),
                 Marker::Object => PartialEq::eq(self.as_object(), other.as_object()),
                 _ => unimplemented!("Comparing other types.")
             }
@@ -290,6 +314,7 @@ impl Decoder<Value> for ByteBuffer {
             Marker::Number => Decoder::<Number>::decode(self).map(Value::from),
             Marker::Boolean => Decoder::<Boolean>::decode(self).map(Value::from),
             Marker::AmfString => Decoder::<AmfString>::decode(self).map(Value::from),
+            Marker::Null => Decoder::<Null>::decode(self).map(Value::from),
             Marker::Object => Decoder::<Object>::decode(self).map(Value::from),
             _ => unimplemented!("Decoding other types.")
         }
@@ -303,6 +328,7 @@ impl Encoder<Value> for ByteBuffer {
             Marker::Number => self.encode(value.as_number()),
             Marker::Boolean => self.encode(value.as_boolean()),
             Marker::AmfString => self.encode(value.as_string()),
+            Marker::Null => self.encode(value.as_null());
             Marker::Object => self.encode(value.as_object()),
             _ => unimplemented!("Encoding other types.")
         }
@@ -502,10 +528,17 @@ mod tests {
     }
 
     #[test]
+    fn null_value() {
+        let null = Null;
+        let allocated = Value::from(null);
+        assert_eq!(null, *allocated.as_null())
+    }
+
+    #[test]
     fn object_value() {
         let object = Object::default();
         let allocated = Value::from(object.clone());
-        assert_eq!(object, *allocated.as_object());
+        assert_eq!(object, *allocated.as_object())
     }
 
     #[test]
