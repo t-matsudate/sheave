@@ -42,10 +42,13 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for PublishHandler<'_, RW>
         rtmp_context.increase_transaction_id();
 
         let transaction_id = rtmp_context.get_transaction_id();
-        let publishing_name = rtmp_context.get_play_path().unwrap();
+        let publishing_name = rtmp_context.get_play_path().map_or(
+            AmfString::default(),
+            |play_path| play_path.clone()
+        );
         let publish_request = Publish::new(
             transaction_id,
-            publishing_name.clone(),
+            publishing_name,
             "live".into()
         );
         let message_id = rtmp_context.get_message_id().unwrap();
