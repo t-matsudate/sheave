@@ -43,7 +43,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_
         rtmp_context.set_transaction_id(create_stream.get_transaction_id());
         let create_stream_result: CreateStreamResult = CreateStreamResult::new("_result".into(), rtmp_context.get_transaction_id(), message_id.into());
         ready!(pin!(write_chunk(self.0.as_mut(), rtmp_context, Duration::default(), u32::default(), &create_stream_result)).poll(cx))?;
-        rtmp_context.set_message_id(message_id.into());
+        rtmp_context.set_message_id(message_id);
 
         Poll::Ready(Ok(()))
     }

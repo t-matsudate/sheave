@@ -52,7 +52,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_
         )?;
 
         let create_stream_result: CreateStreamResult = ready!(pin!(read_chunk(self.0.as_mut(), rtmp_context)).poll(cx))?;
-        rtmp_context.set_message_id(create_stream_result.get_message_id());
+        rtmp_context.set_message_id(create_stream_result.into());
 
         Poll::Ready(Ok(()))
     }

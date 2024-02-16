@@ -37,9 +37,9 @@ impl CreateStreamResult {
     }
 }
 
-impl From<CreateStreamResult> for Number {
+impl From<CreateStreamResult> for u32 {
     fn from(create_stream_result: CreateStreamResult) -> Self {
-        create_stream_result.message_id
+        create_stream_result.message_id.as_integer() as u32
     }
 }
 

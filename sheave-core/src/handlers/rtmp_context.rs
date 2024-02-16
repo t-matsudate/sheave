@@ -47,7 +47,7 @@ pub struct RtmpContext {
     properties: Option<Object>,
     information: Option<Object>,
     play_path: Option<AmfString>,
-    message_id: Option<Number>,
+    message_id: Option<u32>,
     publishing_name: Option<AmfString>,
     publishing_type: Option<AmfString>,
     last_received_chunks: HashMap<u16, LastChunk>,
@@ -270,7 +270,7 @@ impl RtmpContext {
     }
 
     /// Sets a message ID of this stream.
-    pub fn set_message_id(&mut self, message_id: Number) {
+    pub fn set_message_id(&mut self, message_id: u32) {
         self.message_id = Some(message_id);
     }
 
@@ -285,7 +285,7 @@ impl RtmpContext {
     /// let mut rtmp_context = RtmpContext::default();
     /// assert!(rtmp_context.get_message_id().is_none());
     /// ```
-    pub fn get_message_id(&mut self) -> Option<Number> {
+    pub fn get_message_id(&mut self) -> Option<u32> {
         self.message_id
     }
 
