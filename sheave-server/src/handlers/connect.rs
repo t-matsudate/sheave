@@ -59,6 +59,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for ConnectHandler<'_, RW>
             )
         );
         ready!(pin!(write_chunk(self.0.as_mut(), rtmp_context, Duration::default(), u32::default(), &connect_result)).poll(cx))?;
+        let (properties, information): (Object, Object) = connect_result.into();
+        rtmp_context.set_properties(properties);
+        rtmp_context.set_infomration(information);
+
         Poll::Ready(Ok(()))
     }
 }

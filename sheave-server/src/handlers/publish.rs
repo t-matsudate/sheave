@@ -41,7 +41,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for PublishHandler<'_, RW>
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let publish: Publish = ready!(pin!(read_chunk(self.0.as_mut(), rtmp_context)).poll(cx))?;
         let (publishing_name, publishing_type): (AmfString, AmfString) = publish.into();
-        let message_id = rtmp_context.get_message_id().unwrap().as_integer() as u32;
+        let message_id = rtmp_context.get_message_id().unwrap();
         let stream_begin = StreamBegin::new(message_id);
         let on_status = OnStatus::new(
             object!(
@@ -55,6 +55,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for PublishHandler<'_, RW>
         ready!(pin!(write_chunk(self.0.as_mut(), rtmp_context, Duration::default(), message_id, &on_status)).poll(cx))?;
         rtmp_context.set_publishing_name(publishing_name);
         rtmp_context.set_publishing_type(publishing_type);
+        rtmp_context.set_information(on_status.into());
 
         Poll::Ready(Ok(()))
     }
