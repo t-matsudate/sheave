@@ -27,7 +27,8 @@ use crate::handlers::{
     handle_connect,
     handle_release_stream,
     handle_fc_publish,
-    handle_create_stream
+    handle_create_stream,
+    handle_publish
 };
 
 #[derive(Debug)]
@@ -56,6 +57,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Client<RW> {
                 .chain(handle_release_stream(self.stream.make_weak_pin()))
                 .chain(handle_fc_publish(self.stream.make_weak_pin()))
                 .chain(handle_create_stream(self.stream.make_weak_pin()))
+                .chain(handle_publish(self.stream.make_weak_pin()))
         ).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }
 }
