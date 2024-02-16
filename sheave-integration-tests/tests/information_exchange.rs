@@ -29,6 +29,9 @@ async fn information_exchange_with_default() {
                     OnFcPublish,
                     CreateStream,
                     CreateStreamResult,
+                    Publish,
+                    StreamBegin,
+                    OnStatus,
                     amf::v0::{
                         Number,
                         AmfString
@@ -112,6 +115,7 @@ async fn information_exchange_with_default() {
             let actual_on_fc_publish: OnFcPublish = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
             assert_eq!(expected_on_fc_publish, actual_on_fc_publish);
 
+            // Handling "createStream".
             let expected_create_stream_result = CreateStreamResult::new("_result".into(), 4u8.into(), Number::default());
             let mut buffer = ByteBuffer::default();
             buffer.encode(&expected_create_stream_result);
@@ -125,6 +129,38 @@ async fn information_exchange_with_default() {
             assert!(result.is_ok());
             let actual_create_stream_result: CreateStreamResult = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
             assert_eq!(expected_create_stream_result, actual_create_stream_result);
+
+            // Handling "publish".
+            let message_id = server_rtmp_context.get_message_id().unwrap();
+            let expected_stream_begin = StreamBegin::new(message_id);
+            let expected_on_status = OnStatus::new(
+                object!(
+                    "level" => AmfString::from("status"),
+                    "code" => AmfString::from("NetStream.Publish.Start"),
+                    "description" => AmfString::new(format!("{} is now published", "")),
+                    "details" => AmfString::default()
+                )
+            );
+            let mut buffer = ByteBuffer::default();
+            buffer.encode(&expected_stream_begin);
+            let data: Vec<u8> = buffer.into();
+            ready!(pin!(write_basic_header(stream.make_weak_pin(), &BasicHeader::new(MessageFormat::SameSource, StreamBegin::CHANNEL as u16))).poll(cx))?;
+            ready!(pin!(write_message_header(stream.make_weak_pin(), &MessageHeader::SameSource((Duration::default(), data.len() as u32, StreamBegin::MESSAGE_TYPE).into()))).poll(cx))?;
+            ready!(pin!(write_chunk_data(stream.make_weak_pin(), StreamBegin::CHANNEL as u16, client_rtmp_context.get_sending_chunk_size(), &data)).poll(cx))?;
+            let mut buffer = ByteBuffer::default();
+            buffer.encode(&expected_on_status);
+            let data: Vec<u8> = buffer.into();
+            ready!(pin!(write_basic_header(stream.make_weak_pin(), &BasicHeader::new(MessageFormat::New, OnStatus::CHANNEL as u16))).poll(cx))?;
+            ready!(pin!(write_message_header(stream.make_weak_pin(), &MessageHeader::New((Duration::default(), data.len() as u32, OnStatus::MESSAGE_TYPE, message_id).into()))).poll(cx))?;
+            ready!(pin!(write_chunk_data(stream.make_weak_pin(), OnStatus::CHANNEL as u16, client_rtmp_context.get_sending_chunk_size(), &data)).poll(cx))?;
+            let result = ready!(pin!(client::handle_publish(stream.make_weak_pin())).poll_handle(cx, &mut client_rtmp_context));
+            assert!(result.is_ok());
+            let result = ready!(pin!(server::handle_publish(stream.make_weak_pin())).poll_handle(cx, &mut server_rtmp_context));
+            assert!(result.is_ok());
+            let actual_stream_begin: StreamBegin = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
+            assert_eq!(expected_stream_begin, actual_stream_begin);
+            let actual_on_status: OnStatus = ready!(pin!(read_chunk(stream.make_weak_pin(), &mut client_rtmp_context)).poll(cx))?;
+            assert_eq!(expected_on_status, actual_on_status);
 
             Poll::<IOResult<()>>::Ready(Ok(()))
         }
