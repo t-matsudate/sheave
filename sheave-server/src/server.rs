@@ -64,7 +64,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Server<RW> {
                 .chain(handle_release_stream(self.stream.make_weak_pin()))
                 .chain(handle_fc_publish(self.stream.make_weak_pin()))
                 .chain(handle_create_stream(self.stream.make_weak_pin()))
-                .chain(handle_publish(self.stream.make_waek_pin()))
+                .chain(handle_publish(self.stream.make_weak_pin()))
                 .chain(echo_next(self.stream.make_weak_pin()))
         ).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }
