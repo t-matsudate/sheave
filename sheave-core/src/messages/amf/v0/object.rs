@@ -14,7 +14,8 @@ use std::{
     io::Result as IOResult,
     ops::{
         Deref,
-        DerefMut
+        DerefMut,
+        Index
     },
     sync::Arc
 };
@@ -328,7 +329,7 @@ impl Encoder<Value> for ByteBuffer {
             Marker::Number => self.encode(value.as_number()),
             Marker::Boolean => self.encode(value.as_boolean()),
             Marker::AmfString => self.encode(value.as_string()),
-            Marker::Null => self.encode(value.as_null());
+            Marker::Null => self.encode(value.as_null()),
             Marker::Object => self.encode(value.as_object()),
             _ => unimplemented!("Encoding other types.")
         }
@@ -360,6 +361,19 @@ impl Object {
     /// Insert a pair.
     pub fn insert<V: Into<Value>>(&mut self, key: &str, value: V) {
         self.0.insert(key.into(), Arc::new(value.into()));
+    }
+
+    /// Gets a value associated with specified key.
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        self.0.get(&key.into()).map(|value| &**value)
+    }
+}
+
+impl Index<&str> for Object {
+    type Output = Value;
+
+    fn index(&self, key: &str) -> &Self::Output {
+        &**self.0.index(&key.into())
     }
 }
 
