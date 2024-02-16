@@ -11,7 +11,7 @@ use std::{
     }
 };
 
-/// An error means that some chunk size is negative.
+/// An error that some chunk size is negative.
 #[derive(Debug)]
 pub struct NegativeChunkSize(u32);
 

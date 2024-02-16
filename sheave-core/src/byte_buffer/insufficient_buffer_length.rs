@@ -11,7 +11,7 @@ use std::{
     }
 };
 
-/// An error that means buffer has been empty during encoding chunks.
+/// An error that buffer has been empty during decoding chunks.
 #[derive(Debug)]
 pub struct InsufficientBufferLength {
     expected: usize,

@@ -11,7 +11,7 @@ use std::{
     }
 };
 
-/// An error means that some AMF type marker differes you expect.
+/// An error that some AMF type marker differes you expect.
 #[derive(Debug)]
 pub struct InconsistentMarker {
     expected: u8,

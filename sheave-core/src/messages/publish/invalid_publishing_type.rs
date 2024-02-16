@@ -12,7 +12,7 @@ use std::{
 };
 use crate::messages::amf::v0::AmfString;
 
-/// An error means that some publishing type differs you expect.
+/// An error that some publishing type differs you expect.
 #[derive(Debug)]
 pub struct InvalidPublishingType(AmfString);
 

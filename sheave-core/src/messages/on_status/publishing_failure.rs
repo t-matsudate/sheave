@@ -28,8 +28,8 @@ impl Display for PublishingFailure {
         writeln!(
             f,
             "Publishing failed. Code: {:?}, Description: {:?}",
-            self.0.get("code".into()),
-            self.0.get("description".into())
+            self.0.get("code"),
+            self.0.get("description")
         )
     }
 }

@@ -12,7 +12,7 @@ use std::{
     string::FromUtf8Error
 };
 
-/// An error means that some string data is invalid for UTF-8.
+/// An error that some string data is invalid for UTF-8.
 #[derive(Debug)]
 pub struct InvalidString(FromUtf8Error);
 

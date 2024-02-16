@@ -11,7 +11,7 @@ use std::{
     }
 };
 
-/// An error means that specified protocol via CLI is invalid.
+/// An error that specified protocol via CLI is invalid.
 #[derive(Debug)]
 pub struct InvalidProtocol(String);
 
