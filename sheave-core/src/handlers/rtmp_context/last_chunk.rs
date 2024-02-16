@@ -47,7 +47,7 @@ impl LastChunk {
             timestamp: message_header.get_timestamp().unwrap(),
             message_length: message_header.get_message_length().unwrap(),
             message_type: message_header.get_message_type().unwrap(),
-            message_id: message_header.get_message_id().unwrap()
+            message_id: message_header.get_message_id().unwrap_or_default()
         }
     }
 
