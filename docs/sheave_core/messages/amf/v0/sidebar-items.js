@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Marker"],"struct":["AmfString","Boolean","Number","Object"]};
+window.SIDEBAR_ITEMS = {"enum":["Marker"],"struct":["AmfString","Boolean","Null","Number","Object"]};

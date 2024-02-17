@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/messages/amf/v0/object.rs`."><title>object.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.1 (d5c2e9c34 2023-09-13)" data-channel="1.72.1" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../../../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../../../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../../../../source-files.js"></script><script defer src="../../../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../../sheave_core/index.html"><img class="rust-logo" src="../../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/messages/amf/v0/object.rs`."><title>object.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -726,6 +727,14 @@
 <a href="#726" id="726">726</a>
 <a href="#727" id="727">727</a>
 <a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     alloc::{
         GlobalAlloc,
@@ -742,7 +751,8 @@
     io::Result <span class="kw">as </span>IOResult,
     ops::{
         Deref,
-        DerefMut
+        DerefMut,
+        Index
     },
     sync::Arc
 };
@@ -787,28 +797,28 @@
 }
 
 <span class="attr">#[doc(hidden)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PartialEq&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt; <span class="kw">for </span>UnmarkedString {
-    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: &amp;&amp;<span class="lifetime">&#39;a </span>str) -&gt; bool {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PartialEq&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt; <span class="kw">for </span>UnmarkedString {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: &amp;&amp;<span class="lifetime">'a </span>str) -&gt; bool {
         <span class="self">self</span>.<span class="number">0</span>.eq(other)
     }
 }
 
 <span class="attr">#[doc(hidden)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PartialEq&lt;Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;&gt; <span class="kw">for </span>UnmarkedString {
-    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;) -&gt; bool {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PartialEq&lt;Cow&lt;<span class="lifetime">'a</span>, str&gt;&gt; <span class="kw">for </span>UnmarkedString {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Cow&lt;<span class="lifetime">'a</span>, str&gt;) -&gt; bool {
         <span class="self">self</span>.<span class="number">0</span>.eq(other)
     }
 }
 
 <span class="attr">#[doc(hidden)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PartialEq&lt;UnmarkedString&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PartialEq&lt;UnmarkedString&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>str {
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>UnmarkedString) -&gt; bool {
         <span class="self">self</span>.eq(<span class="kw-2">&amp;</span>other.<span class="number">0</span>)
     }
 }
 
 <span class="attr">#[doc(hidden)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PartialEq&lt;UnmarkedString&gt; <span class="kw">for </span>Cow&lt;<span class="lifetime">&#39;a</span>, str&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PartialEq&lt;UnmarkedString&gt; <span class="kw">for </span>Cow&lt;<span class="lifetime">'a</span>, str&gt; {
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>UnmarkedString) -&gt; bool {
         <span class="self">self</span>.eq(<span class="kw-2">&amp;</span>other.<span class="number">0</span>)
     }
@@ -847,7 +857,7 @@
     <span class="kw">fn </span>decode(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IOResult&lt;UnmarkedString&gt; {
         <span class="kw">let </span>len = <span class="self">self</span>.get_u16_be()<span class="question-mark">? </span><span class="kw">as </span>usize;
         <span class="kw">if </span>len == <span class="number">0 </span>{
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="string">&quot;&quot;</span>.into())
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="string">""</span>.into())
         }
         <span class="kw">let </span>bytes = <span class="self">self</span>.get_bytes(len)<span class="question-mark">?</span>;
         String::from_utf8(bytes.to_vec()).map(UnmarkedString::new).map_err(invalid_string)
@@ -890,6 +900,13 @@
         <span class="kw">unsafe </span>{
             <span class="macro">assert_eq!</span>(Marker::AmfString, <span class="self">self</span>.marker);
             <span class="kw-2">&amp;*</span><span class="self">self</span>.ptr.cast::&lt;AmfString&gt;()
+        }
+    }
+
+    <span class="kw">fn </span>as_null(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Null {
+        <span class="kw">unsafe </span>{
+            <span class="macro">assert_eq!</span>(Marker::Null, <span class="self">self</span>.marker);
+            <span class="kw-2">&amp;*</span><span class="self">self</span>.ptr.cast::&lt;Null&gt;()
         }
     }
 
@@ -949,6 +966,21 @@
     }
 }
 
+<span class="kw">impl </span>From&lt;Null&gt; <span class="kw">for </span>Value {
+    <span class="kw">fn </span>from(value: Null) -&gt; <span class="self">Self </span>{
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>layout = Layout::new::&lt;Null&gt;();
+            <span class="kw">let </span>ptr = System.alloc(layout);
+            ptr.cast::&lt;Null&gt;().write(value);
+            <span class="self">Self </span>{
+                layout,
+                ptr,
+                marker: Marker::Null
+            }
+        }
+    }
+}
+
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">impl </span>From&lt;Object&gt; <span class="kw">for </span>Value {
     <span class="kw">fn </span>from(value: Object) -&gt; <span class="self">Self </span>{
@@ -976,13 +1008,14 @@
 
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">impl </span>Debug <span class="kw">for </span>Value {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; FormatResult {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; FormatResult {
         <span class="kw">match </span><span class="self">self</span>.marker {
             Marker::Number =&gt; Debug::fmt(<span class="self">self</span>.as_number(), f),
             Marker::Boolean =&gt; Debug::fmt(<span class="self">self</span>.as_boolean(), f),
             Marker::AmfString =&gt; Debug::fmt(<span class="self">self</span>.as_string(), f),
+            Marker::Null =&gt; Debug::fmt(<span class="self">self</span>.as_null(), f),
             Marker::Object =&gt; Debug::fmt(<span class="self">self</span>.as_object(), f),
-            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Debugging other types.&quot;</span>)
+            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">"Debugging other types."</span>)
         }
     }
 }
@@ -997,8 +1030,9 @@
                 Marker::Number =&gt; PartialEq::eq(<span class="self">self</span>.as_number(), other.as_number()),
                 Marker::Boolean =&gt; PartialEq::eq(<span class="self">self</span>.as_number(), other.as_number()),
                 Marker::AmfString =&gt; PartialEq::eq(<span class="self">self</span>.as_string(), other.as_string()),
+                Marker::Null =&gt; PartialEq::eq(<span class="self">self</span>.as_null(), other.as_null()),
                 Marker::Object =&gt; PartialEq::eq(<span class="self">self</span>.as_object(), other.as_object()),
-                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Comparing other types.&quot;</span>)
+                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">"Comparing other types."</span>)
             }
         }
     }
@@ -1006,6 +1040,8 @@
 
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">impl </span>Eq <span class="kw">for </span>Value {}
+<span class="kw">unsafe impl </span>Send <span class="kw">for </span>Value {}
+<span class="kw">unsafe impl </span>Sync <span class="kw">for </span>Value {}
 
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">impl </span>Decoder&lt;Value&gt; <span class="kw">for </span>ByteBuffer {
@@ -1016,8 +1052,9 @@
             Marker::Number =&gt; Decoder::&lt;Number&gt;::decode(<span class="self">self</span>).map(Value::from),
             Marker::Boolean =&gt; Decoder::&lt;Boolean&gt;::decode(<span class="self">self</span>).map(Value::from),
             Marker::AmfString =&gt; Decoder::&lt;AmfString&gt;::decode(<span class="self">self</span>).map(Value::from),
+            Marker::Null =&gt; Decoder::&lt;Null&gt;::decode(<span class="self">self</span>).map(Value::from),
             Marker::Object =&gt; Decoder::&lt;Object&gt;::decode(<span class="self">self</span>).map(Value::from),
-            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Decoding other types.&quot;</span>)
+            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">"Decoding other types."</span>)
         }
     }
 }
@@ -1029,8 +1066,9 @@
             Marker::Number =&gt; <span class="self">self</span>.encode(value.as_number()),
             Marker::Boolean =&gt; <span class="self">self</span>.encode(value.as_boolean()),
             Marker::AmfString =&gt; <span class="self">self</span>.encode(value.as_string()),
+            Marker::Null =&gt; <span class="self">self</span>.encode(value.as_null()),
             Marker::Object =&gt; <span class="self">self</span>.encode(value.as_object()),
-            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Encoding other types.&quot;</span>)
+            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">"Encoding other types."</span>)
         }
     }
 }
@@ -1040,7 +1078,7 @@
 ///
 /// * Key
 ///
-/// The string which doesn&#39;t have its marker.
+/// The string which doesn't have its marker.
 /// This type is named as `UnmarkedString` in this crate.
 /// Also this occurs the panic if its length exceeds the range of 16 bits.
 ///
@@ -1053,49 +1091,41 @@
 
 <span class="kw">impl </span>Object {
     <span class="doccomment">/// Constrcuts a new object.
-    /// 
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::collections::HashMap;
-    /// use sheave_core::messages::amf::v0::Object;
-    ///
-    /// Object::new(HashMap::default());
-    /// ```
     </span><span class="kw">pub fn </span>new(object: HashMap&lt;UnmarkedString, Arc&lt;Value&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>(object)
     }
 
     <span class="doccomment">/// Insert a pair.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::messages::amf::v0::{
-    ///     AmfString,
-    ///     Object
-    /// };
-    ///
-    /// let mut object = Object::default();
-    /// object.insert(&quot;app&quot;, AmfString::from(&quot;ondemand&quot;))
-    /// ```
     </span><span class="kw">pub fn </span>insert&lt;V: Into&lt;Value&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>str, value: V) {
         <span class="self">self</span>.<span class="number">0</span>.insert(key.into(), Arc::new(value.into()));
+    }
+
+    <span class="doccomment">/// Gets a value associated with specified key.
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Value&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.get(<span class="kw-2">&amp;</span>key.into()).map(|value| <span class="kw-2">&amp;**</span>value)
+    }
+}
+
+<span class="kw">impl </span>Index&lt;<span class="kw-2">&amp;</span>str&gt; <span class="kw">for </span>Object {
+    <span class="kw">type </span>Output = Value;
+
+    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
+        <span class="kw-2">&amp;**</span><span class="self">self</span>.<span class="number">0</span>.index(<span class="kw-2">&amp;</span>key.into())
     }
 }
 
 <span class="kw">impl </span>Decoder&lt;Object&gt; <span class="kw">for </span>ByteBuffer {
-    <span class="doccomment">/// Decodes bytes into an AMF&#39;s Object type.
+    <span class="doccomment">/// Decodes bytes into an AMF's Object type.
     ///
     /// # Errors
     ///
     /// * [`InsufficientBufferLength`]
     ///
-    /// When buffer isn&#39;t remained at least 2 bytes. (non-empty object contains at least one pair of key and value)
+    /// When buffer isn't remained at least 2 bytes. (non-empty object contains at least one pair of key and value)
     ///
     /// * [`InconsistentMarker`]
     ///
-    /// When a marker byte doesn&#39;t indicate the AMF Object.
+    /// When a marker byte doesn't indicate the AMF Object.
     ///
     /// * [`InvalidString`]
     ///
@@ -1115,7 +1145,7 @@
     ///
     /// let mut buffer = ByteBuffer::default();
     /// buffer.put_u8(Marker::Object as u8);
-    /// // AMF&#39;s Object type is required a marker of object end (0x09) which is associated with an empty key.
+    /// // AMF's Object type is required a marker of object end (0x09) which is associated with an empty key.
     /// buffer.put_u16_be(0);
     /// buffer.put_u8(Marker::ObjectEnd as u8);
     /// assert!(Decoder::&lt;Object&gt;::decode(&amp;mut buffer).is_ok());
@@ -1126,7 +1156,7 @@
     /// buffer.put_u8(Marker::ObjectEnd as u8);
     /// assert!(Decoder::&lt;Object&gt;::decode(&amp;mut buffer).is_err());
     ///
-    /// // This is a missing sequence of the &quot;sparkle heart(💖)&quot;.
+    /// // This is a missing sequence of the "sparkle heart(💖)".
     /// let mut bytes = vec![0, 159, 146, 150];
     /// let mut buffer = ByteBuffer::default();
     /// buffer.put_u8(Marker::Object as u8);
@@ -1154,7 +1184,7 @@
         <span class="kw">loop </span>{
             <span class="kw">let </span>key: UnmarkedString = <span class="self">self</span>.decode()<span class="question-mark">?</span>;
 
-            <span class="kw">if </span>key == <span class="string">&quot;&quot; </span>{
+            <span class="kw">if </span>key == <span class="string">"" </span>{
                 <span class="self">self</span>.get_u8().and_then(
                     |marker| ensure_marker(Marker::ObjectEnd <span class="kw">as </span>u8, marker)
                 )<span class="question-mark">?</span>;
@@ -1169,39 +1199,19 @@
 }
 
 <span class="kw">impl </span>Encoder&lt;Object&gt; <span class="kw">for </span>ByteBuffer {
-    <span class="doccomment">/// Encodes an AMF&#39;s Object into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Encoder,
-    ///     messages::amf::v0::{
-    ///         Marker,
-    ///         Object
-    ///     }
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&amp;Object::default());
-    /// let bytes: Vec&lt;u8&gt; = buffer.into();
-    /// assert_eq!(Marker::Object as u8, bytes[0]);
-    /// assert_eq!(0u16.to_be_bytes().as_slice(), &amp;bytes[1..3]);
-    /// assert_eq!(Marker::ObjectEnd as u8, bytes[3])
-    /// ```
+    <span class="doccomment">/// Encodes an AMF's Object into bytes.
     </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, object: <span class="kw-2">&amp;</span>Object) {
         <span class="self">self</span>.put_u8(Marker::Object <span class="kw">as </span>u8);
         <span class="kw">for </span>(k, v) <span class="kw">in </span><span class="kw-2">&amp;</span>object.<span class="number">0 </span>{
             <span class="self">self</span>.encode(k);
             <span class="self">self</span>.encode(v.as_ref());
         }
-        <span class="self">self</span>.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(<span class="string">&quot;&quot;</span>));
+        <span class="self">self</span>.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(<span class="string">""</span>));
         <span class="self">self</span>.put_u8(Marker::ObjectEnd <span class="kw">as </span>u8);
     }
 }
 
-<span class="doccomment">/// Constructs an AMF&#39;s Object.
+<span class="doccomment">/// Constructs an AMF's Object.
 ///
 /// # Examples
 ///
@@ -1217,17 +1227,17 @@
 /// };
 ///
 /// let mut command_object = Object::default();
-/// command_object.insert(&quot;app&quot;, AmfString::from(&quot;ondemand&quot;));
-/// command_object.insert(&quot;type&quot;, AmfString::from(&quot;nonprivate&quot;));
-/// command_object.insert(&quot;flashVer&quot;, AmfString::from(&quot;FMLE/3.0 (compatible; Lavf 60.10.100)&quot;));
-/// command_object.insert(&quot;tcUrl&quot;, AmfString::from(&quot;rtmp://localhost&quot;));
+/// command_object.insert("app", AmfString::from("ondemand"));
+/// command_object.insert("type", AmfString::from("nonprivate"));
+/// command_object.insert("flashVer", AmfString::from("FMLE/3.0 (compatible; Lavf 60.10.100)"));
+/// command_object.insert("tcUrl", AmfString::from("rtmp://localhost"));
 /// assert_eq!(
 ///     command_object,
 ///     object!(
-///         &quot;app&quot; =&gt; AmfString::from(&quot;ondemand&quot;),
-///         &quot;type&quot; =&gt; AmfString::from(&quot;nonprivate&quot;),
-///         &quot;flashVer&quot; =&gt; AmfString::from(&quot;FMLE/3.0 (compatible; Lavf 60.10.100)&quot;),
-///         &quot;tcUrl&quot; =&gt; AmfString::from(&quot;rtmp://localhost&quot;)
+///         "app" =&gt; AmfString::from("ondemand"),
+///         "type" =&gt; AmfString::from("nonprivate"),
+///         "flashVer" =&gt; AmfString::from("FMLE/3.0 (compatible; Lavf 60.10.100)"),
+///         "tcUrl" =&gt; AmfString::from("rtmp://localhost")
 ///     )
 /// )
 /// ```
@@ -1263,22 +1273,29 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>string_value() {
-        <span class="kw">let </span>string = AmfString::new(<span class="string">&quot;&quot;</span>.into());
+        <span class="kw">let </span>string = AmfString::new(<span class="string">""</span>.into());
         <span class="kw">let </span>allocated = Value::from(string.clone());
         <span class="macro">assert_eq!</span>(string, <span class="kw-2">*</span>allocated.as_string())
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>null_value() {
+        <span class="kw">let </span>null = Null;
+        <span class="kw">let </span>allocated = Value::from(null);
+        <span class="macro">assert_eq!</span>(null, <span class="kw-2">*</span>allocated.as_null())
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>object_value() {
         <span class="kw">let </span>object = Object::default();
         <span class="kw">let </span>allocated = Value::from(object.clone());
-        <span class="macro">assert_eq!</span>(object, <span class="kw-2">*</span>allocated.as_object());
+        <span class="macro">assert_eq!</span>(object, <span class="kw-2">*</span>allocated.as_object())
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>decode_unmarked_string() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>app_key = <span class="string">&quot;app&quot;</span>;
+        <span class="kw">let </span>app_key = <span class="string">"app"</span>;
         buffer.put_u16_be(app_key.len() <span class="kw">as </span>u16);
         buffer.put_bytes(app_key.as_bytes());
         <span class="kw">let </span>result: IOResult&lt;UnmarkedString&gt; = buffer.decode();
@@ -1287,7 +1304,7 @@
         <span class="macro">assert_eq!</span>(app_key, actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>type_key = <span class="string">&quot;type&quot;</span>;
+        <span class="kw">let </span>type_key = <span class="string">"type"</span>;
         buffer.put_u16_be(type_key.len() <span class="kw">as </span>u16);
         buffer.put_bytes(type_key.as_bytes());
         <span class="kw">let </span>result: IOResult&lt;UnmarkedString&gt; = buffer.decode();
@@ -1296,16 +1313,16 @@
         <span class="macro">assert_eq!</span>(type_key, actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>flash_ver_key = <span class="string">&quot;flashVer&quot;</span>;
+        <span class="kw">let </span>flash_ver_key = <span class="string">"flashVer"</span>;
         buffer.put_u16_be(flash_ver_key.len() <span class="kw">as </span>u16);
         buffer.put_bytes(flash_ver_key.as_bytes());
         <span class="kw">let </span>result: IOResult&lt;UnmarkedString&gt; = buffer.decode();
         <span class="macro">assert!</span>(result.is_ok());
         <span class="kw">let </span>actual = result.unwrap();
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;flashVer&quot;</span>, actual);
+        <span class="macro">assert_eq!</span>(<span class="string">"flashVer"</span>, actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>tc_url_key = <span class="string">&quot;tcUrl&quot;</span>;
+        <span class="kw">let </span>tc_url_key = <span class="string">"tcUrl"</span>;
         buffer.put_u16_be(tc_url_key.len() <span class="kw">as </span>u16);
         buffer.put_bytes(tc_url_key.as_bytes());
         <span class="kw">let </span>result: IOResult&lt;UnmarkedString&gt; = buffer.decode();
@@ -1314,7 +1331,7 @@
         <span class="macro">assert_eq!</span>(tc_url_key, actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>object_end_key = <span class="string">&quot;&quot;</span>;
+        <span class="kw">let </span>object_end_key = <span class="string">""</span>;
         buffer.put_u16_be(object_end_key.len() <span class="kw">as </span>u16);
         buffer.put_bytes(object_end_key.as_bytes());
         <span class="kw">let </span>result: IOResult&lt;UnmarkedString&gt; = buffer.decode();
@@ -1326,28 +1343,28 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>encode_unmarked_string() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>app_key = <span class="string">&quot;app&quot;</span>;
+        <span class="kw">let </span>app_key = <span class="string">"app"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(app_key));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>(app_key.len() <span class="kw">as </span>u16).to_be_bytes(), <span class="kw-2">&amp;</span>result[..<span class="number">2</span>]);
         <span class="macro">assert_eq!</span>(app_key.as_bytes(), <span class="kw-2">&amp;</span>result[<span class="number">2</span>..]);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>type_key = <span class="string">&quot;type&quot;</span>;
+        <span class="kw">let </span>type_key = <span class="string">"type"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(type_key));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>(type_key.len() <span class="kw">as </span>u16).to_be_bytes(), <span class="kw-2">&amp;</span>result[..<span class="number">2</span>]);
         <span class="macro">assert_eq!</span>(type_key.as_bytes(), <span class="kw-2">&amp;</span>result[<span class="number">2</span>..]);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>flash_ver_key = <span class="string">&quot;flashVer&quot;</span>;
+        <span class="kw">let </span>flash_ver_key = <span class="string">"flashVer"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(flash_ver_key));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>(flash_ver_key.len() <span class="kw">as </span>u16).to_be_bytes(), <span class="kw-2">&amp;</span>result[..<span class="number">2</span>]);
         <span class="macro">assert_eq!</span>(flash_ver_key.as_bytes(), <span class="kw-2">&amp;</span>result[<span class="number">2</span>..]);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>tc_url_key = <span class="string">&quot;tcUrl&quot;</span>;
+        <span class="kw">let </span>tc_url_key = <span class="string">"tcUrl"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(tc_url_key));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>(tc_url_key.len() <span class="kw">as </span>u16).to_be_bytes(), <span class="kw-2">&amp;</span>result[..<span class="number">2</span>]);
@@ -1357,7 +1374,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>decode_value() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>ondemand = <span class="string">&quot;ondemand&quot;</span>;
+        <span class="kw">let </span>ondemand = <span class="string">"ondemand"</span>;
         buffer.put_u8(Marker::AmfString <span class="kw">as </span>u8);
         buffer.put_u16_be(ondemand.len() <span class="kw">as </span>u16);
         buffer.put_bytes(ondemand.as_bytes());
@@ -1367,7 +1384,7 @@
         <span class="macro">assert_eq!</span>(Value::from(AmfString::from(ondemand)), actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>nonprivate = <span class="string">&quot;nonprivate&quot;</span>;
+        <span class="kw">let </span>nonprivate = <span class="string">"nonprivate"</span>;
         buffer.put_u8(Marker::AmfString <span class="kw">as </span>u8);
         buffer.put_u16_be(nonprivate.len() <span class="kw">as </span>u16);
         buffer.put_bytes(nonprivate.as_bytes());
@@ -1377,7 +1394,7 @@
         <span class="macro">assert_eq!</span>(Value::from(AmfString::from(nonprivate)), actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>fmle = <span class="string">&quot;FMLE/3.0 (compatible; Lavf 60.10.100)&quot;</span>;
+        <span class="kw">let </span>fmle = <span class="string">"FMLE/3.0 (compatible; Lavf 60.10.100)"</span>;
         buffer.put_u8(Marker::AmfString <span class="kw">as </span>u8);
         buffer.put_u16_be(fmle.len() <span class="kw">as </span>u16);
         buffer.put_bytes(fmle.as_bytes());
@@ -1387,7 +1404,7 @@
         <span class="macro">assert_eq!</span>(Value::from(AmfString::from(fmle)), actual);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>localhost = <span class="string">&quot;rtmp://localhost&quot;</span>;
+        <span class="kw">let </span>localhost = <span class="string">"rtmp://localhost"</span>;
         buffer.put_u8(Marker::AmfString <span class="kw">as </span>u8);
         buffer.put_u16_be(localhost.len() <span class="kw">as </span>u16);
         buffer.put_bytes(localhost.as_bytes());
@@ -1400,7 +1417,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>encode_value() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>ondemand = <span class="string">&quot;ondemand&quot;</span>;
+        <span class="kw">let </span>ondemand = <span class="string">"ondemand"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>Value::from(AmfString::from(ondemand)));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(Marker::AmfString <span class="kw">as </span>u8, result[<span class="number">0</span>]);
@@ -1408,7 +1425,7 @@
         <span class="macro">assert_eq!</span>(ondemand.as_bytes(), <span class="kw-2">&amp;</span>result[<span class="number">3</span>..]);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>nonprivate = <span class="string">&quot;nonprivate&quot;</span>;
+        <span class="kw">let </span>nonprivate = <span class="string">"nonprivate"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>Value::from(AmfString::from(nonprivate)));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(Marker::AmfString <span class="kw">as </span>u8, result[<span class="number">0</span>]);
@@ -1416,7 +1433,7 @@
         <span class="macro">assert_eq!</span>(nonprivate.as_bytes(), <span class="kw-2">&amp;</span>result[<span class="number">3</span>..]);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>fmle = <span class="string">&quot;FMLE/3.0 (compatible; Lavf 60.10.100)&quot;</span>;
+        <span class="kw">let </span>fmle = <span class="string">"FMLE/3.0 (compatible; Lavf 60.10.100)"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>Value::from(AmfString::from(fmle)));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(Marker::AmfString <span class="kw">as </span>u8, result[<span class="number">0</span>]);
@@ -1424,7 +1441,7 @@
         <span class="macro">assert_eq!</span>(fmle.as_bytes(), <span class="kw-2">&amp;</span>result[<span class="number">3</span>..]);
 
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>localhost = <span class="string">&quot;rtmp://localhost&quot;</span>;
+        <span class="kw">let </span>localhost = <span class="string">"rtmp://localhost"</span>;
         buffer.encode(<span class="kw-2">&amp;</span>Value::from(AmfString::from(localhost)));
         <span class="kw">let </span>result: Vec&lt;u8&gt; = buffer.into();
         <span class="macro">assert_eq!</span>(Marker::AmfString <span class="kw">as </span>u8, result[<span class="number">0</span>]);
@@ -1436,7 +1453,7 @@
     </span><span class="kw">fn </span>decode_object() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
         buffer.put_u8(Marker::Object <span class="kw">as </span>u8);
-        buffer.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(<span class="string">&quot;&quot;</span>));
+        buffer.encode(<span class="kw-2">&amp;</span>UnmarkedString::from(<span class="string">""</span>));
         buffer.put_u8(Marker::ObjectEnd <span class="kw">as </span>u8);
         <span class="kw">let </span>result: IOResult&lt;Object&gt; = buffer.decode();
         <span class="macro">assert!</span>(result.is_ok());

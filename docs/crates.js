@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["sheave_core"];
+window.ALL_CRATES = ["sheave_client","sheave_core","sheave_integration_tests","sheave_server"];

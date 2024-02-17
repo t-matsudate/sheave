@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["insufficient_buffer_length"],"macro":["object"],"mod":["handshake","messages","net","readers","writers"],"struct":["ByteBuffer","InsufficientBufferLength"],"trait":["Decoder","Encoder"]};
+window.SIDEBAR_ITEMS = {"fn":["insufficient_buffer_length"],"macro":["object"],"mod":["cli","handlers","handshake","messages","net","readers","writers"],"struct":["ByteBuffer","InsufficientBufferLength"],"trait":["Decoder","Encoder"]};
