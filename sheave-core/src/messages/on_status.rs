@@ -114,6 +114,11 @@ impl Decoder<OnStatus> for ByteBuffer {
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<OnStatus>::decode(&mut buffer).is_err())
     /// ```
+    ///
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
+    /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
+    /// [`InvalidString`]: crate::messages::amf::InvalidString
+    /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<OnStatus> {
         Decoder::<AmfString>::decode(self).and_then(
             |command| ensure_command_name("onStatus", command)
