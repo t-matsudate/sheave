@@ -1,0 +1,30 @@
+name: Release
+on:
+  push:
+    tags: 0.*
+jobs:
+  push-tagged:
+    name: Push tagged image
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: setup-rust
+        name: Setup Rust
+        uses: docker://rust:1.76.0
+      - id: setup-qemu
+        name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+      - id: login
+        name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - id: build-and-push
+        name: Build a docker image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: tmatsudate/sheave-server:${{ github.ref_name }}
