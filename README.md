@@ -16,9 +16,19 @@ The RTMP server/client written by Rust.
 
 `docker run --rm -it -e PROTOCOL=rtmp -e HOST=127.0.0.1 -e PORT=1935 tmatsudate/sheave-server:latest`
 
+### Client
+
+* Just on this repository
+
+1. `git clone https://github.com/t-matsudate/sheave`
+2. `cd ./sheave/sheave-client`
+3. `cargo run -- -protocol rtmp -a 127.0.0.1 -p 1935`
+
 ## Documentation
 
 * [Core library](https://t-matsudate.github.io/sheave/sheave_core)
+* [Server](https://t-matsudate.github.io/sheave/sheave_server)
+* [Client](https://t-matsudate.github.io/sheave/sheave_client)
 
 ## Goals
 
@@ -31,7 +41,8 @@ The third choice for personal use of RTMP tools.
 ## Features
 
 - [x] RTMP handshake.
-- [ ] Configuration exchange.
+- [x] Configuration exchange.
+- [ ] Storing audio/video data.
 
 ## License
 
