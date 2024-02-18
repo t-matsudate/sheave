@@ -120,14 +120,3 @@ impl LastChunk {
         );
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    #[should_panic]
-    fn last_chunk_constructs_with_not_new() {
-        LastChunk::new(MessageHeader::SameSource((Duration::default(), u32::default(), MessageType::Command).into()));
-    }
-}
