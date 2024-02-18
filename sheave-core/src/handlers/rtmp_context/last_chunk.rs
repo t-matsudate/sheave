@@ -19,29 +19,8 @@ pub struct LastChunk {
 
 impl LastChunk {
     /// Constructs a LastChunk.
-    /// Note this panics when fields are incomplete because regards a message header passed as the 11 bytes type.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::panic::catch_unwind;
-    ///
-    /// let panicked = catch_unwind(
-    ///     || {
-    ///         use std::time::Duration;
-    ///         use sheave_core::{
-    ///             messages::headers::{
-    ///                 MessageType,
-    ///                 MessageHeader
-    ///             },
-    ///             handlers::LastChunk
-    ///         };
-    ///
-    ///         LastChunk::new(MessageHeader::SameSource((Duration::default(), u32::default(), MessageType::Command).into()))
-    ///     }
-    /// );
-    /// assert!(panicked.is_err());
-    /// ```
+    /// Note the message ID is set 0 when message header isn't `New`.
+    /// e.g. On receiving `StreamBegin`.
     pub fn new(message_header: MessageHeader) -> Self {
         Self {
             timestamp: message_header.get_timestamp().unwrap(),
