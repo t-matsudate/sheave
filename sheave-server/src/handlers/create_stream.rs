@@ -39,7 +39,7 @@ pub struct CreateStreamHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a m
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for CreateStreamHandler<'_, RW> {
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let create_stream: CreateStream = ready!(pin!(read_chunk(self.0.as_mut(), rtmp_context)).poll(cx))?;
-        let message_id = ready!(pin!(provide_message_id()).poll(cx));
+        let message_id = provide_message_id();
         rtmp_context.set_transaction_id(create_stream.get_transaction_id());
         let create_stream_result: CreateStreamResult = CreateStreamResult::new("_result".into(), rtmp_context.get_transaction_id(), message_id.into());
         ready!(pin!(write_chunk(self.0.as_mut(), rtmp_context, Duration::default(), u32::default(), &create_stream_result)).poll(cx))?;
