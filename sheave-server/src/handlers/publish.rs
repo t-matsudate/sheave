@@ -101,7 +101,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for PublishHandler<'_, RW>
 ///             let mut stream = pin!(VecStream::default());
 ///             let mut client_rtmp_context = RtmpContext::default();
 ///             let mut server_rtmp_context = RtmpContext::default();
-///             server_rtmp_context.set_message_id(0.into());
+///             server_rtmp_context.set_message_id(0);
 ///             let publishing_name = AmfString::from("example");
 ///
 ///             ready!(pin!(write_chunk(stream.as_mut(), &mut client_rtmp_context, Duration::default(), u32::default(), &Publish::new(5.into(), publishing_name.clone(), "live".into()))).poll(cx))?;
