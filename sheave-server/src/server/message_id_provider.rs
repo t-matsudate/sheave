@@ -45,19 +45,19 @@ pub async fn return_message_id(message_id: u32) {
 mod tests {
     use super::*;
 
-    async fn reset_max_id() {
+    fn reset_max_id() {
         CURRENT_MAX_ID.store(u32::default(), Ordering::Relaxed);
     }
 
-    async fn reset_vacant_ids() {
+    fn reset_vacant_ids() {
         let mut vacant_ids = VACANT_IDS.lock().unwrap();
         *vacant_ids = Vec::default();
     }
 
     #[tokio::test]
     async fn provide_when_nothing_vacant() {
-        reset_max_id().await;
-        reset_vacant_ids().await;
+        reset_max_id();
+        reset_vacant_ids();
         let message_id = provide_message_id().await;
         assert_eq!(0, message_id);
         assert_eq!(1, CURRENT_MAX_ID.load(Ordering::Relaxed));
@@ -65,8 +65,8 @@ mod tests {
 
     #[tokio::test]
     async fn provide_from_vacant_ids() {
-        reset_max_id().await;
-        reset_vacant_ids().await;
+        reset_max_id();
+        reset_vacant_ids();
         let previous_message_id = provide_message_id().await;
         // Emits one more message ID for expressing a vacant state.
         let _ = provide_message_id().await;
