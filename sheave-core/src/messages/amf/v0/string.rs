@@ -221,7 +221,6 @@ impl Encoder<AmfString> for ByteBuffer {
 
 #[cfg(test)]
 mod tests {
-    use std::panic::catch_unwind;
     use super::*;
 
     #[test]
@@ -249,13 +248,9 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn panic_when_length_exceeded() {
-        let result = catch_unwind(
-            || {
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(&AmfString::new("a".repeat(1 + u16::MAX as usize)))
-            }
-        );
-        assert!(result.is_err())
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&AmfString::new("a".repeat(1 + u16::MAX as usize)));
     }
 }
