@@ -95,7 +95,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     let mut part: [u8; 128] = [0; 128];
 ///     part.try_fill(&mut thread_rng()).unwrap();
 ///     reader[..128].copy_from_slice(&part);
-///     reader[128] = u8::from(MessageFormat::Continue) << 6 | (random::<u8>() << 2 >> 2);
+///     reader[128] = u8::from(MessageFormat::Continue) << 6 | 2;
 ///     reader[129..].copy_from_slice(&part);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
@@ -106,7 +106,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     part.try_fill(&mut thread_rng()).unwrap();
 ///     reader[..128].copy_from_slice(&part);
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6;
-///     reader[129] = random::<u8>();
+///     reader[129] = 2;
 ///     reader[130..].copy_from_slice(&part);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
@@ -117,7 +117,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     part.try_fill(&mut thread_rng()).unwrap();
 ///     reader[..128].copy_from_slice(&part);
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
-///     reader[129..131].copy_from_slice(&random::<u16>().to_le_bytes());
+///     reader[129..131].copy_from_slice(&2u16.to_le_bytes());
 ///     reader[131..].copy_from_slice(&part);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
@@ -156,7 +156,7 @@ mod tests {
         let mut part: [u8; 128] = [0; 128];
         part.try_fill(&mut thread_rng()).unwrap();
         reader[..128].copy_from_slice(&part);
-        reader[128] = u8::from(MessageFormat::Continue) << 6 | (random::<u8>() << 2 >> 2);
+        reader[128] = u8::from(MessageFormat::Continue) << 6 | 2;
         reader[129..].copy_from_slice(&part);
         let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 256).await;
         assert!(result.is_ok());
@@ -171,7 +171,7 @@ mod tests {
         part.try_fill(&mut thread_rng()).unwrap();
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6;
-        reader[129] = random::<u8>();
+        reader[129] = 2;
         reader[130..].copy_from_slice(&part);
         let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 256).await;
         assert!(result.is_ok());
@@ -186,7 +186,7 @@ mod tests {
         part.try_fill(&mut thread_rng()).unwrap();
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
-        reader[129..131].copy_from_slice(&random::<u16>().to_le_bytes());
+        reader[129..131].copy_from_slice(&2u16.to_le_bytes());
         reader[131..].copy_from_slice(&part);
         let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 256).await;
         assert!(result.is_ok());
