@@ -420,7 +420,7 @@ impl PartialEq<Self> for Value {
         } else {
             match self.marker {
                 Marker::Number => PartialEq::eq(self.as_number(), other.as_number()),
-                Marker::Boolean => PartialEq::eq(self.as_number(), other.as_number()),
+                Marker::Boolean => PartialEq::eq(self.as_boolean(), other.as_boolean()),
                 Marker::AmfString => PartialEq::eq(self.as_string(), other.as_string()),
                 Marker::Null => PartialEq::eq(self.as_null(), other.as_null()),
                 Marker::Object => PartialEq::eq(self.as_object(), other.as_object()),
