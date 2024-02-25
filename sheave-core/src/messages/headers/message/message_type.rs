@@ -6,6 +6,7 @@
 /// | :- | :- |
 /// |`ChunkSize`|`1`|
 /// |`UserControl`|`4`|
+/// |`Data`|`18`|
 /// |`Command`|`20`|
 /// |`Other`|other numbers|
 #[repr(u8)]
@@ -13,6 +14,7 @@
 pub enum MessageType {
     ChunkSize = 1,
     UserControl = 4,
+    Data = 18,
     Command = 20,
     Other = 0xff
 }
@@ -24,6 +26,7 @@ impl From<u8> for MessageType {
         match message_type {
             1 => ChunkSize,
             4 => UserControl,
+            18 => Data,
             20 => Command,
             _ => Other
         }

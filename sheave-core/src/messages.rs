@@ -166,6 +166,18 @@
 //! Every chunk has the chunk headers.
 //! See [`sheave_core::messages::headers`] about them.
 //!
+//! After negotiation, the server receives actual audio/video data from clients.
+//! However also FLV metadata is received as the AMF (v0).
+//! The message what contains FLV metadata is called [`SetDataFrame`].
+//!
+//! ## [`SetDataFrame`]
+//!
+//! |Field|AMF Type|Value|
+//! | :- | :- | :- |
+//! |Command Name (Probably)|[`String`]|`"@setDataFrame"`|
+//! |Data Name|[`String`]|`"onMetaData"`|
+//! |Data|[`EcmaArray`]|e.g. `"audiocodecid"`, `"videocodecid"`|
+//!
 //! [the Action Message Format (v0)]: amf::v0
 //! [`sheave_core::messages::headers`]: headers
 //! [`Number`]: amf::v0::Number
@@ -180,6 +192,7 @@
 //! [`publish`]: Publish
 //! [`Stream Begin`]: StreamBegin
 //! [`onStatus`]: OnStatus
+//! [`SetDataFrame`]: SetDataFrame
 
 pub mod headers;
 pub mod amf;
@@ -197,6 +210,7 @@ mod publish;
 mod inconsistent_event_type;
 mod stream_begin;
 mod on_status;
+mod set_data_frame;
 
 use std::io::Result as IOResult;
 use self::{
@@ -220,7 +234,8 @@ pub use self::{
     publish::*,
     inconsistent_event_type::*,
     stream_begin::*,
-    on_status::*
+    on_status::*,
+    set_data_frame::*
 };
 
 #[doc(hidden)]
@@ -233,7 +248,6 @@ pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()>
     (expected == EventType::from(actual)).then_some(()).ok_or(inconsistent_event_type(expected, actual))
 }
 
-/// TODO
 /// The IDs which are assigned every roles of chunks.
 /// This is mainly used for the `BasicHeader`'s chunk ID.
 ///
@@ -243,15 +257,18 @@ pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()>
 /// | :- | :- |
 /// |`Network`|[`ChunkSize`]|
 /// |`System`|[`Command`]|
+/// |`Audio`|[`Data`]|
 /// |`Other`|other chunks|
 ///
 /// [`ChunkSize`]: ChunkSize
 /// [`Command`]: Command
+/// [`Data`]: Data
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Channel {
     Network = 2,
     System = 3,
+    Audio = 4,
     Source = 8,
     Other = 0xffff
 }
@@ -263,6 +280,7 @@ impl From<u16> for Channel {
         match channel {
             2 => Network,
             3 => System,
+            4 => Audio,
             8 => Source,
             _ => Other
         }
