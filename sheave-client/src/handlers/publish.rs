@@ -76,7 +76,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for PublishHandler<'_, RW>
 
         // TODO: Replace something logger later.
         println!("information: {:?}", on_status.get_info_object());
-        if on_status.get_info_object()["level"] == AmfString::from("error").into() {
+        if on_status.get_info_object().get_properties()["level"] == AmfString::from("error").into() {
             return Poll::Ready(Err(publishing_failure(on_status.into())))
         }
 
