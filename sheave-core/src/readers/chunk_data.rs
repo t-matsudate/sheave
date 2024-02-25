@@ -134,7 +134,6 @@ mod tests {
     use std::pin::pin;
     use rand::{
         Fill,
-        random,
         thread_rng
     };
     use crate::messages::headers::MessageFormat;
