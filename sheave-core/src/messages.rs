@@ -185,6 +185,7 @@
 //! [`String`]: amf::v0::AmfString
 //! [`Object`]: amf::v0::Object
 //! [`Null`]: amf::v0::Null
+//! [`EcmaArray`]: amf::v0::EcmaArray
 //! [`connect`]: Connect
 //! [`releaseStream`]: ReleaseStream
 //! [`FCPublish`]: FcPublish
@@ -257,12 +258,12 @@ pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()>
 /// | :- | :- |
 /// |`Network`|[`ChunkSize`]|
 /// |`System`|[`Command`]|
-/// |`Audio`|[`Data`]|
+/// |`Audio`|[`SetDataFrame`]|
 /// |`Other`|other chunks|
 ///
 /// [`ChunkSize`]: ChunkSize
 /// [`Command`]: Command
-/// [`Data`]: Data
+/// [`SetDataFrame`]: SetDataFrame
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Channel {
