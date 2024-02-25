@@ -242,7 +242,7 @@
 
         <span class="comment">// TODO: Replace something logger later.
         </span><span class="macro">println!</span>(<span class="string">"information: {:?}"</span>, on_status.get_info_object());
-        <span class="kw">if </span>on_status.get_info_object()[<span class="string">"level"</span>] == AmfString::from(<span class="string">"error"</span>).into() {
+        <span class="kw">if </span>on_status.get_info_object().get_properties()[<span class="string">"level"</span>] == AmfString::from(<span class="string">"error"</span>).into() {
             <span class="kw">return </span>Poll::Ready(<span class="prelude-val">Err</span>(publishing_failure(on_status.into())))
         }
 
