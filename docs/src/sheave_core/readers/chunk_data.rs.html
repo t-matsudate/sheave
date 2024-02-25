@@ -194,7 +194,6 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::min,
     future::Future,
@@ -292,7 +291,7 @@
 ///     let mut part: [u8; 128] = [0; 128];
 ///     part.try_fill(&amp;mut thread_rng()).unwrap();
 ///     reader[..128].copy_from_slice(&amp;part);
-///     reader[128] = u8::from(MessageFormat::Continue) &lt;&lt; 6 | (random::&lt;u8&gt;() &lt;&lt; 2 &gt;&gt; 2);
+///     reader[128] = u8::from(MessageFormat::Continue) &lt;&lt; 6 | 2;
 ///     reader[129..].copy_from_slice(&amp;part);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
@@ -303,7 +302,7 @@
 ///     part.try_fill(&amp;mut thread_rng()).unwrap();
 ///     reader[..128].copy_from_slice(&amp;part);
 ///     reader[128] = u8::from(MessageFormat::Continue) &lt;&lt; 6;
-///     reader[129] = random::&lt;u8&gt;();
+///     reader[129] = 2;
 ///     reader[130..].copy_from_slice(&amp;part);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
@@ -314,7 +313,7 @@
 ///     part.try_fill(&amp;mut thread_rng()).unwrap();
 ///     reader[..128].copy_from_slice(&amp;part);
 ///     reader[128] = u8::from(MessageFormat::Continue) &lt;&lt; 6 | 1;
-///     reader[129..131].copy_from_slice(&amp;random::&lt;u16&gt;().to_le_bytes());
+///     reader[129..131].copy_from_slice(&amp;2u16.to_le_bytes());
 ///     reader[131..].copy_from_slice(&amp;part);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 256).await?;
 ///     assert_eq!(256, result.len());
@@ -331,7 +330,6 @@
     <span class="kw">use </span>std::pin::pin;
     <span class="kw">use </span>rand::{
         Fill,
-        random,
         thread_rng
     };
     <span class="kw">use </span><span class="kw">crate</span>::messages::headers::MessageFormat;
@@ -353,7 +351,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>part: [u8; <span class="number">128</span>] = [<span class="number">0</span>; <span class="number">128</span>];
         part.try_fill(<span class="kw-2">&amp;mut </span>thread_rng()).unwrap();
         reader[..<span class="number">128</span>].copy_from_slice(<span class="kw-2">&amp;</span>part);
-        reader[<span class="number">128</span>] = u8::from(MessageFormat::Continue) &lt;&lt; <span class="number">6 </span>| (random::&lt;u8&gt;() &lt;&lt; <span class="number">2 </span>&gt;&gt; <span class="number">2</span>);
+        reader[<span class="number">128</span>] = u8::from(MessageFormat::Continue) &lt;&lt; <span class="number">6 </span>| <span class="number">2</span>;
         reader[<span class="number">129</span>..].copy_from_slice(<span class="kw-2">&amp;</span>part);
         <span class="kw">let </span>result = read_chunk_data(<span class="macro">pin!</span>(reader.as_slice()), ChunkSize::default(), <span class="number">256</span>).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
@@ -368,7 +366,7 @@
         part.try_fill(<span class="kw-2">&amp;mut </span>thread_rng()).unwrap();
         reader[..<span class="number">128</span>].copy_from_slice(<span class="kw-2">&amp;</span>part);
         reader[<span class="number">128</span>] = u8::from(MessageFormat::Continue) &lt;&lt; <span class="number">6</span>;
-        reader[<span class="number">129</span>] = random::&lt;u8&gt;();
+        reader[<span class="number">129</span>] = <span class="number">2</span>;
         reader[<span class="number">130</span>..].copy_from_slice(<span class="kw-2">&amp;</span>part);
         <span class="kw">let </span>result = read_chunk_data(<span class="macro">pin!</span>(reader.as_slice()), ChunkSize::default(), <span class="number">256</span>).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
@@ -383,7 +381,7 @@
         part.try_fill(<span class="kw-2">&amp;mut </span>thread_rng()).unwrap();
         reader[..<span class="number">128</span>].copy_from_slice(<span class="kw-2">&amp;</span>part);
         reader[<span class="number">128</span>] = u8::from(MessageFormat::Continue) &lt;&lt; <span class="number">6 </span>| <span class="number">1</span>;
-        reader[<span class="number">129</span>..<span class="number">131</span>].copy_from_slice(<span class="kw-2">&amp;</span>random::&lt;u16&gt;().to_le_bytes());
+        reader[<span class="number">129</span>..<span class="number">131</span>].copy_from_slice(<span class="kw-2">&amp;</span><span class="number">2u16</span>.to_le_bytes());
         reader[<span class="number">131</span>..].copy_from_slice(<span class="kw-2">&amp;</span>part);
         <span class="kw">let </span>result = read_chunk_data(<span class="macro">pin!</span>(reader.as_slice()), ChunkSize::default(), <span class="number">256</span>).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());

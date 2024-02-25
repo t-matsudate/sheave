@@ -74,8 +74,8 @@
         <span class="macro">writeln!</span>(
             f,
             <span class="string">"Publishing failed. Code: {:?}, Description: {:?}"</span>,
-            <span class="self">self</span>.<span class="number">0</span>.get(<span class="string">"code"</span>),
-            <span class="self">self</span>.<span class="number">0</span>.get(<span class="string">"description"</span>)
+            <span class="self">self</span>.<span class="number">0</span>.get_properties().get(<span class="string">"code"</span>),
+            <span class="self">self</span>.<span class="number">0</span>.get_properties().get(<span class="string">"description"</span>)
         )
     }
 }

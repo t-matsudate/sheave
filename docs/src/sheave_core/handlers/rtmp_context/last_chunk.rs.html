@@ -100,38 +100,6 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     time::Duration
 };
@@ -153,29 +121,8 @@
 
 <span class="kw">impl </span>LastChunk {
     <span class="doccomment">/// Constructs a LastChunk.
-    /// Note this panics when fields are incomplete because regards a message header passed as the 11 bytes type.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::panic::catch_unwind;
-    ///
-    /// let panicked = catch_unwind(
-    ///     || {
-    ///         use std::time::Duration;
-    ///         use sheave_core::{
-    ///             messages::headers::{
-    ///                 MessageType,
-    ///                 MessageHeader
-    ///             },
-    ///             handlers::LastChunk
-    ///         };
-    ///
-    ///         LastChunk::new(MessageHeader::SameSource((Duration::default(), u32::default(), MessageType::Command).into()))
-    ///     }
-    /// );
-    /// assert!(panicked.is_err());
-    /// ```
+    /// Note the message ID is set 0 when message header isn't `New`.
+    /// e.g. On receiving `StreamBegin`.
     </span><span class="kw">pub fn </span>new(message_header: MessageHeader) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             timestamp: message_header.get_timestamp().unwrap(),
@@ -252,17 +199,6 @@
         message_header.get_message_id().map(
             |message_id| <span class="self">self</span>.message_id = message_id
         );
-    }
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-
-    <span class="attr">#[test]
-    #[should_panic]
-    </span><span class="kw">fn </span>last_chunk_constructs_with_not_new() {
-        LastChunk::new(MessageHeader::SameSource((Duration::default(), u32::default(), MessageType::Command).into()));
     }
 }
 </code></pre></div></section></main></body></html>

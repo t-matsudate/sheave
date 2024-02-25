@@ -513,6 +513,37 @@
 <a href="#512" id="512">512</a>
 <a href="#513" id="513">513</a>
 <a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>encryption_algorithm;
 <span class="kw">mod </span>handshake;
 <span class="kw">mod </span>basic_header;
@@ -686,6 +717,7 @@
             Publish,
             StreamBegin,
             OnStatus,
+            SetDataFrame,
             amf::v0::Number,
             headers::{
                 BasicHeader,
@@ -1022,6 +1054,36 @@
         ).<span class="kw">await</span>.unwrap();
 
         <span class="kw">let </span>result: IOResult&lt;OnStatus&gt; = read_chunk(stream.as_mut(), <span class="kw-2">&amp;mut </span>rtmp_context).<span class="kw">await</span>;
+        <span class="macro">assert!</span>(result.is_ok());
+        <span class="kw">let </span>actual = result.unwrap();
+        <span class="macro">assert_eq!</span>(expected, actual)
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>read_set_data_frame() {
+        <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
+        <span class="kw">let </span>expected = SetDataFrame::default();
+        buffer.encode(<span class="kw-2">&amp;</span>expected);
+        <span class="kw">let </span>data: Vec&lt;u8&gt; = buffer.into();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="macro">pin!</span>(VecStream::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>rtmp_context = RtmpContext::default();
+        write_basic_header(
+            stream.as_mut(),
+            <span class="kw-2">&amp;</span>BasicHeader::new(MessageFormat::New, SetDataFrame::CHANNEL <span class="kw">as </span>u16)
+        ).<span class="kw">await</span>.unwrap();
+        write_message_header(
+            stream.as_mut(),
+            <span class="kw-2">&amp;</span>MessageHeader::New((Duration::default(), data.len() <span class="kw">as </span>u32, SetDataFrame::MESSAGE_TYPE, u32::default()).into())
+        ).<span class="kw">await</span>.unwrap();
+        write_chunk_data(
+            stream.as_mut(),
+            SetDataFrame::CHANNEL <span class="kw">as </span>u16,
+            rtmp_context.get_sending_chunk_size(),
+            <span class="kw-2">&amp;</span>data
+        ).<span class="kw">await</span>.unwrap();
+
+        <span class="kw">let </span>result: IOResult&lt;SetDataFrame&gt; = read_chunk(stream.as_mut(), <span class="kw-2">&amp;mut </span>rtmp_context).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());
         <span class="kw">let </span>actual = result.unwrap();
         <span class="macro">assert_eq!</span>(expected, actual)

@@ -94,7 +94,7 @@
 /// 1. Checks whether some vacant ID exists. Because of avoiding exhausted ID ranges.
 /// 2. If it exists, this provides a new ID, then increases current max number.
 /// 3. Otherwise reuses previous vacancies.
-</span><span class="kw">pub async fn </span>provide_message_id() -&gt; u32 {
+</span><span class="kw">pub fn </span>provide_message_id() -&gt; u32 {
     <span class="kw">let </span><span class="kw-2">mut </span>vacant_ids = VACANT_IDS.lock().unwrap();
 
     <span class="kw">if </span>vacant_ids.is_empty() {
@@ -110,7 +110,7 @@
 /// 1. Checks whether it is equal to current max number. Because of avoiding to duplicate IDs which are provided.
 /// 2. If it is, decreases current max number, then registers it.
 /// 3. Otherwise keeps current max number as it is.
-</span><span class="kw">pub async fn </span>return_message_id(message_id: u32) {
+</span><span class="kw">pub fn </span>return_message_id(message_id: u32) {
     <span class="kw">let </span><span class="kw-2">mut </span>vacant_ids = VACANT_IDS.lock().unwrap();
 
     <span class="kw">if </span>message_id == CURRENT_MAX_ID.load(Ordering::Relaxed) {
@@ -124,33 +124,33 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">async fn </span>reset_max_id() {
+    <span class="kw">fn </span>reset_max_id() {
         CURRENT_MAX_ID.store(u32::default(), Ordering::Relaxed);
     }
 
-    <span class="kw">async fn </span>reset_vacant_ids() {
+    <span class="kw">fn </span>reset_vacant_ids() {
         <span class="kw">let </span><span class="kw-2">mut </span>vacant_ids = VACANT_IDS.lock().unwrap();
         <span class="kw-2">*</span>vacant_ids = Vec::default();
     }
 
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>provide_when_nothing_vacant() {
-        reset_max_id().<span class="kw">await</span>;
-        reset_vacant_ids().<span class="kw">await</span>;
-        <span class="kw">let </span>message_id = provide_message_id().<span class="kw">await</span>;
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>provide_when_nothing_vacant() {
+        reset_max_id();
+        reset_vacant_ids();
+        <span class="kw">let </span>message_id = provide_message_id();
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, message_id);
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, CURRENT_MAX_ID.load(Ordering::Relaxed));
     }
 
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>provide_from_vacant_ids() {
-        reset_max_id().<span class="kw">await</span>;
-        reset_vacant_ids().<span class="kw">await</span>;
-        <span class="kw">let </span>previous_message_id = provide_message_id().<span class="kw">await</span>;
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>provide_from_vacant_ids() {
+        reset_max_id();
+        reset_vacant_ids();
+        <span class="kw">let </span>previous_message_id = provide_message_id();
         <span class="comment">// Emits one more message ID for expressing a vacant state.
-        </span><span class="kw">let _ </span>= provide_message_id().<span class="kw">await</span>;
-        return_message_id(previous_message_id).<span class="kw">await</span>;
-        <span class="kw">let </span>next_message_id = provide_message_id().<span class="kw">await</span>;
+        </span><span class="kw">let _ </span>= provide_message_id();
+        return_message_id(previous_message_id);
+        <span class="kw">let </span>next_message_id = provide_message_id();
         <span class="macro">assert_eq!</span>(previous_message_id, next_message_id);
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, CURRENT_MAX_ID.load(Ordering::Relaxed))
     }

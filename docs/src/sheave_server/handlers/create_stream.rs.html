@@ -149,7 +149,7 @@
 </span><span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>CreateStreamHandler&lt;<span class="lifetime">'_</span>, RW&gt; {
     <span class="kw">fn </span>poll_handle(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
         <span class="kw">let </span>create_stream: CreateStream = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context)).poll(cx))<span class="question-mark">?</span>;
-        <span class="kw">let </span>message_id = <span class="macro">ready!</span>(<span class="macro">pin!</span>(provide_message_id()).poll(cx));
+        <span class="kw">let </span>message_id = provide_message_id();
         rtmp_context.set_transaction_id(create_stream.get_transaction_id());
         <span class="kw">let </span>create_stream_result: CreateStreamResult = CreateStreamResult::new(<span class="string">"_result"</span>.into(), rtmp_context.get_transaction_id(), message_id.into());
         <span class="macro">ready!</span>(<span class="macro">pin!</span>(write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, Duration::default(), u32::default(), <span class="kw-2">&amp;</span>create_stream_result)).poll(cx))<span class="question-mark">?</span>;

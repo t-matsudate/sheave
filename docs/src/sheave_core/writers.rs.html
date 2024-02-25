@@ -464,6 +464,32 @@
 <a href="#463" id="463">463</a>
 <a href="#464" id="464">464</a>
 <a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>encryption_algorithm;
 <span class="kw">mod </span>handshake;
 <span class="kw">mod </span>basic_header;
@@ -648,6 +674,7 @@
             Publish,
             StreamBegin,
             OnStatus,
+            SetDataFrame,
             amf::v0::Number
         },
         readers::*
@@ -926,6 +953,31 @@
         <span class="macro">assert_eq!</span>(u32::default(), message_header.get_message_id().unwrap());
 
         <span class="kw">let </span>actual = Decoder::&lt;OnStatus&gt;::decode(<span class="kw-2">&amp;mut </span>ByteBuffer::from(data)).unwrap();
+        <span class="macro">assert_eq!</span>(expected, actual)
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>write_set_data_frame() {
+        <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="macro">pin!</span>(VecStream::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>rtmp_context = RtmpContext::default();
+        <span class="kw">let </span>expected = SetDataFrame::default();
+
+        <span class="kw">let </span>result = write_chunk(stream.as_mut(), <span class="kw-2">&amp;mut </span>rtmp_context, Duration::default(), u32::default(), <span class="kw-2">&amp;</span>expected).<span class="kw">await</span>;
+        <span class="macro">assert!</span>(result.is_ok());
+        <span class="kw">let </span>basic_header = read_basic_header(stream.as_mut()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>message_format = basic_header.get_message_format();
+        <span class="kw">let </span>message_header = read_message_header(stream.as_mut(), message_format).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>message_length = message_header.get_message_length().unwrap();
+        <span class="kw">let </span>chunk_size = rtmp_context.get_receiving_chunk_size();
+        <span class="kw">let </span>data = read_chunk_data(stream.as_mut(), chunk_size, message_length).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(SetDataFrame::CHANNEL <span class="kw">as </span>u16, basic_header.get_chunk_id());
+        <span class="macro">assert_eq!</span>(MessageFormat::New, message_format);
+        <span class="macro">assert_eq!</span>(Duration::default(), message_header.get_timestamp().unwrap());
+        <span class="macro">assert_eq!</span>(message_length, data.len() <span class="kw">as </span>u32);
+        <span class="macro">assert_eq!</span>(SetDataFrame::MESSAGE_TYPE, message_header.get_message_type().unwrap());
+        <span class="macro">assert_eq!</span>(u32::default(), message_header.get_message_id().unwrap());
+
+        <span class="kw">let </span>actual = Decoder::&lt;SetDataFrame&gt;::decode(<span class="kw-2">&amp;mut </span>ByteBuffer::from(data)).unwrap();
         <span class="macro">assert_eq!</span>(expected, actual)
     }
 }
