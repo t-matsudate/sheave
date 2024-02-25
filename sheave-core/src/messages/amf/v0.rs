@@ -1,4 +1,3 @@
-//! TODO: Defining the ECMA array.
 //! # The AMF Data Types (version 0).
 //!
 //! These are data types which are defined in the Action Message Format version 0 specification.
@@ -51,10 +50,18 @@
 //! * [`AmfString`]
 //! * [`Object`]
 //! * [`Null`]
+//! * [`EcmaArray`]
 //!
 //! ## [`Null`]
 //!
 //! 1. [`Marker`] (1 byte)
+//!
+//! ## [`EcmaArray`]
+//!
+//! 1. [`Marker`] (1 byte)
+//! 2. Length (4 bytes)
+//! 3. Arbitrary number key-value pairs (variable)
+//! 4. The Object End marker that is associated with an empty string.
 //!
 //! [`Marker`]: Marker
 //! [`Number`]: Number
@@ -62,6 +69,7 @@
 //! [`AmfString`]: AmfString
 //! [`Object`]: Object
 //! [`Null`]: Null
+//! [`EcmaArray`]: EcmaArray
 
 mod number;
 mod boolean;
