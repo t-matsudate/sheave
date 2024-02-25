@@ -307,6 +307,13 @@ impl Value {
             &*self.ptr.cast::<Object>()
         }
     }
+
+    fn as_ecma_array(&self) -> &EcmaArray {
+        unsafe {
+            assert_eq!(Marker::EcmaArray, self.marker);
+            &*self.ptr.cast::<EcmaArray>()
+        }
+    }
 }
 
 #[doc(hidden)]
@@ -390,6 +397,22 @@ impl From<Object> for Value {
 }
 
 #[doc(hidden)]
+impl From<EcmaArray> for Value {
+    fn from(value: EcmaArray) -> Self {
+        unsafe {
+            let layout = Layout::new::<EcmaArray>();
+            let ptr = System.alloc(layout);
+            ptr.cast::<EcmaArray>().write(value);
+            Self {
+                layout,
+                ptr,
+                marker: Marker::EcmaArray
+            }
+        }
+    }
+}
+
+#[doc(hidden)]
 impl Drop for Value {
     fn drop(&mut self) {
         unsafe {
@@ -407,6 +430,7 @@ impl Debug for Value {
             Marker::AmfString => Debug::fmt(self.as_string(), f),
             Marker::Null => Debug::fmt(self.as_null(), f),
             Marker::Object => Debug::fmt(self.as_object(), f),
+            Marker::EcmaArray => Debug::fmt(self.as_ecma_array(), f),
             _ => unimplemented!("Debugging other types.")
         }
     }
@@ -424,6 +448,7 @@ impl PartialEq<Self> for Value {
                 Marker::AmfString => PartialEq::eq(self.as_string(), other.as_string()),
                 Marker::Null => PartialEq::eq(self.as_null(), other.as_null()),
                 Marker::Object => PartialEq::eq(self.as_object(), other.as_object()),
+                Marker::EcmaArray => PartialEq::eq(self.as_ecma_array(), other.as_ecma_array()),
                 _ => unimplemented!("Comparing other types.")
             }
         }
@@ -448,6 +473,7 @@ impl Decoder<Value> for ByteBuffer {
             Marker::AmfString => Decoder::<AmfString>::decode(self).map(Value::from),
             Marker::Null => Decoder::<Null>::decode(self).map(Value::from),
             Marker::Object => Decoder::<Object>::decode(self).map(Value::from),
+            Marker::EcmaArray => Decoder::<EcmaArray>::decode(self).map(Value::from),
             _ => unimplemented!("Decoding other types.")
         }
     }
@@ -462,6 +488,7 @@ impl Encoder<Value> for ByteBuffer {
             Marker::AmfString => self.encode(value.as_string()),
             Marker::Null => self.encode(value.as_null()),
             Marker::Object => self.encode(value.as_object()),
+            Marker::EcmaArray => self.encode(value.as_ecma_array()),
             _ => unimplemented!("Encoding other types.")
         }
     }
@@ -565,6 +592,13 @@ mod tests {
         let object = Object::default();
         let allocated = Value::from(object.clone());
         assert_eq!(object, *allocated.as_object())
+    }
+
+    #[test]
+    fn ecma_array_value() {
+        let ecma_array = EcmaArray::default();
+        let allocated = Value::from(ecma_array.clone());
+        assert_eq!(ecma_array, *allocated.as_ecma_array());
     }
 
     #[test]
