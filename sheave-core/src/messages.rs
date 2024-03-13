@@ -212,6 +212,8 @@ mod inconsistent_event_type;
 mod stream_begin;
 mod on_status;
 mod set_data_frame;
+mod audio;
+mod video;
 
 use std::io::Result as IOResult;
 use self::{
@@ -236,7 +238,9 @@ pub use self::{
     inconsistent_event_type::*,
     stream_begin::*,
     on_status::*,
-    set_data_frame::*
+    set_data_frame::*,
+    audio::*,
+    video::*
 };
 
 #[doc(hidden)]
@@ -270,6 +274,7 @@ pub enum Channel {
     Network = 2,
     System = 3,
     Audio = 4,
+    Video = 6,
     Source = 8,
     Other = 0xffff
 }
@@ -282,6 +287,7 @@ impl From<u16> for Channel {
             2 => Network,
             3 => System,
             4 => Audio,
+            6 => Video,
             8 => Source,
             _ => Other
         }

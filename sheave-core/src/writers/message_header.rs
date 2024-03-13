@@ -10,12 +10,15 @@ use std::{
 };
 use futures::ready;
 use tokio::io::AsyncWrite;
-use crate::messages::headers::{
-    MessageHeader,
-    New,
-    SameSource,
-    TimerChange,
-    MessageType
+use crate::{
+    U24_MAX,
+    messages::headers::{
+        MessageHeader,
+        New,
+        SameSource,
+        TimerChange,
+        MessageType
+    }
 };
 
 #[doc(hidden)]
@@ -27,12 +30,12 @@ pub struct MessageHeaderWriter<'a, W: AsyncWrite> {
 
 impl<W: AsyncWrite> MessageHeaderWriter<'_, W> {
     fn write_timestamp(&mut self, cx: &mut FutureContext<'_>, timestamp: Duration) -> Poll<IOResult<()>> {
-        assert!(0x00ffffff >= timestamp.as_millis() as u32);
+        assert!(timestamp.as_millis() <= U24_MAX as u128);
         self.writer.as_mut().poll_write(cx, &(timestamp.as_millis() as u32).to_be_bytes()[1..]).map_ok(|_| ())
     }
 
     fn write_message_length(&mut self, cx: &mut FutureContext<'_>, message_length: u32) -> Poll<IOResult<()>> {
-        assert!(0x00ffffff >= message_length);
+        assert!(message_length <= U24_MAX);
         self.writer.as_mut().poll_write(cx, &message_length.to_be_bytes()[1..]).map_ok(|_| ())
     }
 
@@ -186,8 +189,8 @@ mod tests {
     #[tokio::test]
     async fn write_new() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
-        let message_length = min(0x00ffffff, random::<u32>());
+        let timestamp = Duration::from_millis(min(U24_MAX, random::<u32>()) as u64);
+        let message_length = min(U24_MAX, random::<u32>());
         let message_type = random::<u8>();
         let message_id = random::<u32>();
         let message_header = MessageHeader::New((timestamp, message_length, message_type.into(), message_id).into());
@@ -212,8 +215,8 @@ mod tests {
     #[tokio::test]
     async fn write_same_source() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
-        let message_length = min(0x00ffffff, random::<u32>());
+        let timestamp = Duration::from_millis(min(U24_MAX, random::<u32>()) as u64);
+        let message_length = min(U24_MAX, random::<u32>());
         let message_type = random::<u8>();
         let message_header = MessageHeader::SameSource((timestamp, message_length, message_type.into()).into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
@@ -233,7 +236,7 @@ mod tests {
     #[tokio::test]
     async fn write_timer_change() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let timestamp = Duration::from_millis(min(0x00ffffff, random::<u32>()) as u64);
+        let timestamp = Duration::from_millis(min(U24_MAX, random::<u32>()) as u64);
         let message_header = MessageHeader::TimerChange(timestamp.into());
         let result = write_message_header(writer.as_mut(), &message_header).await;
         assert!(result.is_ok());

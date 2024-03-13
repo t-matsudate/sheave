@@ -29,6 +29,7 @@ use tokio::io::AsyncWrite;
 use crate::{
     ByteBuffer,
     Encoder,
+    U24_MAX,
     handlers::{
         LastChunk,
         RtmpContext
@@ -120,9 +121,9 @@ where
             },
             _ => MessageFormat::New
         };
-        let extended_timestamp = if MessageHeader::U24_MAX <= timestamp.as_millis() as u32 {
+        let extended_timestamp = if U24_MAX <= timestamp.as_millis() as u32 {
             let extended_timestamp = timestamp;
-            timestamp = Duration::from_millis(MessageHeader::U24_MAX as u64);
+            timestamp = Duration::from_millis(U24_MAX as u64);
             Some(extended_timestamp)
         } else {
             None
