@@ -38,6 +38,7 @@ impl AmfString {
 
 impl Deref for AmfString {
     type Target = StdString;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
