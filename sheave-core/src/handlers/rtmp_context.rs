@@ -16,7 +16,8 @@ use crate::{
             AmfString,
             Object
         }
-    }
+    },
+    flv::Flv
 };
 pub use self::last_chunk::*;
 
@@ -50,6 +51,7 @@ pub struct RtmpContext {
     message_id: Option<u32>,
     publishing_name: Option<AmfString>,
     publishing_type: Option<AmfString>,
+    flv: Flv,
     last_received_chunks: HashMap<u16, LastChunk>,
     last_sent_chunks: HashMap<u16, LastChunk>
 }
@@ -327,6 +329,14 @@ impl RtmpContext {
     /// ```
     pub fn get_publishing_type(&mut self) -> Option<&AmfString> {
         self.publishing_type.as_ref()
+    }
+
+    pub fn get_flv(&mut self) -> &Flv {
+        &self.flv
+    }
+
+    pub fn get_flv_mut(&mut self) -> &mut Flv {
+        &mut self.flv
     }
 
     /// Stores a last received chunk.

@@ -8,9 +8,12 @@ mod encoder;
 mod byte_buffer;
 pub mod cli;
 pub mod handlers;
+pub mod flv;
 
 pub use self::{
     decoder::Decoder,
     encoder::Encoder,
     byte_buffer::*
 };
+
+pub(crate) const U24_MAX: u32 = 0x00ffffff;
