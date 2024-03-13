@@ -1,6 +1,7 @@
 mod insufficient_buffer_length;
 
 use std::io::Result as IOResult;
+use crate::U24_MAX;
 pub use self::insufficient_buffer_length::*;
 
 /// The stream buffer for encoding/decoding chunk data.
@@ -114,6 +115,53 @@ impl ByteBuffer {
         ).ok_or(insufficient_buffer_length(2, self.remained()))
     }
 
+    /// Tries getting **signed** 3 bytes from buffer, as the big endian.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When buffer isn't remained at least 2 bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use rand::{
+    ///     Fill,
+    ///     thread_rng
+    /// };
+    /// use sheave_core::ByteBuffer;
+    ///
+    /// let mut bytes: [u8; 3] = [0; 3];
+    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// let mut buffer: ByteBuffer = bytes.to_vec().into();
+    /// assert!(buffer.get_i24_be().is_ok());
+    ///
+    /// let mut buffer: ByteBuffer = Vec::new().into();
+    /// assert!(buffer.get_i24_be().is_err());
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: InsufficientBufferLength
+    pub fn get_i24_be(&mut self) -> IOResult<i32> {
+        let offset = self.offset;
+        self.bytes.get(offset..(offset + 3)).map(
+            |bytes| {
+                self.offset += bytes.len();
+                let mut _bytes: [u8; 4] = [0; 4];
+                _bytes[1..].copy_from_slice(bytes);
+                let mut n = i32::from_be_bytes(_bytes);
+
+                // Moves the most significant bit if this is a negative number in 3 bytes.
+                if (n & 0x00800000) != 0 {
+                    n ^= -1;
+                    n += 1;
+                }
+
+                n
+            }
+        ).ok_or(insufficient_buffer_length(3, self.remained()))
+    }
+
     /// Tries getting 4 bytes from buffer, as the big endian.
     ///
     /// # Errors
@@ -222,6 +270,33 @@ impl ByteBuffer {
     /// Puts 2 bytes into buffer, as the big endian.
     pub fn put_u16_be(&mut self, n: u16) {
         self.bytes.extend_from_slice(&n.to_be_bytes());
+    }
+
+    /// Puts **signed** 3 bytes into buffer, as the big endian.
+    ///
+    /// # Panics
+    ///
+    /// Its value must be the range of 24 bits.
+    /// If it exceeds, a panic is occured.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::panic::catch_unwind;
+    ///
+    /// let result = catch_unwind(
+    ///     || {
+    ///         use sheave_core::ByteBuffer;
+    ///
+    ///         let mut buffer = ByteBuffer::default();
+    ///         buffer.put_i24_be((0x00ffffff + 1) as i32);
+    ///     }
+    /// );
+    /// assert!(result.is_err())
+    /// ```
+    pub fn put_i24_be(&mut self, n: i32) {
+        assert!(n <= U24_MAX as i32);
+        self.bytes.extend_from_slice(&n.to_be_bytes()[1..]);
     }
 
     /// Puts 4 bytes into buffer, as the big endian.
