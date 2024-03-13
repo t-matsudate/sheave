@@ -2,46 +2,30 @@ use std::io::Result as IOResult;
 use crate::{
     ByteBuffer,
     Decoder,
-    Encoder,
-    messages::{
-        Channel,
-        ChunkData,
-        amf::v0::{
-            AmfString,
-            EcmaArray
-        },
-        ensure_command_name,
-        headers::MessageType
-    }
+    Encoder
+};
+use super::{
+    Channel,
+    ChunkData,
+    amf::v0::AmfString,
+    ensure_command_name,
+    headers::MessageType
 };
 
-/// The data message to handle the metadata of FLV.
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct SetDataFrame {
-    name: AmfString,
-    data: EcmaArray
-}
+/// The message to handle something data.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SetDataFrame(Vec<u8>);
 
 impl SetDataFrame {
     /// Constructs a new SetDataFrame message.
-    pub fn new(name: AmfString, data: EcmaArray) -> Self {
-        Self { name, data }
-    }
-
-    /// Gets the data name of this message.
-    pub fn get_name(&self) -> &AmfString {
-        &self.name
-    }
-
-    /// Gets the data of this message.
-    pub fn get_data(&self) -> &EcmaArray {
-        &self.data
+    pub fn new(bytes: Vec<u8>) -> Self {
+        Self(bytes)
     }
 }
 
-impl From<SetDataFrame> for (AmfString, EcmaArray) {
+impl From<SetDataFrame> for Vec<u8> {
     fn from(set_data_frame: SetDataFrame) -> Self {
-        (set_data_frame.name, set_data_frame.data)
+        set_data_frame.0
     }
 }
 
@@ -74,31 +58,29 @@ impl Decoder<SetDataFrame> for ByteBuffer {
     /// # Examples
     ///
     /// ```rust
+    /// use rand::{
+    ///     Fill,
+    ///     thread_rng
+    /// };
     /// use sheave_core::{
     ///     ByteBuffer,
     ///     Decoder,
     ///     Encoder,
     ///     messages::{
     ///         SetDataFrame,
-    ///         amf::v0::{
-    ///             Number,
-    ///             Boolean,
-    ///             AmfString,
-    ///             EcmaArray
-    ///         }
+    ///         amf::v0::AmfString,
     ///     }
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
+    /// let mut bytes: [u8; 128] = [0; 128];
+    /// bytes.try_fill(&mut thread_rng()).unwrap();
     /// buffer.encode(&AmfString::from("@setDataFrame"));
-    /// buffer.encode(&AmfString::from("onMetaData"));
-    /// buffer.encode(&EcmaArray::default());
+    /// buffer.put_bytes(&bytes);
     /// assert!(Decoder::<SetDataFrame>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
     /// buffer.encode(&AmfString::from("something else"));
-    /// buffer.encode(&AmfString::from("onMetaData"));
-    /// buffer.encode(&EcmaArray::default());
     /// assert!(Decoder::<SetDataFrame>::decode(&mut buffer).is_err())
     /// ```
     ///
@@ -111,9 +93,9 @@ impl Decoder<SetDataFrame> for ByteBuffer {
             |command| ensure_command_name("@setDataFrame", command)
         )?;
 
-        let name: AmfString = self.decode()?;
-        let data: EcmaArray = self.decode()?;
-        Ok(SetDataFrame { name, data })
+        let remained = self.remained();
+        let bytes = self.get_bytes(remained)?.to_vec();
+        Ok(SetDataFrame(bytes))
     }
 }
 
@@ -121,101 +103,42 @@ impl Encoder<SetDataFrame> for ByteBuffer {
     /// Encodes a SetDataFrame message into bytes.
     fn encode(&mut self, set_data_frame: &SetDataFrame) {
         self.encode(&AmfString::from("@setDataFrame"));
-        self.encode(set_data_frame.get_name());
-        self.encode(set_data_frame.get_data());
+        self.put_bytes(&set_data_frame.0);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        ecma_array,
-        messages::amf::v0::{
-            Number,
-            Boolean,
-            AmfString
-        }
+    use rand::{
+        Fill,
+        thread_rng
     };
     use super::*;
 
     #[test]
     fn decode_set_data_frame() {
         let mut buffer = ByteBuffer::default();
+        let mut bytes: [u8; 128] = [0; 128];
+        bytes.try_fill(&mut thread_rng()).unwrap();
         buffer.encode(&AmfString::from("@setDataFrame"));
-        buffer.encode(&AmfString::from("onMetaData"));
-        buffer.encode(
-            &ecma_array!(
-                "audiocodecid" => Number::default(),
-                "audiodatarate" => Number::default(),
-                "audiodelay" => Number::default(),
-                "audiosamplerate" => Number::default(),
-                "audiosamplesize" => Number::default(),
-                "canSeekToEnd" => Boolean::default(),
-                "creationdate" => AmfString::default(),
-                "duration" => Number::default(),
-                "filesize" => Number::default(),
-                "framerate" => Number::default(),
-                "height" => Number::default(),
-                "stereo" => Boolean::default(),
-                "videocodecid" => Number::from(2),
-                "videodatarate" => Number::default(),
-                "width" => Number::default()
-            )
-        );
+        buffer.put_bytes(&bytes);
         let result: IOResult<SetDataFrame> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = SetDataFrame::new(
-            "onMetaData".into(),
-            ecma_array!(
-                "audiocodecid" => Number::default(),
-                "audiodatarate" => Number::default(),
-                "audiodelay" => Number::default(),
-                "audiosamplerate" => Number::default(),
-                "audiosamplesize" => Number::default(),
-                "canSeekToEnd" => Boolean::default(),
-                "creationdate" => AmfString::default(),
-                "duration" => Number::default(),
-                "filesize" => Number::default(),
-                "framerate" => Number::default(),
-                "height" => Number::default(),
-                "stereo" => Boolean::default(),
-                "videocodecid" => Number::from(2),
-                "videodatarate" => Number::default(),
-                "width" => Number::default()
-            )
-        );
+        let expected = SetDataFrame::new(bytes.to_vec());
         assert_eq!(expected, actual)
     }
 
     #[test]
     fn encode_set_data_frame() {
         let mut buffer = ByteBuffer::default();
-        let expected_data_name = "onMetaData";
-        let expected_data = ecma_array!(
-            "audiocodecid" => Number::default(),
-            "audiodatarate" => Number::default(),
-            "audiodelay" => Number::default(),
-            "audiosamplerate" => Number::default(),
-            "audiosamplesize" => Number::default(),
-            "canSeekToEnd" => Boolean::default(),
-            "creationdate" => AmfString::default(),
-            "duration" => Number::default(),
-            "filesize" => Number::default(),
-            "framerate" => Number::default(),
-            "height" => Number::default(),
-            "stereo" => Boolean::default(),
-            "videocodecid" => Number::from(2),
-            "videodatarate" => Number::default(),
-            "width" => Number::default()
-        );
-        let expected = SetDataFrame::new(expected_data_name.into(), expected_data.clone());
+        let mut expected_bytes: [u8; 128] = [0; 128];
+        expected_bytes.try_fill(&mut thread_rng()).unwrap();
+        let expected = SetDataFrame::new(expected_bytes.to_vec());
         buffer.encode(&expected);
         let message_name: AmfString = buffer.decode().unwrap();
         assert_eq!("@setDataFrame", message_name);
-        let actual_data_name: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_data_name, actual_data_name);
-        let actual_data: EcmaArray = buffer.decode().unwrap();
-        assert_eq!(expected_data, actual_data)
+        let actual_data: Vec<u8> = buffer.into();
+        assert_eq!(expected_bytes.as_slice(), &actual_data)
     }
 }
