@@ -29,12 +29,7 @@ use crate::{
     ByteBuffer,
     Decoder,
     U24_MAX,
-    flv::{
-        InnerTag,
-        AudioTag,
-        VideoTag,
-        ScriptDataTag
-    },
+    flv::tags::*,
     handlers::{
         LastChunk,
         RtmpContext
@@ -163,6 +158,86 @@ where
     }))
 }
 
+/// Reads a FLV chunk from streams.
+///
+/// # Errors
+///
+/// This will be occured several errors in decoding.
+/// For examples:
+///
+/// * When streams didn't have enough data.
+/// * When data format is invalid.
+/// * When something value in data differed from what's expected.
+///
+/// Because this is expected receiving chunk data is correctly ready in streams.
+///
+/// # Examples
+///
+/// ```rust
+/// use std::{
+///     io::Result as IOResult,
+///     pin::pin,
+///     time::Duration
+/// };
+/// use sheave_core::{
+///     ByteBuffer,
+///     Encoder,
+///     flv::tags::{
+///         InnerTag,
+///         ScriptDataTag
+///     },
+///     handlers::{
+///         RtmpContext,
+///         VecStream
+///     },
+///     messages::{
+///         ChunkData,
+///         ChunkSize,
+///         SetDataFrame,
+///         amf::v0::{
+///             AmfString,
+///             EcmaArray
+///         },
+///         headers::{
+///             BasicHeader,
+///             MessageFormat,
+///             MessageHeader
+///         }
+///     },
+///     readers::read_flv_chunk,
+///     writers::{
+///         write_basic_header,
+///         write_chunk_data,
+///         write_message_header
+///     }
+/// };
+///
+/// #[tokio::main]
+/// async fn main() -> IOResult<()> {
+///     // The FLV needs messages which consist of string and ECMA array for storing its metadata.
+///     let mut buffer = ByteBuffer::default();
+///     buffer.encode(&AmfString::default());
+///     buffer.encode(&EcmaArray::default());
+///     let script_data_bytes: Vec<u8> = buffer.into();
+///
+///     // Therefore, the @setDataFrame message is required to contain them when reading as FLV.
+///     let mut buffer = ByteBuffer::default();
+///     buffer.encode(&SetDataFrame::new(script_data_bytes));
+///     let data: Vec<u8> = buffer.into();
+///
+///     let mut stream = pin!(VecStream::default());
+///     write_basic_header(stream.as_mut(), &BasicHeader::new(MessageFormat::New, SetDataFrame::CHANNEL as u16)).await?;
+///     write_message_header(stream.as_mut(), &MessageHeader::New((Duration::default(), data.len() as u32, SetDataFrame::MESSAGE_TYPE, u32::default()).into())).await?;
+///     write_chunk_data(stream.as_mut(), SetDataFrame::CHANNEL as u16, ChunkSize::default(), &data).await?;
+///     let result: IOResult<InnerTag> = read_flv_chunk(stream.as_mut(), &mut RtmpContext::default()).await;
+///     assert!(result.is_ok());
+///
+///     let chunk = result.unwrap();
+///     assert_eq!(InnerTag::ScriptData(ScriptDataTag::new(AmfString::default(), EcmaArray::default())), chunk);
+///
+///     Ok(())
+/// }
+/// ```
 pub fn read_flv_chunk<'a, R: AsyncRead>(mut reader: Pin<&'a mut R>, rtmp_context: &'a mut RtmpContext) -> PollFn<Box<dyn FnMut(&mut FutureContext) -> Poll<IOResult<InnerTag>> + 'a>> {
     poll_fn(Box::new(move |cx| {
         let basic_header = ready!(pin!(read_basic_header(reader.as_mut())).poll(cx))?;
