@@ -6,6 +6,8 @@
 /// | :- | :- |
 /// |`ChunkSize`|`1`|
 /// |`UserControl`|`4`|
+/// |`Audio`|`8`|
+/// |`Video`|`9`|
 /// |`Data`|`18`|
 /// |`Command`|`20`|
 /// |`Other`|other numbers|

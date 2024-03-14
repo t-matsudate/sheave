@@ -262,12 +262,15 @@ pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()>
 /// | :- | :- |
 /// |`Network`|[`ChunkSize`]|
 /// |`System`|[`Command`]|
-/// |`Audio`|[`SetDataFrame`]|
+/// |`Audio`|[`SetDataFrame`], [`Audio`]|
+/// |`Video`|[`Video`]|
 /// |`Other`|other chunks|
 ///
 /// [`ChunkSize`]: ChunkSize
 /// [`Command`]: Command
 /// [`SetDataFrame`]: SetDataFrame
+/// [`Audio`]: Audio
+/// [`Video`]: Video
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Channel {
