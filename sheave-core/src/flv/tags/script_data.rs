@@ -15,6 +15,7 @@ use crate::{
     }
 };
 
+/// TODO
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScriptDataTag {
     name: AmfString,
@@ -59,7 +60,7 @@ impl Decoder<ScriptDataTag> for ByteBuffer {
     ///     ByteBuffer,
     ///     Decoder,
     ///     Encoder,
-    ///     flv::ScriptDataTag,
+    ///     flv::tags::ScriptDataTag,
     ///     messages::amf::v0::{
     ///         AmfString,
     ///         EcmaArray
