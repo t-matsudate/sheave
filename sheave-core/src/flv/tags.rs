@@ -5,9 +5,9 @@ mod script_data;
 use std::time::Duration;
 use super::EncryptionHeader;
 pub use self::{
-    audio::AudioTag,
-    video::VideoTag,
-    script_data::ScriptDataTag
+    audio::*,
+    video::*,
+    script_data::*
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,6 +45,7 @@ impl From<TagType> for u8 {
     }
 }
 
+/// TODO
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FlvTag {
     timestamp: Duration,

@@ -1,5 +1,6 @@
+//! TODO
 mod encryption_header;
-mod tags;
+pub mod tags;
 
 use std::{
     fmt::{
@@ -12,10 +13,8 @@ use std::{
         Instant
     }
 };
-pub use self::{
-    encryption_header::*,
-    tags::*
-};
+use self::tags::*;
+pub use self::encryption_header::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FlvHeader {
