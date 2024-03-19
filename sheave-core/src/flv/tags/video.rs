@@ -9,6 +9,17 @@ use crate::{
     messages::Video
 };
 
+/// Representation of the FrameType field.
+///
+/// Variants correspond to respectively following numbers:
+///
+/// |Variant|Number|
+/// | :- | :- |
+/// |`Key`|`1`|
+/// |`Inter`|`2`|
+/// |`Disposable`|`3`|
+/// |`Generated`|`4`|
+/// |`Other`|other numbers|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FrameType {
@@ -41,6 +52,19 @@ impl From<FrameType> for u8 {
     }
 }
 
+/// Representation of the CodecID field.
+///
+/// Variants are correspond to respectively following numbers:
+///
+/// |Variants|Number|
+/// | :- | :- |
+/// |`H263`|`2`|
+/// |`ScreenVideo`|`3`|
+/// |`Vp6`|`4`|
+/// |`Vp6a`|`5`|
+/// |`Screen2`|`6`|
+/// |`Avc`|7|
+/// |`Other`|other numbers|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Codec {
@@ -54,6 +78,7 @@ pub enum Codec {
 }
 
 impl Codec {
+    /// Checkes whether this codec is the AVC.
     pub fn is_avc(&self) -> bool {
         match *self {
             Codec::Avc => true,
@@ -84,6 +109,7 @@ impl From<Codec> for u8 {
     }
 }
 
+/// Packet types of the AVC codec.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AvcPacketType {
@@ -112,6 +138,7 @@ impl From<AvcPacketType> for u8 {
     }
 }
 
+/// The header of the VideoTag.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VideoTagHeader {
     frame_type: FrameType,
@@ -121,12 +148,39 @@ pub struct VideoTagHeader {
 }
 
 impl VideoTagHeader {
+    /// Constructs a VideoTagHeader.
     pub fn new(frame_type: FrameType, codec: Codec, avc_packet_type: Option<AvcPacketType>, composition_time: Option<i32>) -> Self {
         Self { frame_type, codec, avc_packet_type, composition_time }
     }
 }
 
 impl Decoder<VideoTagHeader> for ByteBuffer {
+    /// Decodes bytes into a VideoTagHeader.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When some field misses.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::{
+    ///     ByteBuffer,
+    ///     Decoder,
+    ///     flv::tags::VideoTagHeader
+    /// };
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// buffer.put_u8(0x32);
+    /// assert!(Decoder::<VideoTagHeader>::decode(&mut buffer).is_ok());
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// assert!(Decoder::<VideoTagHeader>::decode(&mut buffer).is_err())
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     fn decode(&mut self) -> IOResult<VideoTagHeader> {
         let byte = self.get_u8()?;
         let frame_type: FrameType = (byte >> 4).into();
@@ -150,6 +204,7 @@ impl Decoder<VideoTagHeader> for ByteBuffer {
 }
 
 impl Encoder<VideoTagHeader> for ByteBuffer {
+    /// Encodes a VideoTagHeader into bytes.
     fn encode(&mut self, video_tag_header: &VideoTagHeader) {
         let mut byte = u8::from(video_tag_header.frame_type) << 4;
         byte |= u8::from(video_tag_header.codec);
@@ -162,6 +217,7 @@ impl Encoder<VideoTagHeader> for ByteBuffer {
     }
 }
 
+/// The video data format.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VideoTag {
     header: VideoTagHeader,
@@ -169,12 +225,53 @@ pub struct VideoTag {
 }
 
 impl VideoTag {
+    /// Constructs a VideoTag.
     pub fn new(header: VideoTagHeader, body: Vec<u8>) -> Self {
         Self { header, body }
     }
 }
 
 impl Decoder<VideoTag> for ByteBuffer {
+    /// Decodes bytes into a VideoTag.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When some field misses.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use rand::{
+    ///     Fill,
+    ///     thread_rng
+    /// };
+    /// use sheave_core::{
+    ///     ByteBuffer,
+    ///     Decoder,
+    ///     Encoder,
+    ///     flv::tags::{
+    ///         VideoTag,
+    ///         VideoTagHeader,
+    ///         FrameType,
+    ///         Codec,
+    ///         AvcPacketType
+    ///     }
+    /// };
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// buffer.encode(&VideoTagHeader::new(FrameType::Disposable, Codec::H263, None, None));
+    /// let mut bytes: [u8; 127] = [0; 127];
+    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// buffer.put_bytes(&bytes);
+    /// assert!(Decoder::<VideoTag>::decode(&mut buffer).is_ok());
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// assert!(Decoder::<VideoTag>::decode(&mut buffer).is_err())
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     fn decode(&mut self) -> IOResult<VideoTag> {
         let header: VideoTagHeader = self.decode()?;
         let remained = self.remained();
@@ -185,6 +282,7 @@ impl Decoder<VideoTag> for ByteBuffer {
 }
 
 impl Encoder<VideoTag> for ByteBuffer {
+    /// Encodes a VideoTag into bytes.
     fn encode(&mut self, video_tag: &VideoTag) {
         self.encode(&video_tag.header);
         self.put_bytes(&video_tag.body);

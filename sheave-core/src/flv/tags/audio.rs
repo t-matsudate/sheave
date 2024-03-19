@@ -9,6 +9,26 @@ use crate::{
     messages::Audio
 };
 
+/// Representation of the SoundFormat field of the AudioTag.
+///
+/// Variants correspond to respectively following numbers:
+///
+/// |Pattern|Number|
+/// | :- | :- |
+/// |`LinearPcmNe`|`0`|
+/// |`AdPcm`|`1`|
+/// |`Mp3`|`2`|
+/// |`LinearPcmLe`|`3`|
+/// |`NellyMoserMono16`|`4`|
+/// |`NellyMoserMono8`|`5`|
+/// |`NellyMoserStereo`|`6`|
+/// |`G711A`|`7`|
+/// |`G711Mu`|`8`|
+/// |`Reserved`|`9`|
+/// |`Aac`|`10`|
+/// |`Speex`|`11`|
+/// |`Mp3_8`|`14`|
+/// |`DeviceSpecific`|`15`|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoundFormat {
@@ -21,7 +41,8 @@ pub enum SoundFormat {
     NellyMoserStereo,
     G711A,
     G711Mu,
-    Aac = 10,
+    Reserved,
+    Aac,
     Speex,
     Mp3_8 = 14,
     DeviceSpecific
@@ -37,6 +58,28 @@ impl SoundFormat {
 }
 
 impl From<u8> for SoundFormat {
+    /// Converts a SoundFormat field into a variant.
+    ///
+    /// # Panics
+    ///
+    /// Because of FLV specification, this is implemented in such a way as to emit a panic when is passed a value either 12, 13 or any of above 15.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::panic::catch_unwind;
+    /// use sheave_core::flv::tags::{
+    ///     SoundFormat,
+    ///     SoundFormat::*
+    /// };
+    ///
+    /// assert_eq!(Speex, SoundFormat::from(11)); // => ok
+    /// assert_eq!(Mp3_8, SoundFormat::from(14)); // => ok
+    /// assert_eq!(DeviceSpecific, SoundFormat::from(15)); // => ok
+    /// assert!(catch_unwind(|| SoundFormat::from(12)).is_err()); // => this will be backtrace.
+    /// assert!(catch_unwind(|| SoundFormat::from(13)).is_err()); // => this is too.
+    /// assert!(catch_unwind(|| SoundFormat::from(16)).is_err()) // => same as above.
+    /// ```
     fn from(sound_format: u8) -> Self {
         use SoundFormat::*;
 
@@ -50,11 +93,12 @@ impl From<u8> for SoundFormat {
             6 => NellyMoserStereo,
             7 => G711A,
             8 => G711Mu,
+            9 => Reserved,
             10 => Aac,
             11 => Speex,
             14 => Mp3_8,
             15 => DeviceSpecific,
-            _ => panic!("Unreachable sound format.")
+            _ => unreachable!("SoundFormat")
         }
     }
 }
@@ -65,25 +109,56 @@ impl From<SoundFormat> for u8 {
     }
 }
 
+/// Representation of the SoundRate field.
+///
+/// Variants correspond to respectively following numbers:
+///
+/// |Variant|Number|
+/// | :- | :- |
+/// |`FivePointFive`|`0`|
+/// |`Eleven`|`1`|
+/// |`TwentyTwo`|`2`|
+/// |`FourtyFour`|`3`|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SoundRate {
     FivePointFive,
     Eleven,
-    TwnetyTwo,
+    TwentyTwo,
     FourtyFour
 }
 
 impl From<u8> for SoundRate {
+    /// Converts a SoundRate field into a variant.
+    ///
+    /// # Panics
+    ///
+    /// Because of FLV specification, this is implemented in such a way as to emit a panic when is passed any value above 3.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::panic::catch_unwind;
+    /// use sheave_core::flv::tags::{
+    ///     SoundRate,
+    ///     SoundRate::*
+    /// };
+    ///
+    /// assert_eq!(FivePointFive, SoundRate::from(0)); // => ok
+    /// assert_eq!(Eleven, SoundRate::from(1)); // => ok
+    /// assert_eq!(TwentyTwo, SoundRate::from(2)); // => ok
+    /// assert_eq!(FourtyFour, SoundRate::from(3)); // => ok
+    /// assert!(catch_unwind(|| SoundRate::from(4)).is_err()) // => this will be backtrace.
+    /// ```
     fn from(sound_rate: u8) -> Self {
         use SoundRate::*;
 
         match sound_rate {
             0 => FivePointFive,
             1 => Eleven,
-            2 => TwnetyTwo,
+            2 => TwentyTwo,
             3 => FourtyFour,
-            _ => panic!("Unreachable sound rate.")
+            _ => unreachable!("SoundRate.")
         }
     }
 }
@@ -94,6 +169,7 @@ impl From<SoundRate> for u8 {
     }
 }
 
+/// The header of the AudioTag.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AudioTagHeader {
     sound_format: SoundFormat,
@@ -104,12 +180,39 @@ pub struct AudioTagHeader {
 }
 
 impl AudioTagHeader {
+    /// Consturcts a AudioTagHeader.
     pub fn new(sound_format: SoundFormat, sound_rate: SoundRate, is_sixteen_bits: bool, is_stereo: bool, is_aac_raw: Option<bool>) -> Self {
         Self { sound_format, sound_rate, is_sixteen_bits, is_stereo, is_aac_raw }
     }
 }
 
 impl Decoder<AudioTagHeader> for ByteBuffer {
+    /// Decodes bytes into a AudioTagHeader.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When some field misses.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::{
+    ///     ByteBuffer,
+    ///     Decoder,
+    ///     flv::tags::AudioTagHeader
+    /// };
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// buffer.put_u8(0);
+    /// assert!(Decoder::<AudioTagHeader>::decode(&mut buffer).is_ok());
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// assert!(Decoder::<AudioTagHeader>::decode(&mut buffer).is_err())
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     fn decode(&mut self) -> IOResult<AudioTagHeader> {
         let byte = self.get_u8()?;
         let sound_format: SoundFormat = ((byte & 0xf0) >> 4).into();
@@ -129,6 +232,7 @@ impl Decoder<AudioTagHeader> for ByteBuffer {
 }
 
 impl Encoder<AudioTagHeader> for ByteBuffer {
+    /// Encodes a AudioTagHeader into bytes.
     fn encode(&mut self, audio_tag_header: &AudioTagHeader) {
         let mut byte = u8::from(audio_tag_header.sound_format) << 4;
         byte |= u8::from(audio_tag_header.sound_rate) << 2;
@@ -142,6 +246,7 @@ impl Encoder<AudioTagHeader> for ByteBuffer {
     }
 }
 
+/// The audio data format.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AudioTag {
     header: AudioTagHeader,
@@ -149,12 +254,52 @@ pub struct AudioTag {
 }
 
 impl AudioTag {
+    /// Constructs a AudioTag.
     pub fn new(header: AudioTagHeader, body: Vec<u8>) -> Self {
         Self { header, body }
     }
 }
 
 impl Decoder<AudioTag> for ByteBuffer {
+    /// Decodes bytes into a AudioTag.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When some field misses.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use rand::{
+    ///     Fill,
+    ///     thread_rng
+    /// };
+    /// use sheave_core::{
+    ///     ByteBuffer,
+    ///     Decoder,
+    ///     Encoder,
+    ///     flv::tags::{
+    ///         AudioTag,
+    ///         AudioTagHeader,
+    ///         SoundFormat,
+    ///         SoundRate
+    ///     }
+    /// };
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// buffer.encode(&AudioTagHeader::new(SoundFormat::LinearPcmNe, SoundRate::FivePointFive, false, false, None));
+    /// let mut bytes: [u8; 127] = [0; 127];
+    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// buffer.put_bytes(&bytes);
+    /// assert!(Decoder::<AudioTag>::decode(&mut buffer).is_ok());
+    ///
+    /// let mut buffer = ByteBuffer::default();
+    /// assert!(Decoder::<AudioTag>::decode(&mut buffer).is_err())
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     fn decode(&mut self) -> IOResult<AudioTag> {
         let header: AudioTagHeader = self.decode()?;
         let remained = self.remained();
@@ -165,6 +310,7 @@ impl Decoder<AudioTag> for ByteBuffer {
 }
 
 impl Encoder<AudioTag> for ByteBuffer {
+    /// Encodes a AudioTag into bytes.
     fn encode(&mut self, audio_tag: &AudioTag) {
         self.encode(&audio_tag.header);
         self.put_bytes(&audio_tag.body);

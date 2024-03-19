@@ -1,4 +1,34 @@
-//! TODO
+//! # The FLV File Format
+//!
+//! In RTMP, Both of the client and the server send/receive actual multi media data as the FLV file format.
+//! Its format consists of:
+//!
+//! 1. FLV header
+//!    * Signature ("FLV")
+//!    * Version (8 bits)
+//!    * Reserved (5 bits)
+//!    * Whether some audio data is contained (1 bit)
+//!    * Reserved (1 bit)
+//!    * Whether some video data is contained (1 bit)
+//!    * Offset to FLV data (that is, a size of this header = 9) (32 bits)
+//! 2. FLV file body
+//!    * PreviousTagSize (32 bits. this of the first is 0)
+//!    * FLV Tag (arbitrary size)
+//!
+//! Note the FLV header is skipped by almost RTMP tools.
+//!
+//! ## FLV Tag
+//!
+//! FLV Tag is a part of actual FLV bodies.
+//! FLV Tag consists of:
+//!
+//! * [`AudioTag`]
+//! * [`VideoTag`]
+//! * [`ScriptDataTag`]
+//!
+//! [`AudioTag`]: tags::AudioTag
+//! [`VideoTag`]: tags::VideoTag
+//! [`ScriptDataTag`]: tags::ScriptDataTag
 mod encryption_header;
 pub mod tags;
 
@@ -16,6 +46,7 @@ use std::{
 use self::tags::*;
 pub use self::encryption_header::*;
 
+/// An outermost header part of the FLV.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FlvHeader {
     has_audio: bool,
@@ -39,6 +70,14 @@ impl Default for FlvHeader {
     }
 }
 
+/// Patterns of the FilterName field.
+/// Currently, FilterName consists of:
+///
+/// * `"Encryption"`
+/// * `"SE"` (Selective Encryption)
+///
+/// But these are strings so we will be hard to refuse other values at this rate.
+/// Therefore this limits any FilterName pattern to fix it to an enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FilterName {
     Encryption,
@@ -56,6 +95,7 @@ impl Display for FilterName {
     }
 }
 
+/// The FLV container.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Flv {
     created_at: Instant,
@@ -73,14 +113,17 @@ impl Flv {
         }
     }
 
+    /// Gets the current FLV version.
     pub fn get_version(&self) -> u8 {
         self.header.version
     }
 
+    /// Checks whether this contains audio data.
     pub fn has_audio(&self) -> bool {
         self.header.has_audio
     }
 
+    /// Checks whether this contains video data.
     pub fn has_video(&self) -> bool {
         self.header.has_video
     }
@@ -105,6 +148,8 @@ impl Flv {
         self.body.push(FlvTag::new(timestamp, None, InnerTag::Video(video)));
     }
 
+    /// Appends a FLV tag into bodies this has.
+    /// Note a timestamp of any tag is set 0 if this has still no body.
     pub fn append_flv_tag(&mut self, flv_tag: InnerTag) {
         match flv_tag {
             InnerTag::Audio(audio_tag) => self.append_audio(audio_tag),
@@ -113,6 +158,7 @@ impl Flv {
         }
     }
 
+    /// Gets current body data as the slice.
     pub fn get_current_bodies(&self) -> &[FlvTag] {
         &self.body
     }

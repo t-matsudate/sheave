@@ -15,7 +15,7 @@ use crate::{
     }
 };
 
-/// TODO
+/// The meta data which consists of a name-value pair.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScriptDataTag {
     name: AmfString,
@@ -23,23 +23,26 @@ pub struct ScriptDataTag {
 }
 
 impl ScriptDataTag {
+    /// Constructs a ScriptDataTag.
     pub fn new(name: AmfString, value: EcmaArray) -> Self {
         Self { name, value }
     }
 
+    /// Gets the name of this metadata.
     pub fn get_name(&self) -> &AmfString {
         &self.name
     }
 
+    /// Gets the value of this metadata.
     pub fn get_value(&self) -> &EcmaArray {
         &self.value
     }
 }
 
 impl Decoder<ScriptDataTag> for ByteBuffer {
-    /// Decodes a SetDataFrame message into a ScriptDataTag.
+    /// Decodes bytes into a ScriptDataTag.
     ///
-    /// # Erorrs
+    /// # Errors
     ///
     /// * [`InsufficientBufferLength`]
     ///
@@ -87,7 +90,7 @@ impl Decoder<ScriptDataTag> for ByteBuffer {
 }
 
 impl Encoder<ScriptDataTag> for ByteBuffer {
-    /// Encodes a ScriptDataTag into a SetDataFrame message.
+    /// Encodes a ScriptDataTag into bytes.
     fn encode(&mut self, script_data: &ScriptDataTag) {
         self.encode(script_data.get_name());
         self.encode(script_data.get_value());
