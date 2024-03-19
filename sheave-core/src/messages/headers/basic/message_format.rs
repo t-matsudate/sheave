@@ -47,7 +47,7 @@ impl From<u8> for MessageFormat {
             1 => SameSource,
             2 => TimerChange,
             3 => Continue,
-            _ => panic!("Somehow a value abovce 3 was passed.")
+            _ => unreachable!("MessageFormat.")
         }
     }
 }
