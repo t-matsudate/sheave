@@ -46,7 +46,7 @@ impl Decoder<Acknowledgement> for ByteBuffer {
     ///
     /// * [`InsufficientBufferLength`]
     ///
-    /// When some field misses.
+    /// When this buffer didn't remain at least 4 bytes.
     ///
     /// # Examples
     ///
