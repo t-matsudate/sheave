@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    io::Result as IOResult
-};
+use std::io::Result as IOResult;
 use crate::{
     ByteBuffer,
     Decoder,
@@ -15,7 +12,7 @@ use crate::{
 
 /// The message to tell that some message length has exceeded the server-side bandwidth range.
 /// Note this must be input the total message length in receiving. (it's not bytes received.)
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Acknowledgement(u32);
 
 impl Acknowledgement {
@@ -34,18 +31,6 @@ impl PartialEq<u32> for Acknowledgement {
 impl PartialEq<Acknowledgement> for u32 {
     fn eq(&self, other: &Acknowledgement) -> bool {
         self.eq(&other.0)
-    }
-}
-
-impl PartialOrd<u32> for Acknowledgement {
-    fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
-        self.0.partial_cmp(other)
-    }
-}
-
-impl PartialOrd<Acknowledgement> for u32 {
-    fn partial_cmp(&self, other: &Acknowledgement) -> Option<Ordering> {
-        self.partial_cmp(&other.0)
     }
 }
 
