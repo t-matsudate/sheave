@@ -5,6 +5,7 @@
 /// |Pattern|Number|
 /// | :- | :- |
 /// |`ChunkSize`|`1`|
+/// |`Acknowledgement`|`3`|
 /// |`UserControl`|`4`|
 /// |`Audio`|`8`|
 /// |`Video`|`9`|
