@@ -214,6 +214,7 @@ mod on_status;
 mod set_data_frame;
 mod audio;
 mod video;
+mod acknowledgement;
 
 use std::io::Result as IOResult;
 use self::{
@@ -240,7 +241,8 @@ pub use self::{
     on_status::*,
     set_data_frame::*,
     audio::*,
-    video::*
+    video::*,
+    acknowledgement::*
 };
 
 #[doc(hidden)]
