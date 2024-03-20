@@ -17,7 +17,8 @@
 pub enum MessageType {
     ChunkSize = 1,
     Acknowledgement = 3,
-    UserControl = 4,
+    UserControl,
+    WindowAcknowledgementSize,
     Audio = 8,
     Video = 9,
     Data = 18,
@@ -33,6 +34,7 @@ impl From<u8> for MessageType {
             1 => ChunkSize,
             3 => Acknowledgement,
             4 => UserControl,
+            5 => WindowAcknowledgementSize,
             8 => Audio,
             9 => Video,
             18 => Data,

@@ -215,6 +215,7 @@ mod set_data_frame;
 mod audio;
 mod video;
 mod acknowledgement;
+mod window_acknowledgement_size;
 
 use std::io::Result as IOResult;
 use self::{
@@ -242,7 +243,8 @@ pub use self::{
     set_data_frame::*,
     audio::*,
     video::*,
-    acknowledgement::*
+    acknowledgement::*,
+    window_acknowledgement_size::*
 };
 
 #[doc(hidden)]
