@@ -95,8 +95,8 @@ mod tests {
     #[test]
     fn encode_acknowledgement() {
         let mut buffer = ByteBuffer::default();
-        let expected_bytes = 0u32;
-        buffer.encode(&Acknowledgement::new(expected_bytes));
+        let expected_bytes = u32::default();
+        buffer.encode(&Acknowledgement::default());
         let actual_bytes = buffer.get_u32_be().unwrap();
         assert_eq!(expected_bytes, actual_bytes)
     }
