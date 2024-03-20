@@ -331,10 +331,12 @@ impl RtmpContext {
         self.publishing_type.as_ref()
     }
 
+    /// Gets the FLV data.
     pub fn get_flv(&mut self) -> &Flv {
         &self.flv
     }
 
+    /// Gets the FLV data as mutable.
     pub fn get_flv_mut(&mut self) -> &mut Flv {
         &mut self.flv
     }
