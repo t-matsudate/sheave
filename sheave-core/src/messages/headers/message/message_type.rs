@@ -7,6 +7,7 @@
 /// |`ChunkSize`|`1`|
 /// |`Acknowledgement`|`3`|
 /// |`UserControl`|`4`|
+/// |`WindowAcknowledgementSize`|`5`|
 /// |`Audio`|`8`|
 /// |`Video`|`9`|
 /// |`Data`|`18`|
