@@ -1,4 +1,12 @@
-use std::io::Result as IOResult;
+use std::{
+    io::Result as IOResult,
+    ops::{
+        Add,
+        AddAssign,
+        Sub,
+        SubAssign
+    }
+};
 use crate::{
     ByteBuffer,
     Decoder,
@@ -12,7 +20,7 @@ use crate::{
 
 /// The message to tell that some message length has exceeded the server-side bandwidth range.
 /// Note this must be input the total message length in receiving. (it's not bytes received.)
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Acknowledgement(u32);
 
 impl Acknowledgement {
@@ -31,6 +39,62 @@ impl PartialEq<u32> for Acknowledgement {
 impl PartialEq<Acknowledgement> for u32 {
     fn eq(&self, other: &Acknowledgement) -> bool {
         self.eq(&other.0)
+    }
+}
+
+impl Add<u32> for Acknowledgement {
+    type Output = Self;
+
+    fn add(self, rhs: u32) -> Self::Output {
+        Self(self.0.add(rhs))
+    }
+}
+
+impl Add<Self> for Acknowledgement {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0.add(rhs.0))
+    }
+}
+
+impl AddAssign<u32> for Acknowledgement {
+    fn add_assign(&mut self, rhs: u32) {
+        self.0.add_assign(rhs);
+    }
+}
+
+impl AddAssign<Self> for Acknowledgement {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0.add_assign(rhs.0);
+    }
+}
+
+impl Sub<u32> for Acknowledgement {
+    type Output = Self;
+
+    fn sub(self, rhs: u32) -> Self::Output {
+        Self(self.0.sub(rhs))
+    }
+}
+
+impl Sub<Self> for Acknowledgement {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0.sub(rhs.0))
+    }
+}
+
+impl SubAssign<u32> for Acknowledgement {
+    fn sub_assign(&mut self, rhs: u32) {
+        self.0.sub_assign(rhs);
+    }
+}
+
+impl SubAssign<Self> for Acknowledgement {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0.sub_assign(rhs.0);
     }
 }
 
