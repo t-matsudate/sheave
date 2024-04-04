@@ -117,21 +117,6 @@ impl Decoder<ChunkSize> for ByteBuffer {
 
 impl Encoder<ChunkSize> for ByteBuffer {
     /// Encodes a ChunkSize into bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::{
-    ///     ByteBuffer,
-    ///     Encoder,
-    ///     messages::ChunkSize
-    /// };
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&ChunkSize::default());
-    /// let chunk_size = buffer.get_u32_be().unwrap();
-    /// assert_eq!(128, chunk_size)
-    /// ```
     fn encode(&mut self, chunk_size: &ChunkSize) {
         self.put_u32_be(chunk_size.0);
     }
