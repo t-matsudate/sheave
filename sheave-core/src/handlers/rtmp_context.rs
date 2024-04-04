@@ -11,6 +11,9 @@ use crate::{
     },
     messages::{
         ChunkSize,
+        Acknowledgement,
+        WindowAcknowledgementSize,
+        PeerBandwidth,
         amf::v0::{
             Number,
             AmfString,
@@ -40,6 +43,9 @@ pub struct RtmpContext {
     signed: bool,
     receiving_chunk_size: ChunkSize,
     sending_chunk_size: ChunkSize,
+    window_acknowledgement_size: WindowAcknowledgementSize,
+    peer_bandwidth: PeerBandwidth,
+    total_received_length: Acknowledgement,
     last_transaction_id: Number,
     encryption_algorithm: Option<EncryptionAlgorithm>,
     client_handshake: Option<Handshake>,
@@ -92,6 +98,30 @@ impl RtmpContext {
     /// Gets a chunkign size which writes into stream.
     pub fn get_sending_chunk_size(&mut self) -> ChunkSize {
         self.sending_chunk_size
+    }
+
+    pub fn set_window_acknowledgement_size(&mut self, window_acknowledgement_size: WindowAcknowledgementSize) {
+        self.window_acknowledgement_size = window_acknowledgement_size;
+    }
+
+    pub fn get_window_acknowledgement_size(&mut self) -> WindowAcknowledgementSize {
+        self.window_acknowledgement_size
+    }
+
+    pub fn set_peer_bandwidth(&mut self, peer_bandwidth: PeerBandwidth) {
+        self.peer_bandwidth = peer_bandwidth;
+    }
+
+    pub fn get_peer_bandwidth(&mut self) -> PeerBandwidth {
+        self.peer_bandwidth
+    }
+
+    pub fn add_total_received_length(&mut self, received_length: u32) {
+        self.total_received_length += received_length;
+    }
+
+    pub fn get_total_received_length(&mut self) -> Acknowledgement {
+        self.total_received_length
     }
 
     /// Sets a transaction ID.
