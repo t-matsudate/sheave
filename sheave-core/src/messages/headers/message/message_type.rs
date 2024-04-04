@@ -8,6 +8,7 @@
 /// |`Acknowledgement`|`3`|
 /// |`UserControl`|`4`|
 /// |`WindowAcknowledgementSize`|`5`|
+/// |`PeerBandwidth`|`6`|
 /// |`Audio`|`8`|
 /// |`Video`|`9`|
 /// |`Data`|`18`|
@@ -20,6 +21,7 @@ pub enum MessageType {
     Acknowledgement = 3,
     UserControl,
     WindowAcknowledgementSize,
+    PeerBandwidth,
     Audio = 8,
     Video = 9,
     Data = 18,
@@ -36,6 +38,7 @@ impl From<u8> for MessageType {
             3 => Acknowledgement,
             4 => UserControl,
             5 => WindowAcknowledgementSize,
+            6 => PeerBandwidth,
             8 => Audio,
             9 => Video,
             18 => Data,

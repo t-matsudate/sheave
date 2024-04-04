@@ -216,6 +216,7 @@ mod audio;
 mod video;
 mod acknowledgement;
 mod window_acknowledgement_size;
+mod peer_bandwidth;
 
 use std::io::Result as IOResult;
 use self::{
@@ -223,6 +224,7 @@ use self::{
         AmfString,
         Number,
     },
+    cmp::Ordering,
     headers::MessageType
 };
 pub use self::{
@@ -244,7 +246,8 @@ pub use self::{
     audio::*,
     video::*,
     acknowledgement::*,
-    window_acknowledgement_size::*
+    window_acknowledgement_size::*,
+    peer_bandwidth::*
 };
 
 #[doc(hidden)]
@@ -373,4 +376,28 @@ impl From<EventType> for u16 {
 /// This makes you to reduce its cost.
 pub trait UserControl {
     const EVENT_TYPE: EventType;
+}
+
+impl PartialOrd<WindowAcknowledgementSize> for Acknowledgement {
+    fn partial_cmp(&self, other: &WindowAcknowledgementSize) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl PartialOrd<Acknowledgement> for WindowAcknowledgementSize {
+    fn partial_cmp(&self, other: &Acknowledgement) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl PartialOrd<PeerBandwidth> for Acknowledgement {
+    fn partial_cmp(&self, other: &PeerBandwidth) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl PartialOrd<Acknowledgement> for PeerBandwidth {
+    fn partial_cmp(&self, other: &Acknowledgement) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
 }
