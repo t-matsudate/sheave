@@ -128,7 +128,14 @@ impl Flv {
         self.header.has_video
     }
 
-    fn append_meta_data(&mut self, meta_data: ScriptDataTag) {
+    /// Appends FLV metadata into the tag container.
+    /// This library reuses the Codec IDs in the metadata for checking whether FLV has audio/video data.
+    /// That is,
+    ///
+    /// If `audiocodecid` exists, FLV contains auduo data.
+    /// Or if `videocodecid` exists, FLV contains video data.
+    /// Otherwise FLV consists of just script data.
+    pub fn append_meta_data(&mut self, meta_data: ScriptDataTag) {
         let timestamp = self.compute_timestamp();
 
         self.header.has_audio = meta_data.get_value().get_properties().get("audiocodecid").is_some();
@@ -136,26 +143,18 @@ impl Flv {
         self.body.push(FlvTag::new(timestamp, None, InnerTag::ScriptData(meta_data)));
     }
 
-    fn append_audio(&mut self, audio: AudioTag) {
+    /// Appends audio data into the tag container.
+    pub fn append_audio(&mut self, audio: AudioTag) {
         let timestamp = self.compute_timestamp();
 
         self.body.push(FlvTag::new(timestamp, None, InnerTag::Audio(audio)));
     }
 
-    fn append_video(&mut self, video: VideoTag) {
+    /// Appends video data into the tag container.
+    pub fn append_video(&mut self, video: VideoTag) {
         let timestamp = self.compute_timestamp();
 
         self.body.push(FlvTag::new(timestamp, None, InnerTag::Video(video)));
-    }
-
-    /// Appends a FLV tag into bodies this has.
-    /// Note a timestamp of any tag is set 0 if this has still no body.
-    pub fn append_flv_tag(&mut self, flv_tag: InnerTag) {
-        match flv_tag {
-            InnerTag::Audio(audio_tag) => self.append_audio(audio_tag),
-            InnerTag::Video(video_tag) => self.append_video(video_tag),
-            InnerTag::ScriptData(script_data_tag) => self.append_meta_data(script_data_tag)
-        }
     }
 
     /// Gets current body data as the slice.
