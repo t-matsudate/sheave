@@ -134,20 +134,7 @@ mod tests {
         buffer.encode(
             &ecma_array!(
                 "audiocodecid" => Number::default(),
-                "audiodatarate" => Number::default(),
-                "audiodelay" => Number::default(),
-                "audiosamplerate" => Number::default(),
-                "audiosamplesize" => Number::default(),
-                "canSeekToEnd" => Boolean::default(),
-                "creationdate" => AmfString::default(),
-                "duration" => Number::default(),
-                "filesize" => Number::default(),
-                "framerate" => Number::default(),
-                "height" => Number::default(),
-                "stereo" => Boolean::default(),
-                "videocodecid" => Number::from(2),
-                "videodatarate" => Number::default(),
-                "width" => Number::default()
+                "videocodecid" => Number::from(2)
             )
         );
         let result: IOResult<ScriptDataTag> = buffer.decode();
@@ -157,20 +144,7 @@ mod tests {
             "onMetaData".into(),
             ecma_array!(
                 "audiocodecid" => Number::default(),
-                "audiodatarate" => Number::default(),
-                "audiodelay" => Number::default(),
-                "audiosamplerate" => Number::default(),
-                "audiosamplesize" => Number::default(),
-                "canSeekToEnd" => Boolean::default(),
-                "creationdate" => AmfString::default(),
-                "duration" => Number::default(),
-                "filesize" => Number::default(),
-                "framerate" => Number::default(),
-                "height" => Number::default(),
-                "stereo" => Boolean::default(),
-                "videocodecid" => Number::from(2),
-                "videodatarate" => Number::default(),
-                "width" => Number::default()
+                "videocodecid" => Number::from(2)
             )
         );
         assert_eq!(expected, actual)
@@ -182,20 +156,7 @@ mod tests {
         let expected_name = "onMetaData";
         let expected_value = ecma_array!(
             "audiocodecid" => Number::default(),
-            "audiodatarate" => Number::default(),
-            "audiodelay" => Number::default(),
-            "audiosamplerate" => Number::default(),
-            "audiosamplesize" => Number::default(),
-            "canSeekToEnd" => Boolean::default(),
-            "creationdate" => AmfString::default(),
-            "duration" => Number::default(),
-            "filesize" => Number::default(),
-            "framerate" => Number::default(),
-            "height" => Number::default(),
-            "stereo" => Boolean::default(),
-            "videocodecid" => Number::from(2),
-            "videodatarate" => Number::default(),
-            "width" => Number::default()
+            "videocodecid" => Number::from(2)
         );
         let expected = ScriptDataTag::new(expected_name.into(), expected_value.clone());
         buffer.encode(&expected);
