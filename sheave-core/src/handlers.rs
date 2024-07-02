@@ -20,22 +20,47 @@ mod rtmp_context;
 mod inconsistent_sha;
 mod stream_wrapper;
 mod vec_stream;
+mod status;
+mod measure_acknowledgement;
 mod chain;
+mod while_ok;
+mod middlewares;
+mod map_err;
 
 use std::{
     io::Result as IOResult,
     pin::Pin,
+    sync::Arc,
     task::{
         Context as FutureContext,
         Poll
     }
 };
-use self::chain::*;
+use tokio::io::{
+    AsyncRead,
+    AsyncWrite
+};
+use self::{
+    chain::*,
+    while_ok::*,
+    middlewares::{
+        Wrap,
+        wrap
+    },
+    map_err::{
+        MapErr,
+        map_err,
+    }
+};
 pub use self::{
     rtmp_context::*,
     inconsistent_sha::*,
     stream_wrapper::*,
-    vec_stream::*
+    vec_stream::*,
+    status::*,
+    middlewares::Middleware,
+    map_err::ErrorHandler,
+    measure_acknowledgement::*,
 };
 
 /// The interface for handling RTMP connection steps with `Future`.
@@ -184,6 +209,34 @@ pub trait AsyncHandlerExt: AsyncHandler {
     {
         chain(self, next)
     }
+
+    fn wrap<M>(self, middleware: M) -> Wrap<M, Self>
+    where
+        M: Middleware + Unpin,
+        Self: Sized + Unpin
+    {
+        wrap(middleware, self)
+    }
+
+    fn while_ok<H>(self, condition: H) -> WhileOk<Self, H>
+    where
+        H: AsyncHandler + Unpin,
+        Self: Sized + Unpin
+    {
+        while_ok(self, condition)
+    }
+
+    fn map_err<E>(self, error_handler: E) -> MapErr<Self, E>
+    where
+        E: ErrorHandler + Unpin,
+        Self: Sized + Unpin
+    {
+        map_err(self, error_handler)
+    }
 }
 
 impl<H: AsyncHandler> AsyncHandlerExt for H {}
+
+pub trait HandlerConstructor<RW: AsyncRead + AsyncWrite + Unpin>: AsyncHandler {
+    fn new(stream: Arc<RW>) -> Self;
+}
