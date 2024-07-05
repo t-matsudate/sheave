@@ -12,15 +12,24 @@ use tokio::io::{
     AsyncWrite,
     ReadBuf
 };
+use super::MeasureAcknowledgement;
 
 /// The wrapper for stream types.
 #[derive(Debug)]
-pub struct StreamWrapper<RW: Unpin>(RW);
+pub struct StreamWrapper<RW: Unpin> {
+    stream: RW,
+    is_measured: bool,
+    current_amount: u32
+}
 
 impl<RW: Unpin> StreamWrapper<RW> {
     /// Constructs a wrapped stream.
     pub fn new(stream: RW) -> Self {
-        Self(stream)
+        Self {
+            stream,
+            is_measured: bool::default(),
+            current_amount: u32::default()
+        }
     }
 
     /// Makes this stream into *pinned* weak pointer.
@@ -40,27 +49,53 @@ impl<RW: Unpin> StreamWrapper<RW> {
     ///
     /// Arc::new(StreamWrapper::new(VecStream::default())).make_weak_pin();
     /// ```
-    pub fn make_weak_pin<'a>(self: &'a Arc<Self>) -> Pin<&'a mut RW> {
-        unsafe { Pin::new(&mut *(Arc::downgrade(self).as_ptr() as *mut RW)) }
+    pub fn make_weak_pin<'a>(self: &'a Arc<Self>) -> Pin<&'a mut Self> {
+        unsafe { Pin::new(&mut *(Arc::downgrade(self).as_ptr() as *mut Self)) }
+    }
+}
+
+impl<RW: Unpin> MeasureAcknowledgement for StreamWrapper<RW> {
+    fn begin_measuring(&mut self) {
+        self.current_amount = u32::default();
+        self.is_measured = true;
+    }
+
+    fn finish_measuring(&mut self) {
+        self.current_amount = u32::default();
+        self.is_measured = false;
+    }
+
+    fn add_amount(&mut self, amount: u32) {
+        self.current_amount += amount;
+    }
+
+    fn get_current_amount(&mut self) -> u32 {
+        self.current_amount
     }
 }
 
 impl<R: AsyncRead + Unpin> AsyncRead for StreamWrapper<R> {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<IOResult<()>> {
-        Pin::new(&mut self.0).poll_read(cx, buf)
+        let result = Pin::new(&mut self.stream).poll_read(cx, buf);
+
+        if self.is_measured {
+            self.add_amount(buf.filled().len() as u32);
+        }
+
+        result
     }
 }
 
 impl<W: AsyncWrite + Unpin> AsyncWrite for StreamWrapper<W> {
     fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<IOResult<usize>> {
-        Pin::new(&mut self.0).poll_write(cx, buf)
+        Pin::new(&mut self.stream).poll_write(cx, buf)
     }
 
     fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<IOResult<()>> {
-        Pin::new(&mut self.0).poll_flush(cx)
+        Pin::new(&mut self.stream).poll_flush(cx)
     }
 
     fn poll_shutdown(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<IOResult<()>> {
-        Pin::new(&mut self.0).poll_shutdown(cx)
+        Pin::new(&mut self.stream).poll_shutdown(cx)
     }
 }
