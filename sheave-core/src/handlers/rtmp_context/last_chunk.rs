@@ -1,12 +1,5 @@
-use std::{
-    time::Duration
-};
-use crate::{
-    messages::headers::{
-        MessageHeader,
-        MessageType,
-    },
-};
+use std::time::Duration;
+use crate::messages::headers::MessageType;
 
 /// The chunk information which is sent/received last.
 #[derive(Debug, Clone, Copy)]
@@ -21,13 +14,13 @@ impl LastChunk {
     /// Constructs a LastChunk.
     /// Note the message ID is set 0 when message header isn't `New`.
     /// e.g. On receiving `StreamBegin`.
-    pub fn new(message_header: MessageHeader) -> Self {
-        Self {
-            timestamp: message_header.get_timestamp().unwrap(),
-            message_length: message_header.get_message_length().unwrap(),
-            message_type: message_header.get_message_type().unwrap(),
-            message_id: message_header.get_message_id().unwrap_or_default()
-        }
+    pub fn new(timestamp: Duration, message_length: u32, message_type: MessageType, message_id: u32) -> Self {
+        Self { timestamp, message_length, message_type, message_id }
+    }
+
+    /// Sets a timestamp.
+    pub fn set_timestamp(&mut self, timestamp: Duration) {
+        self.timestamp = timestamp;
     }
 
     /// Gets a timestamp.
@@ -35,9 +28,19 @@ impl LastChunk {
         self.timestamp
     }
 
+    /// Sets a message length.
+    pub fn set_message_length(&mut self, message_length: u32) {
+        self.message_length = message_length;
+    }
+
     /// Gets a message length.
     pub fn get_message_length(&self) -> u32 {
         self.message_length
+    }
+
+    /// Sets a message type.
+    pub fn set_message_type(&mut self, message_type: MessageType) {
+        self.message_type = message_type;
     }
 
     /// Gets a message type.
@@ -45,57 +48,13 @@ impl LastChunk {
         self.message_type
     }
 
+    /// Sets a message ID.
+    pub fn set_message_id(&mut self, message_id: u32) {
+        self.message_id = message_id;
+    }
+
     /// Gets a message ID.
     pub fn get_message_id(&self) -> u32 {
         self.message_id
-    }
-
-    /// Updates this chunk information into a new one passed.
-    /// Note if any extended timestamp is passed, this increases its timestamp using it instead.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::time::Duration;
-    /// use sheave_core::{
-    ///     handlers::LastChunk,
-    ///     messages::headers::{
-    ///         MessageHeader,
-    ///         MessageType
-    ///     }
-    /// };
-    ///
-    /// let mut last_chunk = LastChunk::new(MessageHeader::New((Duration::default(), u32::default(), MessageType::Command, u32::default()).into()));
-    ///
-    /// last_chunk.update(&MessageHeader::New((Duration::from_millis(1), 1, MessageType::Command, 1).into()), None);
-    /// assert_eq!(Duration::from_millis(1), last_chunk.get_timestamp());
-    /// assert_eq!(1, last_chunk.get_message_length());
-    /// assert_eq!(MessageType::Command, last_chunk.get_message_type());
-    /// assert_eq!(1, last_chunk.get_message_id());
-    ///
-    /// last_chunk.update(&MessageHeader::New((Duration::from_millis(2), 2, MessageType::Other, 2).into()), Some(Duration::from_millis(0x01000000 as u64)));
-    /// assert_eq!(Duration::from_millis(0x01000000 as u64), last_chunk.get_timestamp());
-    /// assert_eq!(2, last_chunk.get_message_length());
-    /// assert_eq!(MessageType::Other, last_chunk.get_message_type());
-    /// assert_eq!(2, last_chunk.get_message_id())
-    /// ```
-    pub fn update(&mut self, message_header: &MessageHeader, extended_timestamp: Option<Duration>) {
-        if let Some(extended_timestamp) = extended_timestamp {
-            self.timestamp = extended_timestamp;
-        } else {
-            if let Some(timestamp) = message_header.get_timestamp() {
-                self.timestamp = timestamp;
-            }
-        }
-
-        message_header.get_message_length().map(
-            |message_length| self.message_length = message_length
-        );
-        message_header.get_message_type().map(
-            |message_type| self.message_type = message_type
-        );
-        message_header.get_message_id().map(
-            |message_id| self.message_id = message_id
-        );
     }
 }
