@@ -10,8 +10,8 @@ use crate::{
         Handshake
     },
     messages::{
+        Channel,
         ChunkSize,
-        Acknowledgement,
         WindowAcknowledgementSize,
         PeerBandwidth,
         amf::v0::{
@@ -22,6 +22,7 @@ use crate::{
     },
     flv::Flv
 };
+use super::PublisherStatus;
 pub use self::last_chunk::*;
 
 /// RTMP's common contexts.
@@ -45,15 +46,18 @@ pub struct RtmpContext {
     sending_chunk_size: ChunkSize,
     window_acknowledgement_size: WindowAcknowledgementSize,
     peer_bandwidth: PeerBandwidth,
-    total_received_length: Acknowledgement,
     last_transaction_id: Number,
+    app: Option<AmfString>,
+    playpath: Option<AmfString>,
+    tc_url: Option<AmfString>,
+    publisher_status: Option<PublisherStatus>,
+    last_sent_channel: Option<Channel>,
     encryption_algorithm: Option<EncryptionAlgorithm>,
     client_handshake: Option<Handshake>,
     server_handshake: Option<Handshake>,
     command_object: Option<Object>,
     properties: Option<Object>,
     information: Option<Object>,
-    play_path: Option<AmfString>,
     message_id: Option<u32>,
     publishing_name: Option<AmfString>,
     publishing_type: Option<AmfString>,
@@ -67,7 +71,7 @@ impl RtmpContext {
     /// Sheave uses this after wrapping into `Arc`.
     /// Because of making this shareable between every handling steps.
     pub fn make_weak_mut<'a>(self: &'a Arc<Self>) -> &'a mut Self {
-        unsafe { &mut *(Arc::downgrade(self).as_ptr() as *mut RtmpContext) }
+        unsafe { &mut *(Arc::downgrade(self).as_ptr() as *mut Self) }
     }
 
     /// Stores a flag to mean this handshake is signed.
@@ -116,14 +120,6 @@ impl RtmpContext {
         self.peer_bandwidth
     }
 
-    pub fn add_total_received_length(&mut self, received_length: u32) {
-        self.total_received_length += received_length;
-    }
-
-    pub fn get_total_received_length(&mut self) -> Acknowledgement {
-        self.total_received_length
-    }
-
     /// Sets a transaction ID.
     /// Mainly, this is used by server side contexts.
     /// Because of servers should echo same transaction ID in its response.
@@ -141,6 +137,93 @@ impl RtmpContext {
     /// Because of clients should count which transaction is it now on.
     pub fn increase_transaction_id(&mut self) {
         self.last_transaction_id += 1f64;
+    }
+
+    /// Sets the `app` name.
+    /// This can be contained in a request URI of RTMP.
+    pub fn set_app(&mut self, app: AmfString) {
+        self.app = Some(app);
+    }
+
+    /// Gets the `app` name.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_app().is_none())
+    /// ```
+    pub fn get_app(&mut self) -> Option<&AmfString> {
+        self.app.as_ref()
+    }
+
+    /// Sets the `tcUrl`. This is a full URL in the RTMP request like following form.
+    ///
+    /// `rtmp://hostname/[app]/[playpath]`
+    ///
+    /// Where `app` and `playpath` can be unspecified.
+    /// Clients specify above URL at the start of RTMP requests.
+    /// Then the server checks `app` and `playpath` in client-side `Connect` commands (if they are specified).
+    pub fn set_tc_url(&mut self, tc_url: AmfString) {
+        self.tc_url = Some(tc_url);
+    }
+
+    /// Gets the `tcUrl`.
+    /// Note this can return `None`. e.g. this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_tc_url().is_none())
+    /// ```
+    pub fn get_tc_url(&mut self) -> Option<&AmfString> {
+        self.tc_url.as_ref()
+    }
+
+    /// Sets one of status to mean which a publication client is in.
+    pub fn set_publisher_status(&mut self, status: PublisherStatus) {
+        self.publisher_status = Some(status);
+    }
+
+    /// Gets one of status to mean which a publication client is in.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_publisher_status());
+    /// ```
+    pub fn get_publisher_status(&mut self) -> Option<PublisherStatus> {
+        self.publisher_status
+    }
+
+    /// Sets the last sent chunk channel.
+    pub fn set_last_sent_channel(&mut self, channel: Channel) {
+        self.last_sent_channel = Some(channel);
+    }
+
+    /// Gets the last sent chunk channel.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_last_sent_channel().is_none())
+    /// ```
+    pub fn get_last_sent_channel(&mut self) -> Option<Channel> {
+        self.last_sent_channel
     }
 
     /// Stores the algorithm to encrypt this handshake.
@@ -263,6 +346,7 @@ impl RtmpContext {
 
     /// Sets a information object of a server.
     pub fn set_information(&mut self, information: Object) {
+        // TODO: Logging information object.
         self.information = Some(information);
     }
 
@@ -281,12 +365,18 @@ impl RtmpContext {
         self.information.as_ref()
     }
 
-    /// Sets a play path (e.g. filename) sent from a client.
-    pub fn set_play_path(&mut self, play_path: AmfString) {
-        self.play_path = Some(play_path);
+    /// Sets a `playpath` (e.g. filename) sent from a client.
+    pub fn set_playpath(&mut self, playpath: AmfString) {
+        self.playpath = Some(playpath);
     }
 
-    /// Gets a play path (e.g. filename) sent from a client.
+    /// Resets a `playpath` from this context.
+    /// This is prepared for deleting the `playpath` when receives the `FCUnpublish` command.
+    pub fn reset_play_path(&mut self) {
+        self.play_path = None;
+    }
+
+    /// Gets a `playpath` (e.g. filename) sent from a client.
     /// Note this can return `None`. e.g. When it is the default as is.
     ///
     /// # Examples
@@ -295,15 +385,21 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_play_path().is_none())
+    /// assert!(rtmp_context.get_playpath().is_none())
     /// ```
-    pub fn get_play_path(&mut self) -> Option<&AmfString> {
-        self.play_path.as_ref()
+    pub fn get_playpath(&mut self) -> Option<&AmfString> {
+        self.playpath.as_ref()
     }
 
     /// Sets a message ID of this stream.
     pub fn set_message_id(&mut self, message_id: u32) {
         self.message_id = Some(message_id);
+    }
+
+    /// Resets a message ID from this context.
+    /// This is prepared for deleting tne `message_id` when receives the `deleteStream` command.
+    pub fn reset_message_id(&mut self) {
+        self.message_id = None;
     }
 
     /// Gets a message ID of this stream.
