@@ -231,9 +231,6 @@ impl RtmpStream {
 impl TryFrom<StdStream> for RtmpStream {
     type Error = IOError;
 
-    /// Consumes stream, returning the RtmpStream.
-    ///
-    /// This is equivalent to [`RtmpStream::from_std`](RtmpStream::from_std).
     fn try_from(std_stream: StdStream) -> IOResult<Self> {
         Self::from_std(std_stream)
     }
@@ -246,8 +243,9 @@ impl From<TokioStream> for RtmpStream {
 }
 
 impl AsyncRead for RtmpStream {
-    /// Same as Tokio's TcpStream except awaits until gets something result.
-    /// [Read more](https://docs.rs/tokio/latest/tokio/io/trait.AsyncRead.html#tymethod.poll_read)
+    /// Reads RTMP data asynchronously.
+    /// Note this stream awaits until reading completed.
+    /// Because of uniforming timings to communicate with other RTMP tools.
     fn poll_read(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &mut ReadBuf<'_>) -> Poll<IOResult<()>> {
         let mut this = self.project();
         loop {
@@ -260,10 +258,12 @@ impl AsyncRead for RtmpStream {
 }
 
 impl AsyncWrite for RtmpStream {
-    /// Same as Tokio's TcpStream except awaits until gets something result.
-    /// [Read more](https://docs.rs/tokio/latest/tokio/io/trait.AsyncWrite.html#tymethod.poll_write)
+    /// Writes RTMP data asynchronously.
+    /// Note this stream awaits until writing completed.
+    /// Because of uniforming timings to communicate with other RTMP tools.
     fn poll_write(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &[u8]) -> Poll<IOResult<usize>> {
-        let mut this = self.project();
+        let this = self.project();
+
         loop {
             match this.tokio_stream.as_mut().poll_write(cx, buf) {
                 Poll::Pending => continue,
@@ -272,10 +272,11 @@ impl AsyncWrite for RtmpStream {
         }
     }
 
-    /// Same as Tokio's TcpStream except awaits until gets something result.
-    /// [Read more](https://docs.rs/tokio/latest/tokio/io/trait.AsyncWrite.html#method.poll_write_vectored)
+    /// Writes **plural** RTMP data asynchronously.
+    /// Note this stream awaits until writing completed.
+    /// Because of uniforming timings to communicate with other RTMP tools.
     fn poll_write_vectored(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, bufs: &[IoSlice<'_>]) -> Poll<IOResult<usize>> {
-        let mut this = self.project();
+        let this = self.project();
         loop {
             match this.tokio_stream.as_mut().poll_write_vectored(cx, bufs) {
                 Poll::Pending => continue,
@@ -284,28 +285,18 @@ impl AsyncWrite for RtmpStream {
         }
     }
 
-    /// Same as Tokio's TcpStream except awaits until gets something result.
-    /// [Read more](https://docs.rs/tokio/latest/tokio/io/trait.AsyncWrite.html#tymethod.poll_flush)
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<IOResult<()>> {
-        let mut this = self.project();
-        loop {
-            match this.tokio_stream.as_mut().poll_flush(cx) {
-                Poll::Pending => continue,
-                result => return result
-            }
-        }
+    fn is_write_vectored(&self) -> bool {
+        self.tokio_stream.is_write_vectored()
     }
 
-    /// Same as Tokio's TcpStream except awaits until gets something result.
-    /// [Read more](https://docs.rs/tokio/latest/tokio/io/trait.AsyncWrite.html#tymethod.poll_shutdown)
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<IOResult<()>> {
+        let this = self.project();
+        this.tokio_stream.poll_flush(cx)
+    }
+
     fn poll_shutdown(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<IOResult<()>> {
-        let mut this = self.project();
-        loop {
-            match this.tokio_stream.as_mut().poll_shutdown(cx) {
-                Poll::Pending => continue,
-                result => return result
-            }
-        }
+        let this = self.project();
+        this.tokio_stream.poll_shutdown(cx)
     }
 }
 
