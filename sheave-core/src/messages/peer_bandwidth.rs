@@ -2,7 +2,8 @@ mod limit_type;
 
 use std::{
     cmp::Ordering,
-    io::Result as IOResult
+    io::Result as IOResult,
+    ops::Div
 };
 use crate::{
     ByteBuffer,
@@ -44,6 +45,14 @@ impl PeerBandwidth {
     /// Constructs a PeerBandwidth message.
     pub fn new(peer_bandwidth: u32, limit_type: LimitType) -> Self {
         Self(peer_bandwidth, limit_type)
+    }
+
+    pub fn get_inner_bandwidth(&self) -> u32 {
+        self.0
+    }
+
+    pub fn get_inner_limit_type(&self) -> LimitType {
+        self.1
     }
 }
 
@@ -100,6 +109,14 @@ impl PartialEq<LimitType> for PeerBandwidth {
 impl PartialEq<PeerBandwidth> for LimitType {
     fn eq(&self, other: &PeerBandwidth) -> bool {
         self.eq(&other.1)
+    }
+}
+
+impl Div<u32> for PeerBandwidth {
+    type Output = Self;
+
+    fn div(self, rhs: u32) -> Self::Output {
+        Self(self.0 / rhs, self.1)
     }
 }
 

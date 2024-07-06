@@ -1,6 +1,7 @@
 use std::{
     cmp::Ordering,
-    io::Result as IOResult
+    io::Result as IOResult,
+    ops::Div
 };
 use crate::{
     ByteBuffer,
@@ -24,6 +25,10 @@ impl WindowAcknowledgementSize {
     /// Constructs an WindowAcknowledgementSize message.
     pub fn new(window_acknowledgement_size: u32) -> Self {
         Self(window_acknowledgement_size)
+    }
+
+    pub fn get_inner(&self) -> u32 {
+        self.0
     }
 }
 
@@ -63,6 +68,14 @@ impl PartialOrd<u32> for WindowAcknowledgementSize {
 impl PartialOrd<WindowAcknowledgementSize> for u32 {
     fn partial_cmp(&self, other: &WindowAcknowledgementSize) -> Option<Ordering> {
         self.partial_cmp(&other.0)
+    }
+}
+
+impl Div<u32> for WindowAcknowledgementSize {
+    type Output = Self;
+
+    fn div(self, rhs: u32) -> Self::Output {
+        Self(self.0 / rhs)
     }
 }
 
