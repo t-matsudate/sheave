@@ -464,6 +464,14 @@ impl PartialEq<Self> for Value {
 }
 
 #[doc(hidden)]
+impl<T: Into<Value> + Clone> PartialEq<T> for Value {
+    fn eq(&self, other: &T) -> bool {
+        let value: Self = other.clone().into();
+        self.eq(&value)
+    }
+}
+
+#[doc(hidden)]
 impl Eq for Value {}
 #[doc(hidden)]
 unsafe impl Send for Value {}
