@@ -9,8 +9,7 @@ use crate::{
         EventType,
         UserControl,
         headers::MessageType,
-        ensure_event_type
-    },
+    }
 };
 
 /// The event to tell that the stream is ready to a client.
@@ -53,10 +52,6 @@ impl Decoder<StreamBegin> for ByteBuffer {
     ///
     /// When some field misses.
     ///
-    /// * [`InconsistentEventType`]
-    ///
-    /// When the event type isn't `0` (Stream Begin).
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -71,32 +66,23 @@ impl Decoder<StreamBegin> for ByteBuffer {
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_u16_be(EventType::StreamBegin as u16);
     /// buffer.put_u32_be(u32::default());
     /// assert!(Decoder::<StreamBegin>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_u16_be(EventType::Other as u16);
     /// buffer.put_u32_be(u32::default());
     /// assert!(Decoder::<StreamBegin>::decode(&mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
-    /// [`InconsistentEventType`]: super::InconsistentEventType
     fn decode(&mut self) -> IOResult<StreamBegin> {
-        self.get_u16_be().and_then(
-            |event_type| ensure_event_type(EventType::StreamBegin, event_type)
-        )?;
-
-        let message_id = self.get_u32_be()?;
-        Ok(StreamBegin(message_id))
+        self.get_u32_be().map(StreamBegin)
     }
 }
 
 impl Encoder<StreamBegin> for ByteBuffer {
     /// Encodes a StreamBegin event into bytes.
     fn encode(&mut self, stream_begin: &StreamBegin) {
-        self.put_u16_be(StreamBegin::EVENT_TYPE as u16);
         self.put_u32_be(stream_begin.get_message_id());
     }
 }
@@ -108,7 +94,6 @@ mod tests {
     #[test]
     fn decode_stream_begin() {
         let mut buffer = ByteBuffer::default();
-        buffer.put_u16_be(StreamBegin::EVENT_TYPE as u16);
         buffer.put_u32_be(u32::default());
         let result: IOResult<StreamBegin> = buffer.decode();
         assert!(result.is_ok());
@@ -123,8 +108,6 @@ mod tests {
         let expected_message_id = u32::default();
         let expected = StreamBegin::new(expected_message_id);
         buffer.encode(&expected);
-        let event_type = buffer.get_u16_be().unwrap();
-        assert_eq!(EventType::StreamBegin, EventType::from(event_type));
         let actual_message_id = buffer.get_u32_be().unwrap();
         assert_eq!(expected_message_id, actual_message_id)
     }
