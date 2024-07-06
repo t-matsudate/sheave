@@ -3,7 +3,6 @@ use super::{
     Channel,
     ChunkData,
     Command,
-    ensure_command_name,
     headers::MessageType
 };
 use crate::{
@@ -12,15 +11,13 @@ use crate::{
     ByteBuffer,
     messages::amf::v0::{
         Number,
-        AmfString,
         Object
     }
 };
 
 /// The response message for Connect requests.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct ConnectResult {
-    result: AmfString,
     properties: Object,
     information: Object
 }
@@ -29,8 +26,8 @@ impl ConnectResult {
     const TRANSACTION_ID: f64 = 1f64;
 
     /// Constructs a ConnectResult command.
-    pub fn new(result: AmfString, properties: Object, information: Object) -> Self {
-        Self { result, properties, information }
+    pub fn new(properties: Object, information: Object) -> Self {
+        Self { properties, information }
     }
 
     /// Gets the properties object.
@@ -50,27 +47,12 @@ impl From<ConnectResult> for (Object, Object) {
     }
 }
 
-impl Default for ConnectResult {
-    fn default() -> Self {
-        Self {
-            result: "_result".into(),
-            properties: Object::default(),
-            information: Object::default()
-        }
-    }
-}
-
 impl ChunkData for ConnectResult {
     const CHANNEL: Channel = Channel::System;
     const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
 impl Command for ConnectResult {
-    /// Gets the result which is either `"_result"` or `"_error"`.
-    fn get_command_name(&self) -> &str {
-        &**self.result
-    }
-
     /// Gets the transaction ID in this response.
     /// In this response, it's fixed to `1`.
     fn get_transaction_id(&self) -> Number {
@@ -91,14 +73,6 @@ impl Decoder<ConnectResult> for ByteBuffer {
     ///
     /// When some value is inconsistent with its marker.
     ///
-    /// * [`InvalidString`]
-    ///
-    /// When some value is invalid for UTF-8 string.
-    ///
-    /// * [`InconsistentCommand`]
-    ///
-    /// When the command name is neither `"_result"` nor `"_error"`.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -110,45 +84,34 @@ impl Decoder<ConnectResult> for ByteBuffer {
     ///         ConnectResult,
     ///         amf::v0::{
     ///             Number,
-    ///             AmfString,
     ///             Object
     ///         }
     ///     }
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("_result"));
     /// buffer.encode(&Number::new(1f64));
     /// buffer.encode(&Object::default());
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<ConnectResult>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("something else"));
-    /// buffer.encode(&Number::new(1f64));
-    /// buffer.encode(&Object::default());
-    /// buffer.encode(&Object::default());
     /// assert!(Decoder::<ConnectResult>::decode(&mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
-    /// [`InvalidString`]: crate::messages::amf::InvalidString
-    /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<ConnectResult> {
-        let result: AmfString = self.decode()?;
-        ensure_command_name("_result", result.clone()).or(ensure_command_name("_error", result.clone()))?;
         Decoder::<Number>::decode(self)?;
         let properties: Object = self.decode()?;
         let information: Object = self.decode()?;
-        Ok(ConnectResult { result, properties, information } )
+        Ok(ConnectResult { properties, information } )
     }
 }
 
 impl Encoder<ConnectResult> for ByteBuffer {
     /// Encodes a ConnectResult command into bytes.
     fn encode(&mut self, connect_result: &ConnectResult) {
-        self.encode(&AmfString::from(connect_result.get_command_name()));
         self.encode(&connect_result.get_transaction_id());
         self.encode(connect_result.get_properties());
         self.encode(connect_result.get_information());
@@ -157,13 +120,15 @@ impl Encoder<ConnectResult> for ByteBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::object;
+    use crate::{
+        messages::amf::v0::AmfString,
+        object
+    };
     use super::*;
 
     #[test]
     fn decode_connect_result() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&AmfString::from("_result"));
         buffer.encode(&Number::new(1f64));
         buffer.encode(
             &object!(
@@ -183,7 +148,6 @@ mod tests {
         assert!(result.is_ok());
         let actual = result.unwrap();
         let expected = ConnectResult::new(
-            "_result".into(),
             object!(
                 "fmsVer" => AmfString::from("FMS/5,0,17"),
                 "capabilities" => Number::new(31f64)
@@ -212,9 +176,7 @@ mod tests {
             "description" => AmfString::from("Connection succeeded."),
             "objectEncoding" => Number::new(0f64)
         );
-        buffer.encode(&ConnectResult::new("_result".into(), expected_properties.clone(), expected_information.clone()));
-        let command_name: AmfString = buffer.decode().unwrap();
-        assert_eq!("_result", command_name);
+        buffer.encode(&ConnectResult::new(expected_properties.clone(), expected_information.clone()));
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id);
         let actual_properties: Object = buffer.decode().unwrap();

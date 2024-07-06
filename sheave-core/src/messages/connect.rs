@@ -3,7 +3,6 @@ use super::{
     Channel,
     ChunkData,
     Command,
-    ensure_command_name,
     headers::MessageType
 };
 use crate::{
@@ -12,7 +11,6 @@ use crate::{
     ByteBuffer,
     messages::amf::v0::{
         Number,
-        AmfString,
         Object
     }
 };
@@ -22,7 +20,6 @@ use crate::{
 pub struct Connect(Object);
 
 impl Connect {
-    const COMMAND_NAME: &'static str = "connect";
     const TRANSACTION_ID: f64 = 1f64;
 
     /// Constructs a Connect command.
@@ -55,14 +52,6 @@ impl Decoder<Connect> for ByteBuffer {
     ///
     /// When some value is inconsistent with its marker.
     ///
-    /// * [`InvalidString`]
-    ///
-    /// When some value is invalid for UTF-8 string.
-    ///
-    /// * [`InconsistentCommand`]
-    ///
-    /// When the command name isn't `"connect"`.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -74,34 +63,23 @@ impl Decoder<Connect> for ByteBuffer {
     ///         Connect,
     ///         amf::v0::{
     ///             Number,
-    ///             AmfString,
     ///             Object
     ///         }
     ///     }
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("connect"));
     /// buffer.encode(&Number::new(1f64));
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<Connect>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("something else"));
-    /// buffer.encode(&Number::new(1f64));
-    /// buffer.encode(&Object::default());
     /// assert!(Decoder::<Connect>::decode(&mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
-    /// [`InvalidString`]: crate::messages::amf::InvalidString
-    /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<Connect> {
-        Decoder::<AmfString>::decode(self).and_then(
-            |command| ensure_command_name("connect", command)
-        )?;
-
         // Skips because the transaction ID in the Connect command is fixed to `1`.
         Decoder::<Number>::decode(self)?;
         let command_object: Object = self.decode()?;
@@ -112,7 +90,6 @@ impl Decoder<Connect> for ByteBuffer {
 impl Encoder<Connect> for ByteBuffer {
     /// Encodes a Connect command into bytes.
     fn encode(&mut self, connect: &Connect) {
-        self.encode(&AmfString::from(connect.get_command_name()));
         self.encode(&connect.get_transaction_id());
         self.encode(connect.get_command_object());
     }
@@ -124,12 +101,6 @@ impl ChunkData for Connect {
 }
 
 impl Command for Connect {
-    /// Gets the command name.
-    /// In this request, it's fixed to `"connect"`.
-    fn get_command_name(&self) -> &str {
-        Self::COMMAND_NAME
-    }
-
     /// Gets the transaction ID.
     /// In this request, it's fixed to `1`.
     fn get_transaction_id(&self) -> Number {
@@ -139,13 +110,15 @@ impl Command for Connect {
 
 #[cfg(test)]
 mod tests {
-    use crate::object;
+    use crate::{
+        messages::amf::v0::AmfString,
+        object
+    };
     use super::*;
 
     #[test]
     fn decode_connect_input() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&AmfString::from("connect"));
         buffer.encode(&Number::new(1f64));
         buffer.encode(
             &object!(
@@ -181,8 +154,6 @@ mod tests {
         );
         let expected = Connect::new(expected_command_object.clone());
         buffer.encode(&expected);
-        let command_name: AmfString = buffer.decode().unwrap();
-        assert_eq!("connect", command_name);
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id);
         let actual_command_object: Object = buffer.decode().unwrap();

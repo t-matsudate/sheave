@@ -11,11 +11,9 @@ use crate::{
         Command,
         amf::v0::{
             Number,
-            AmfString,
             Object,
             Null
         },
-        ensure_command_name,
         headers::MessageType
     }
 };
@@ -26,7 +24,6 @@ pub use self::publishing_failure::*;
 pub struct OnStatus(Object);
 
 impl OnStatus {
-    const COMMAND_NAME: &'static str = "onStatus";
     const TRANSACTION_ID: f64 = 0f64;
 
     /// Constructs an OnStatus command.
@@ -52,10 +49,6 @@ impl ChunkData for OnStatus {
 }
 
 impl Command for OnStatus {
-    fn get_command_name(&self) -> &str {
-        Self::COMMAND_NAME
-    }
-
     fn get_transaction_id(&self) -> Number {
         Number::new(Self::TRANSACTION_ID)
     }
@@ -74,14 +67,6 @@ impl Decoder<OnStatus> for ByteBuffer {
     ///
     /// When some value is inconsistent with its marker.
     ///
-    /// * [`InvalidString`]
-    ///
-    /// When some value is invalid for UTF-8 string.
-    ///
-    /// * [`InconsistentCommand`]
-    ///
-    /// When the command name isn't `"onStatus"`.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -93,7 +78,6 @@ impl Decoder<OnStatus> for ByteBuffer {
     ///         OnStatus,
     ///         amf::v0::{
     ///             Number,
-    ///             AmfString,
     ///             Object,
     ///             Null
     ///         }
@@ -101,29 +85,18 @@ impl Decoder<OnStatus> for ByteBuffer {
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("onStatus"));
     /// buffer.encode(&Number::from(0u8));
     /// buffer.encode(&Null);
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<OnStatus>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("something else"));
-    /// buffer.encode(&Number::from(0u8));
-    /// buffer.encode(&Null);
-    /// buffer.encode(&Object::default());
     /// assert!(Decoder::<OnStatus>::decode(&mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
-    /// [`InvalidString`]: crate::messages::amf::InvalidString
-    /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<OnStatus> {
-        Decoder::<AmfString>::decode(self).and_then(
-            |command| ensure_command_name("onStatus", command)
-        )?;
-
         Decoder::<Number>::decode(self)?;
         Decoder::<Null>::decode(self)?;
         let info_object: Object = self.decode()?;
@@ -135,7 +108,6 @@ impl Decoder<OnStatus> for ByteBuffer {
 impl Encoder<OnStatus> for ByteBuffer {
     /// Encodes an OnStatus command into bytes.
     fn encode(&mut self, on_status: &OnStatus) {
-        self.encode(&AmfString::from(on_status.get_command_name()));
         self.encode(&on_status.get_transaction_id());
         self.encode(&Null);
         self.encode(on_status.get_info_object());
@@ -144,13 +116,15 @@ impl Encoder<OnStatus> for ByteBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::object;
+    use crate::{
+        messages::amf::v0::AmfString,
+        object
+    };
     use super::*;
 
     #[test]
     fn decode_on_status() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&AmfString::from("onStatus"));
         buffer.encode(&Number::from(0u8));
         buffer.encode(&Null);
         buffer.encode(
@@ -186,8 +160,6 @@ mod tests {
             "details" => AmfString::from("filename")
         );
         buffer.encode(&OnStatus::new(expected_info_object.clone()));
-        let command_name: AmfString = buffer.decode().unwrap();
-        assert_eq!("onStatus", command_name);
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id);
         Decoder::<Null>::decode(&mut buffer).unwrap();

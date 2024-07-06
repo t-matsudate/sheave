@@ -14,7 +14,6 @@ use crate::{
             AmfString,
             Null
         },
-        ensure_command_name,
         headers::MessageType
     }
 };
@@ -29,8 +28,6 @@ pub struct Publish {
 }
 
 impl Publish {
-    const COMMAND_NAME: &'static str = "publish";
-
     /// Constructs a Publish command.
     pub fn new(transaction_id: Number, publishing_name: AmfString, publishing_type: AmfString) -> Self {
         Self { transaction_id, publishing_name, publishing_type }
@@ -59,10 +56,6 @@ impl ChunkData for Publish {
 }
 
 impl Command for Publish {
-    fn get_command_name(&self) -> &str {
-        Self::COMMAND_NAME
-    }
-
     fn get_transaction_id(&self) -> Number {
         self.transaction_id
     }
@@ -84,10 +77,6 @@ impl Decoder<Publish> for ByteBuffer {
     /// * [`InvalidString`]
     ///
     /// When some value is invalid for UTF-8 string.
-    ///
-    /// * [`InconsistentCommand`]
-    ///
-    /// When the command name isn't `"publish"`.
     ///
     /// * [`InvalidPublishingType`]
     ///
@@ -111,7 +100,6 @@ impl Decoder<Publish> for ByteBuffer {
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("publish"));
     /// buffer.encode(&Number::new(5f64));
     /// buffer.encode(&Null);
     /// buffer.encode(&AmfString::default());
@@ -119,15 +107,20 @@ impl Decoder<Publish> for ByteBuffer {
     /// assert!(Decoder::<Publish>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("something else"));
     /// buffer.encode(&Number::new(5f64));
     /// buffer.encode(&Null);
     /// buffer.encode(&AmfString::default());
-    /// buffer.encode(&AmfString::from("live"));
-    /// assert!(Decoder::<Publish>::decode(&mut buffer).is_err());
+    /// buffer.encode(&AmfString::from("record"));
+    /// assert!(Decoder::<Publish>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("publish"));
+    /// buffer.encode(&Number::new(5f64));
+    /// buffer.encode(&Null);
+    /// buffer.encode(&AmfString::default());
+    /// buffer.encode(&AmfString::from("append"));
+    /// assert!(Decoder::<Publish>::decode(&mut buffer).is_ok());
+    ///
+    /// let mut buffer = ByteBuffer::default();
     /// buffer.encode(&Number::new(5f64));
     /// buffer.encode(&Null);
     /// buffer.encode(&AmfString::default());
@@ -138,13 +131,8 @@ impl Decoder<Publish> for ByteBuffer {
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     /// [`InvalidString`]: crate::messages::amf::InvalidString
-    /// [`InconsistentCommand`]: super::InconsistentCommand
     /// [`InvalidPublishingType`]: InvalidPublishingType
     fn decode(&mut self) -> IOResult<Publish> {
-        Decoder::<AmfString>::decode(self).and_then(
-            |command| ensure_command_name("publish", command)
-        )?;
-
         let transaction_id: Number = self.decode()?;
         Decoder::<Null>::decode(self)?;
         let publishing_name: AmfString = self.decode()?;
@@ -161,7 +149,6 @@ impl Decoder<Publish> for ByteBuffer {
 impl Encoder<Publish> for ByteBuffer {
     /// Encodes a Publish command into bytes.
     fn encode(&mut self, publish: &Publish) {
-        self.encode(&AmfString::from(publish.get_command_name()));
         self.encode(&publish.get_transaction_id());
         self.encode(&Null);
         self.encode(publish.get_publishing_name());
@@ -176,7 +163,6 @@ mod tests {
     #[test]
     fn decode_publish() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&AmfString::from("publish"));
         buffer.encode(&Number::new(5f64));
         buffer.encode(&Null);
         buffer.encode(&AmfString::default());
@@ -196,8 +182,6 @@ mod tests {
         let expected_publishing_type = "live";
         let expected = Publish::new(Number::new(expected_transaction_id), AmfString::from(expected_publishing_name), AmfString::from(expected_publishing_type));
         buffer.encode(&expected);
-        let command_name: AmfString = buffer.decode().unwrap();
-        assert_eq!("publish", command_name);
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id);
         Decoder::<Null>::decode(&mut buffer).unwrap();

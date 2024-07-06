@@ -3,7 +3,6 @@ use super::{
     Channel,
     ChunkData,
     Command,
-    ensure_command_name,
     headers::MessageType
 };
 use crate::{
@@ -12,22 +11,18 @@ use crate::{
     ByteBuffer,
     messages::amf::v0::{
         Number,
-        AmfString,
         Null
     }
 };
 
 /// The response message for ReleaseStream requests.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ReleaseStreamResult {
-    result: AmfString,
-    transaction_id: Number
-}
+pub struct ReleaseStreamResult(Number);
 
 impl ReleaseStreamResult {
     /// Constructs a ReleaseStreamResult command.
-    pub fn new(result: AmfString, transaction_id: Number) -> Self {
-        Self { result, transaction_id }
+    pub fn new(transaction_id: Number) -> Self {
+        Self(transaction_id)
     }
 }
 
@@ -37,14 +32,9 @@ impl ChunkData for ReleaseStreamResult {
 }
 
 impl Command for ReleaseStreamResult {
-    /// Gets the result which is either `"_result"` or `"_error"`.
-    fn get_command_name(&self) -> &str {
-        &**self.result
-    }
-
     /// Gets the transaction ID in this response.
     fn get_transaction_id(&self) -> Number {
-        self.transaction_id
+        self.0
     }
 }
 
@@ -61,14 +51,6 @@ impl Decoder<ReleaseStreamResult> for ByteBuffer {
     ///
     /// When some value is inconsistent with its marker.
     ///
-    /// * [`InvalidString`]
-    ///
-    /// When some value is invalid for UTF-8 string.
-    ///
-    /// * [`InconsistentCommand`]
-    ///
-    /// When the command name is neither `"_result"` nor `"_error"`.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -80,42 +62,32 @@ impl Decoder<ReleaseStreamResult> for ByteBuffer {
     ///         ReleaseStreamResult,
     ///         amf::v0::{
     ///             Number,
-    ///             AmfString,
     ///             Null
     ///         }
     ///     }
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("_result"));
     /// buffer.encode(&Number::new(2f64));
     /// buffer.encode(&Null);
     /// assert!(Decoder::<ReleaseStreamResult>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("something else"));
-    /// buffer.encode(&Number::new(2f64));
-    /// buffer.encode(&Null);
     /// assert!(Decoder::<ReleaseStreamResult>::decode(&mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
-    /// [`InvalidString`]: crate::messages::amf::InvalidString
-    /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<ReleaseStreamResult> {
-        let result: AmfString = self.decode()?;
-        ensure_command_name("_result", result.clone()).or(ensure_command_name("_error", result.clone()))?;
         let transaction_id: Number = self.decode()?;
         Decoder::<Null>::decode(self)?;
-        Ok(ReleaseStreamResult { result, transaction_id })
+        Ok(ReleaseStreamResult(transaction_id))
     }
 }
 
 impl Encoder<ReleaseStreamResult> for ByteBuffer {
     /// Encodes a ReleaseStreamResult command into bytes.
     fn encode(&mut self, release_stream_result: &ReleaseStreamResult) {
-        self.encode(&AmfString::from(release_stream_result.get_command_name()));
         self.encode(&release_stream_result.get_transaction_id());
         self.encode(&Null);
     }
@@ -128,13 +100,12 @@ mod tests {
     #[test]
     fn decode_release_stream_result() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&AmfString::from("_result"));
         buffer.encode(&Number::new(2f64));
         buffer.encode(&Null);
         let result: IOResult<ReleaseStreamResult> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = ReleaseStreamResult::new("_result".into(), 2.into());
+        let expected = ReleaseStreamResult::new(2.into());
         assert_eq!(expected, actual)
     }
 
@@ -142,10 +113,8 @@ mod tests {
     fn encode_release_stream_result() {
         let mut buffer = ByteBuffer::default();
         let expected_transaction_id = 2f64;
-        let expected = ReleaseStreamResult::new("_result".into(), Number::new(expected_transaction_id));
+        let expected = ReleaseStreamResult::new(Number::new(expected_transaction_id));
         buffer.encode(&expected);
-        let command_name: AmfString = buffer.decode().unwrap();
-        assert_eq!("_result", command_name);
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id)
     }
