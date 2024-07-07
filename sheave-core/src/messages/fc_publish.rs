@@ -26,8 +26,8 @@ pub struct FcPublish {
 
 impl FcPublish {
     /// Constructs a FcPublish command.
-    pub fn new(transaction_id: Number, play_path: AmfString) -> Self {
-        Self { transaction_id, play_path }
+    pub fn new(transaction_id: Number, playpath: AmfString) -> Self {
+        Self { transaction_id, playpath }
     }
 
     /// Gets the playpath.

@@ -372,8 +372,8 @@ impl RtmpContext {
 
     /// Resets a `playpath` from this context.
     /// This is prepared for deleting the `playpath` when receives the `FCUnpublish` command.
-    pub fn reset_play_path(&mut self) {
-        self.play_path = None;
+    pub fn reset_playpath(&mut self) {
+        self.playpath = None;
     }
 
     /// Gets a `playpath` (e.g. filename) sent from a client.

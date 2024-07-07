@@ -27,7 +27,7 @@ pub struct FcUnpublish {
 
 impl FcUnpublish {
     /// Constructs a FcUnpublish command.
-    pub fn new(transaction_id: Number, play_path: AmfString) -> Self {
+    pub fn new(transaction_id: Number, playpath: AmfString) -> Self {
         Self { transaction_id, playpath }
     }
 
