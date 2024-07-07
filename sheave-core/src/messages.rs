@@ -217,14 +217,18 @@ mod video;
 mod acknowledgement;
 mod window_acknowledgement_size;
 mod peer_bandwidth;
+mod fc_unpublish;
+mod delete_stream;
 
-use std::io::Result as IOResult;
+use std::{
+    cmp::Ordering,
+    io::Result as IOResult
+};
 use self::{
     amf::v0::{
         AmfString,
         Number,
     },
-    cmp::Ordering,
     headers::MessageType
 };
 pub use self::{
@@ -247,17 +251,14 @@ pub use self::{
     video::*,
     acknowledgement::*,
     window_acknowledgement_size::*,
-    peer_bandwidth::*
+    peer_bandwidth::*,
+    fc_unpublish::*,
+    delete_stream::*
 };
 
 #[doc(hidden)]
 pub(self) fn ensure_command_name(expected: &str, actual: AmfString) -> IOResult<()> {
     (expected == actual).then_some(()).ok_or(inconsistent_command(expected, actual))
-}
-
-#[doc(hidden)]
-pub(self) fn ensure_event_type(expected: EventType, actual: u16) -> IOResult<()> {
-    (expected == EventType::from(actual)).then_some(()).ok_or(inconsistent_event_type(expected, actual))
 }
 
 /// The IDs which are assigned every roles of chunks.
@@ -332,7 +333,6 @@ pub trait ChunkData {
 /// [`decode`]: crate::Decoder
 /// [`encode`]: crate::Encoder
 pub trait Command {
-    fn get_command_name(&self) -> &str;
     fn get_transaction_id(&self) -> Number;
 }
 
@@ -378,26 +378,50 @@ pub trait UserControl {
     const EVENT_TYPE: EventType;
 }
 
+impl PartialEq<WindowAcknowledgementSize> for Acknowledgement {
+    fn eq(&self, other: &WindowAcknowledgementSize) -> bool {
+        self.get_inner().eq(&other.get_inner())
+    }
+}
+
 impl PartialOrd<WindowAcknowledgementSize> for Acknowledgement {
     fn partial_cmp(&self, other: &WindowAcknowledgementSize) -> Option<Ordering> {
-        self.0.partial_cmp(&other.0)
+        self.get_inner().partial_cmp(&other.get_inner())
+    }
+}
+
+impl PartialEq<Acknowledgement> for WindowAcknowledgementSize {
+    fn eq(&self, other: &Acknowledgement) -> bool {
+        self.get_inner().eq(&other.get_inner())
     }
 }
 
 impl PartialOrd<Acknowledgement> for WindowAcknowledgementSize {
     fn partial_cmp(&self, other: &Acknowledgement) -> Option<Ordering> {
-        self.0.partial_cmp(&other.0)
+        self.get_inner().partial_cmp(&other.get_inner())
+    }
+}
+
+impl PartialEq<PeerBandwidth> for Acknowledgement {
+    fn eq(&self, other: &PeerBandwidth) -> bool {
+        self.get_inner().eq(&other.get_inner_bandwidth())
     }
 }
 
 impl PartialOrd<PeerBandwidth> for Acknowledgement {
     fn partial_cmp(&self, other: &PeerBandwidth) -> Option<Ordering> {
-        self.0.partial_cmp(&other.0)
+        self.get_inner().partial_cmp(&other.get_inner_bandwidth())
+    }
+}
+
+impl PartialEq<Acknowledgement> for PeerBandwidth {
+    fn eq(&self, other: &Acknowledgement) -> bool {
+        self.get_inner_bandwidth().eq(&other.get_inner())
     }
 }
 
 impl PartialOrd<Acknowledgement> for PeerBandwidth {
     fn partial_cmp(&self, other: &Acknowledgement) -> Option<Ordering> {
-        self.0.partial_cmp(&other.0)
+        self.get_inner_bandwidth().partial_cmp(&other.get_inner())
     }
 }
