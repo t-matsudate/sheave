@@ -16,12 +16,12 @@ use crate::{
     }
 };
 
-/// The command to tell the Play Path.
+/// The command to tell the playpath.
 /// Typically, this becomes same as the releaseStream's one.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FcPublish {
     transaction_id: Number,
-    play_path: AmfString
+    playpath: AmfString
 }
 
 impl FcPublish {
@@ -30,15 +30,15 @@ impl FcPublish {
         Self { transaction_id, play_path }
     }
 
-    /// Gets the Play Path.
-    pub fn get_play_path(&self) -> &AmfString {
-        &self.play_path
+    /// Gets the playpath.
+    pub fn get_playpath(&self) -> &AmfString {
+        &self.playpath
     }
 }
 
 impl From<FcPublish> for AmfString {
     fn from(fc_publish: FcPublish) -> Self {
-        fc_publish.play_path
+        fc_publish.playpath
     }
 }
 
@@ -103,8 +103,8 @@ impl Decoder<FcPublish> for ByteBuffer {
     fn decode(&mut self) -> IOResult<FcPublish> {
         let transaction_id: Number = self.decode()?;
         Decoder::<Null>::decode(self)?;
-        let play_path: AmfString = self.decode()?;
-        Ok(FcPublish { transaction_id, play_path })
+        let playpath: AmfString = self.decode()?;
+        Ok(FcPublish { transaction_id, playpath })
     }
 }
 
@@ -113,7 +113,7 @@ impl Encoder<FcPublish> for ByteBuffer {
     fn encode(&mut self, fc_publish: &FcPublish) {
         self.encode(&fc_publish.get_transaction_id());
         self.encode(&Null);
-        self.encode(fc_publish.get_play_path());
+        self.encode(fc_publish.get_playpath());
     }
 }
 
@@ -138,13 +138,13 @@ mod tests {
     fn encode_fc_publish() {
         let mut buffer = ByteBuffer::default();
         let expected_transaction_id = 3f64;
-        let expected_play_path = "";
-        let expected = FcPublish::new(Number::new(expected_transaction_id), AmfString::from(expected_play_path));
+        let expected_playpath = "";
+        let expected = FcPublish::new(Number::new(expected_transaction_id), AmfString::from(expected_playpath));
         buffer.encode(&expected);
         let actual_transaction_id: Number = buffer.decode().unwrap();
         assert_eq!(expected_transaction_id, actual_transaction_id);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_play_path: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_play_path, actual_play_path)
+        let actual_playpath: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_playpath, actual_playpath)
     }
 }
