@@ -262,7 +262,7 @@ impl AsyncWrite for RtmpStream {
     /// Note this stream awaits until writing completed.
     /// Because of uniforming timings to communicate with other RTMP tools.
     fn poll_write(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &[u8]) -> Poll<IOResult<usize>> {
-        let this = self.project();
+        let mut this = self.project();
 
         loop {
             match this.tokio_stream.as_mut().poll_write(cx, buf) {
@@ -276,7 +276,7 @@ impl AsyncWrite for RtmpStream {
     /// Note this stream awaits until writing completed.
     /// Because of uniforming timings to communicate with other RTMP tools.
     fn poll_write_vectored(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, bufs: &[IoSlice<'_>]) -> Poll<IOResult<usize>> {
-        let this = self.project();
+        let mut this = self.project();
         loop {
             match this.tokio_stream.as_mut().poll_write_vectored(cx, bufs) {
                 Poll::Pending => continue,
