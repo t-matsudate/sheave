@@ -32,7 +32,7 @@ impl<R: AsyncRead> Future for HandshakeReader<'_, R> {
     }
 }
 
-/// Reads actual handshake data from stream.
+/// Reads an actual handshake data from streams.
 ///
 /// # Examples
 ///

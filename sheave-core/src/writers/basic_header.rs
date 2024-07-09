@@ -38,7 +38,7 @@ impl<W: AsyncWrite> Future for BasicHeaderWriter<'_, W> {
     }
 }
 
-/// Writes basic header into stream,
+/// Writes a basic header into streams.
 ///
 /// # Examples
 ///

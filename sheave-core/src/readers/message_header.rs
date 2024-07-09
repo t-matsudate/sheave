@@ -29,6 +29,7 @@ pub struct MessageHeaderReader<'a, R: AsyncRead> {
     message_format: MessageFormat
 }
 
+#[doc(hidden)]
 impl<R: AsyncRead> MessageHeaderReader<'_, R> {
     fn read_timestamp(&mut self, cx: &mut FutureContext<'_>) -> Poll<IOResult<Duration>> {
         let mut timestamp_bytes: [u8; 4] = [0; 4];
@@ -93,7 +94,7 @@ impl<R: AsyncRead> Future for MessageHeaderReader<'_, R> {
     }
 }
 
-/// Reads message header from stream.
+/// Reads a message header from streams.
 ///
 /// # Examples
 ///

@@ -52,12 +52,13 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
     }
 }
 
-/// Writes a chunk data into stream.
+/// Writes a chunk data into streams.
 ///
-/// If a chunk datum exceeds specified chunk size, continue headers is inserted between chunk data per chunk size.
+/// If a chunk data exceeds specified chunk size, continue headers is inserted between chunk data per chunk size.
 /// Note the message length doesn't count their headers.
 ///
 /// # Examples
+///
 /// ```rust
 /// use std::{
 ///     io::Result as IOResult,

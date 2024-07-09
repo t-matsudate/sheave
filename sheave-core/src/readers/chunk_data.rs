@@ -55,9 +55,9 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
     }
 }
 
-/// Reads a chunk datum from stream.
+/// Reads a chunk data from streams.
 ///
-/// If a chunk datum exceeds specified chunk size, to insert continue headers between chunk data per chunk size is required.
+/// If a chunk data exceeds specified chunk size, to insert continue headers between chunk data per chunk size is required.
 /// Note the message length doesn't count their headers.
 ///
 /// # Examples

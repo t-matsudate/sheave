@@ -32,7 +32,7 @@ impl<R: AsyncRead> Future for ExtendedTimestampReader<'_, R> {
     }
 }
 
-/// Reads extended timestamp from stream.
+/// Reads an extended timestamp from streams.
 ///
 /// # Examples
 ///

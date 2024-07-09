@@ -51,7 +51,7 @@ impl<R: AsyncRead> Future for BasicHeaderReader<'_, R> {
     }
 }
 
-/// Reads basic header from stream.
+/// Reads a basic header from streams.
 ///
 /// # Examples
 ///

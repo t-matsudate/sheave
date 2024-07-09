@@ -28,6 +28,7 @@ pub struct MessageHeaderWriter<'a, W: AsyncWrite> {
     message_header: &'a MessageHeader
 }
 
+#[doc(hidden)]
 impl<W: AsyncWrite> MessageHeaderWriter<'_, W> {
     fn write_timestamp(&mut self, cx: &mut FutureContext<'_>, timestamp: Duration) -> Poll<IOResult<()>> {
         assert!(timestamp.as_millis() <= U24_MAX as u128);
@@ -84,7 +85,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
     }
 }
 
-/// Writes message header from stream.
+/// Writes a message header into streams.
 ///
 /// # Panics
 ///

@@ -27,7 +27,7 @@ impl<W: AsyncWrite> Future for EncryptionAlgorithmWriter<'_, W> {
     }
 }
 
-/// Writes one byte to indicate the encryption algorithm into stream.
+/// Writes one byte to indicate the encryption algorithm into streams.
 ///
 /// # Examples
 ///

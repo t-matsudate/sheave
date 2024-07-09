@@ -27,7 +27,7 @@ impl<W: AsyncWrite> Future for ExtendedTimestampWriter<'_, W> {
     }
 }
 
-/// Writes extended timestramp into stream.
+/// Writes an extended timestramp into streams.
 ///
 /// # Examples
 ///

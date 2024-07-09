@@ -27,7 +27,7 @@ impl<W: AsyncWrite> Future for HandshakeWriter<'_, W> {
     }
 }
 
-/// Writes actual handshake data into stream.
+/// Writes actual handshake data into streams.
 ///
 /// # Examples
 ///
