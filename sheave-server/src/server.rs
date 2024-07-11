@@ -5,6 +5,7 @@ use std::{
     io::{
         Result as IOResult
     },
+    marker::PhantomData,
     pin::{
         Pin,
         pin
@@ -19,84 +20,114 @@ use tokio::io::{
     AsyncRead,
     AsyncWrite
 };
-use sheave_core::{
-    handlers::{
-        AsyncHandler,
-        AsyncHandlerExt,
-        RtmpContext,
-        StreamWrapper
-    }
-};
-use crate::handlers::{
-    handle_first_handshake,
-    handle_second_handshake,
-    handle_connect,
-    handle_release_stream,
-    handle_fc_publish,
-    handle_create_stream,
-    handle_publish
+use sheave_core::handlers::{
+    RtmpContext,
+    StreamWrapper,
+    HandlerConstructor
 };
 pub use self::message_id_provider::*;
 
+/// # The server instance of the Sheave
+///
+/// This consists of:
+///
+/// * Some stream instance which can both of read and write.
+/// * Context data in the server.
+/// * Some type parameter which implemented the [`HandlerConstructor`] trait.
+///
+/// The server wraps streams into [`Arc`] as a way of sharing streams among communication steps.
+/// And also wraps contexts because of the same purpose.
+///
+/// The server makes any foreign handler to be able to construct via the [`PhantomData`], where a type parameter of [`PhantomData`] requires to implement the [`HandlerConstructor`] trait.
+/// That is, its type parameter behaves as the constructor injection.
+///
+/// ## Examples
+///
+/// ```rust
+/// use std::{
+///     io::Result as IOResult,
+///     marker::PhantomData,
+///     pin::Pin,
+///     sync::Arc,
+///     task::{
+///         Context as FutureContext,
+///         Poll
+///     }
+/// };
+/// use tokio::io::{
+///     AsyncRead,
+///     AsyncWrite
+/// };
+/// use sheave_core::handlers::{
+///     AsyncHandler,
+///     HandlerConstructor,
+///     RtmpContext,
+///     StreamWrapper,
+///     VecStream
+/// };
+/// use sheave_server::Server;
+///
+/// struct Handler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<StreamWrapper<RW>>);
+///
+/// impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for Handler<RW> {
+///     fn poll_handle(self: Pin<&mut Self>, _cx: &mut FutureContext<'_>, _rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
+///         Poll::Ready(Ok(()))
+///     }
+/// }
+///
+/// impl<RW: AsyncRead + AsyncWrite + Unpin> HandlerConstructor<StreamWrapper<RW>> for Handler<RW> {
+///     fn new(stream: Arc<StreamWrapper<RW>>) -> Self {
+///         Self(stream)
+///     }
+/// }
+///
+/// #[tokio::main]
+/// async fn main() {
+///     let stream = StreamWrapper::new(VecStream::default());
+///     let rtmp_context = RtmpContext::default();
+///     let mut server = Server::new(stream, rtmp_context, PhantomData::<Handler>);
+///     let result = server.await;
+///     assert!(result.is_ok())
+/// }
+/// ```
+///
+/// [`Arc`]: std::sync::Arc
+/// [`PhantomData`]: std::marker::PhantomData
+/// [`HandlerConstructor`]: sheave_core::handlers::HandlerConstructor
 #[derive(Debug)]
-pub struct Server<RW: AsyncRead + AsyncWrite + Unpin> {
+pub struct Server<RW, C>
+where
+    RW: AsyncRead + AsyncWrite + Unpin,
+    C: HandlerConstructor<StreamWrapper<RW>>
+{
     stream: Arc<StreamWrapper<RW>>,
-    rtmp_context: Arc<RtmpContext>
+    rtmp_context: Arc<RtmpContext>,
+    handler_constructor: PhantomData<C>
 }
 
-impl<RW: AsyncRead + AsyncWrite + Unpin> Server<RW> {
-    pub fn new(stream: RW) -> Self {
+impl<RW, C> Server<RW, C>
+where
+    RW: AsyncRead + AsyncWrite + Unpin,
+    C: HandlerConstructor<StreamWrapper<RW>>
+{
+    /// Constructs a Server instance.
+    pub fn new(stream: RW, rtmp_context: RtmpContext, handler_constructor: PhantomData<C>) -> Self {
         Self {
             stream: Arc::new(StreamWrapper::new(stream)),
-            rtmp_context: Arc::new(RtmpContext::default())
+            rtmp_context: Arc::new(rtmp_context),
+            handler_constructor
         }
     }
 }
 
-impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Server<RW> {
+impl<RW, C> Future for Server<RW, C>
+where
+    RW: AsyncRead + AsyncWrite + Unpin,
+    C: HandlerConstructor<StreamWrapper<RW>>
+{
     type Output = IOResult<()>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<Self::Output> {
-        pin!(
-            handle_first_handshake(self.stream.make_weak_pin())
-                .chain(handle_second_handshake(self.stream.make_weak_pin()))
-                .chain(handle_connect(self.stream.make_weak_pin()))
-                .chain(handle_release_stream(self.stream.make_weak_pin()))
-                .chain(handle_fc_publish(self.stream.make_weak_pin()))
-                .chain(handle_create_stream(self.stream.make_weak_pin()))
-                .chain(handle_publish(self.stream.make_weak_pin()))
-                .chain(echo_next(self.stream.make_weak_pin()))
-        ).poll_handle(cx, self.rtmp_context.make_weak_mut())
+        pin!(C::new(Arc::clone(&self.stream))).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }
-}
-
-#[derive(Debug)]
-struct EchoHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
-
-impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for EchoHandler<'_, RW> {
-    fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
-        use futures::ready;
-        use sheave_core::readers::{
-            read_basic_header,
-            read_message_header,
-            read_chunk_data
-        };
-        let basic_header = ready!(pin!(read_basic_header(self.0.as_mut())).poll(cx))?;
-        println!("{basic_header:?}");
-        let message_header = ready!(pin!(read_message_header(self.0.as_mut(), basic_header.get_message_format())).poll(cx))?;
-        println!("{message_header:?}");
-        let chunk_size = rtmp_context.get_receiving_chunk_size();
-        let message_length = if let Some(message_length) = message_header.get_message_length() {
-            message_length
-        } else {
-            rtmp_context.get_last_received_chunk(&basic_header.get_chunk_id()).unwrap().get_message_length()
-        };
-        let data = ready!(pin!(read_chunk_data(self.0.as_mut(), chunk_size, message_length)).poll(cx))?;
-        println!("{data:?}");
-        Poll::Ready(Ok(()))
-    }
-}
-
-fn echo_next<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>) -> EchoHandler<'a, RW> {
-    EchoHandler(stream)
 }
