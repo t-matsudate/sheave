@@ -200,7 +200,7 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_publisher_status());
+    /// assert!(rtmp_context.get_publisher_status().is_none());
     /// ```
     pub fn get_publisher_status(&mut self) -> Option<PublisherStatus> {
         self.publisher_status
