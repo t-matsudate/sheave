@@ -76,7 +76,7 @@ pub use self::{
 ///     let mut buffer = ByteBuffer::default();
 ///     buffer.encode(&Connect::new(Object::default()));
 ///     let expected: Vec<u8> = buffer.into();
-///     write_chunk(stream.as_mut(), &mut rtmp_context, Connect::CHANNEL, Duration::default(), Connect::MESSAGE_TYPE, u32::default(), &expected).await?;
+///     write_chunk(stream.as_mut(), &mut rtmp_context, Connect::CHANNEL.into(), Duration::default(), Connect::MESSAGE_TYPE, u32::default(), &expected).await?;
 ///
 ///     let basic_header = read_basic_header(stream.as_mut()).await?;
 ///     let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await?;
