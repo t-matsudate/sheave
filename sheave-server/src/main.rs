@@ -1,46 +1,56 @@
 pub mod net;
 pub mod handlers;
-pub mod server;
+mod server;
 
-use std::io::Result as IOResult;
-use clap::Parser;
-use tokio::spawn;
-use sheave_core::cli::*;
-use self::{
-    net::rtmp::RtmpListener,
-    server::Server
+use std::{
+    io::Result as IOResult,
+    marker::PhantomData
 };
+use clap::{
+    Args,
+    Parser
+};
+use tokio::spawn;
+use sheave_core::{
+    handlers::RtmpContext,
+    net::rtmp::RtmpStream
+};
+use self::{
+    handlers::RtmpHandler,
+    net::rtmp::RtmpListener
+};
+pub use self::server::*;
+
+#[derive(Debug, Clone, Args)]
+#[group(required = true)]
+struct Listeners {
+    #[arg(long, value_name = "Address", default_values_t=[String::from("127.0.0.1:1935")])]
+    rtmp: Vec<String>
+}
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 struct ServerOptions {
-    #[arg(long, value_enum, default_value_t = Protocol::Rtmp)]
-    protocol: Protocol,
-    #[arg(short, long, default_value = "127.0.0.1")]
-    address: String,
-    #[arg(short, long, default_value_t = 1935)]
-    port: u16
+    #[command(flatten)]
+    listeners: Listeners,
+    // TODO: Makes other options if they are required.
 }
 
-async fn run_as_rtmp(host: String, port: u16) -> IOResult<()> {
-    let listener = RtmpListener::bind((host, port)).await?;
+async fn run_as_rtmp(address: &str) -> IOResult<()> {
+    let listener = RtmpListener::bind(address).await?;
 
     loop {
         let (stream, _) = listener.accept().await?;
-        let server = Server::new(stream);
+        let server = Server::new(stream, RtmpContext::default(), PhantomData::<RtmpHandler<RtmpStream>>);
         return spawn(server).await?;
     }
 }
 
 #[tokio::main]
 async fn main() -> IOResult<()> {
-    use Protocol::*;
-
     let options = ServerOptions::parse();
-    match options.protocol {
-        Rtmp => if let Err(e) = run_as_rtmp(options.address, options.port).await {
-            println!("{e}")
-        }
+    if let Err(e) = run_as_rtmp(&options.listeners.rtmp[0]).await {
+        println!("{e}");
     }
 
     Ok(())
