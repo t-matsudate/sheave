@@ -104,18 +104,22 @@ impl RtmpContext {
         self.sending_chunk_size
     }
 
+    /// Sets the window acknowledgement size.
     pub fn set_window_acknowledgement_size(&mut self, window_acknowledgement_size: WindowAcknowledgementSize) {
         self.window_acknowledgement_size = window_acknowledgement_size;
     }
 
+    /// Gets the window acknowledgement size.
     pub fn get_window_acknowledgement_size(&mut self) -> WindowAcknowledgementSize {
         self.window_acknowledgement_size
     }
 
+    /// Sets the peer bandwidth.
     pub fn set_peer_bandwidth(&mut self, peer_bandwidth: PeerBandwidth) {
         self.peer_bandwidth = peer_bandwidth;
     }
 
+    /// Gets the peer bandwidth.
     pub fn get_peer_bandwidth(&mut self) -> PeerBandwidth {
         self.peer_bandwidth
     }
