@@ -1,3 +1,5 @@
 pub mod net;
 pub mod handlers;
-pub mod server;
+mod server;
+
+pub use self::server::*;
