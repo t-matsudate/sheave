@@ -70,7 +70,6 @@ impl Decoder<StreamBegin> for ByteBuffer {
     /// assert!(Decoder::<StreamBegin>::decode(&mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.put_u32_be(u32::default());
     /// assert!(Decoder::<StreamBegin>::decode(&mut buffer).is_err())
     /// ```
     ///
