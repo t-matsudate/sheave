@@ -1,17 +1,10 @@
-mod first_handshake;
-mod second_handshake;
-mod connect;
-mod release_stream;
-mod fc_publish;
-mod create_stream;
-mod publish;
+pub mod middlewares;
+mod rtmp;
+mod connection_error;
+mod publication_error;
 
 pub use self::{
-    first_handshake::*,
-    second_handshake::*,
-    connect::*,
-    release_stream::*,
-    fc_publish::*,
-    create_stream::*,
-    publish::*
+    connection_error::*,
+    publication_error::*,
+    rtmp::RtmpHandler
 };
