@@ -67,15 +67,15 @@ pub use self::message_id_provider::*;
 /// };
 /// use sheave_server::Server;
 ///
-/// struct Handler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<StreamWrapper<RW>>);
+/// struct SomethingHandler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<StreamWrapper<RW>>);
 ///
-/// impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for Handler<RW> {
+/// impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for SomethingHandler<RW> {
 ///     fn poll_handle(self: Pin<&mut Self>, _cx: &mut FutureContext<'_>, _rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
 ///         Poll::Ready(Ok(()))
 ///     }
 /// }
 ///
-/// impl<RW: AsyncRead + AsyncWrite + Unpin> HandlerConstructor<StreamWrapper<RW>> for Handler<RW> {
+/// impl<RW: AsyncRead + AsyncWrite + Unpin> HandlerConstructor<StreamWrapper<RW>> for SomethingHandler<RW> {
 ///     fn new(stream: Arc<StreamWrapper<RW>>) -> Self {
 ///         Self(stream)
 ///     }
@@ -83,9 +83,9 @@ pub use self::message_id_provider::*;
 ///
 /// #[tokio::main]
 /// async fn main() {
-///     let stream = StreamWrapper::new(VecStream::default());
+///     let stream = VecStream::default();
 ///     let rtmp_context = RtmpContext::default();
-///     let mut server = Server::new(stream, rtmp_context, PhantomData::<Handler>);
+///     let mut server = Server::new(stream, rtmp_context, PhantomData::<SomethingHandler<VecStream>>);
 ///     let result = server.await;
 ///     assert!(result.is_ok())
 /// }
