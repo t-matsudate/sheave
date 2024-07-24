@@ -1,6 +1,7 @@
 use std::{
     future::Future,
     io::Result as IOResult,
+    marker::PhantomData,
     pin::{
         Pin,
         pin
@@ -16,48 +17,44 @@ use tokio::io::{
     AsyncWrite
 };
 use sheave_core::handlers::{
-    AsyncHandler,
-    AsyncHandlerExt,
+    HandlerConstructor,
     RtmpContext,
     StreamWrapper
 };
-use crate::handlers::{
-    handle_first_handshake,
-    handle_second_handshake,
-    handle_connect,
-    handle_release_stream,
-    handle_fc_publish,
-    handle_create_stream,
-    handle_publish
-};
 
 #[derive(Debug)]
-pub struct Client<RW: AsyncRead + AsyncWrite + Unpin> {
+pub struct Client<RW, C>
+where
+    RW: AsyncRead + AsyncWrite + Unpin,
+    C: HandlerConstructor<StreamWrapper<RW>>
+{
     stream: Arc<StreamWrapper<RW>>,
-    rtmp_context: Arc<RtmpContext>
+    rtmp_context: Arc<RtmpContext>,
+    handler_constructor: PhantomData<C>
 }
 
-impl<RW: AsyncRead + AsyncWrite + Unpin> Client<RW> {
-    pub fn new(stream: RW) -> Self {
+impl<RW, C> Client<RW, C>
+where
+    RW: AsyncRead + AsyncWrite + Unpin,
+    C: HandlerConstructor<StreamWrapper<RW>>
+{
+    pub fn new(stream: RW, rtmp_context: RtmpContext, handler_constructor: PhantomData<C>) -> Self {
         Self {
             stream: Arc::new(StreamWrapper::new(stream)),
-            rtmp_context: Arc::new(RtmpContext::default())
+            rtmp_context: Arc::new(rtmp_context),
+            handler_constructor
         }
     }
 }
 
-impl<RW: AsyncRead + AsyncWrite + Unpin> Future for Client<RW> {
+impl<RW, C> Future for Client<RW, C>
+where
+    RW: AsyncRead + AsyncWrite + Unpin,
+    C: HandlerConstructor<StreamWrapper<RW>>
+{
     type Output = IOResult<()>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<Self::Output> {
-        pin!(
-            handle_first_handshake(self.stream.make_weak_pin())
-                .chain(handle_second_handshake(self.stream.make_weak_pin()))
-                .chain(handle_connect(self.stream.make_weak_pin()))
-                .chain(handle_release_stream(self.stream.make_weak_pin()))
-                .chain(handle_fc_publish(self.stream.make_weak_pin()))
-                .chain(handle_create_stream(self.stream.make_weak_pin()))
-                .chain(handle_publish(self.stream.make_weak_pin()))
-        ).poll_handle(cx, self.rtmp_context.make_weak_mut())
+        pin!(C::new(Arc::clone(&self.stream))).poll_handle(cx, self.rtmp_context.make_weak_mut())
     }
 }
