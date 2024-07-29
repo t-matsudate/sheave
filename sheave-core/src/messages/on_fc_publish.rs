@@ -9,7 +9,6 @@ use crate::{
     Decoder,
     Encoder,
     ByteBuffer,
-    messages::amf::v0::Number
 };
 
 /// The response message for FcPublish requests.
@@ -21,11 +20,7 @@ impl ChunkData for OnFcPublish {
     const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
-impl Command for OnFcPublish {
-    fn get_transaction_id(&self) -> Number {
-        unimplemented!("onFCPublish has no transaction ID.")
-    }
-}
+impl Command for OnFcPublish {}
 
 impl Decoder<OnFcPublish> for ByteBuffer {
     /// Decodes bytes into an OnFcPublish command.

@@ -220,17 +220,8 @@ mod peer_bandwidth;
 mod fc_unpublish;
 mod delete_stream;
 
-use std::{
-    cmp::Ordering,
-    io::Result as IOResult
-};
-use self::{
-    amf::v0::{
-        AmfString,
-        Number,
-    },
-    headers::MessageType
-};
+use std::cmp::Ordering;
+use self::headers::MessageType;
 pub use self::{
     inconsistent_command::*,
     connect::*,
@@ -255,11 +246,6 @@ pub use self::{
     fc_unpublish::*,
     delete_stream::*
 };
-
-#[doc(hidden)]
-pub(self) fn ensure_command_name(expected: &str, actual: AmfString) -> IOResult<()> {
-    (expected == actual).then_some(()).ok_or(inconsistent_command(expected, actual))
-}
 
 /// The IDs which are assigned every roles of chunks.
 /// This is mainly used for the `BasicHeader`'s chunk ID.
@@ -324,17 +310,7 @@ pub trait ChunkData {
     const MESSAGE_TYPE: MessageType;
 }
 
-/// The accessor for common fields in every command chunk.
-///
-/// All command chunk but onFCPublish has its command name and identifier for the transaction (only onFCPublish has just its command name).
-/// This provide ways for accessing to their common fields of command chunks uniformly.
-/// For example, [`decode`] and [`encode`] which are implemented for them use this for reading them from streams or writing them into streams.
-///
-/// [`decode`]: crate::Decoder
-/// [`encode`]: crate::Encoder
-pub trait Command {
-    fn get_transaction_id(&self) -> Number;
-}
+pub trait Command {}
 
 /// The IDs which are types of user control messages.
 ///

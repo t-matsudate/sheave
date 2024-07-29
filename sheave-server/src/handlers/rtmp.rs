@@ -192,11 +192,20 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    fn handle_data(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+    fn handle_script_data(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let script_data_tag: ScriptDataTag = buffer.decode()?;
         rtmp_context.get_flv_mut().append_meta_data(script_data_tag);
 
         Ok(())
+    }
+
+    fn handle_data(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let message: AmfString = buffer.decode()?;
+
+        match message.as_str() {
+            "@setDataFrame" => self.handle_script_data(rtmp_context, buffer),
+            _ => unimplemented!("Other data message.")
+        }
     }
 
     fn handle_connect_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -254,6 +263,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         use PublisherStatus::*;
 
         let command: AmfString = buffer.decode()?;
+        let transaction_id: Number = buffer.decode()?;
+        rtmp_context.set_transaction_id(transaction_id);
 
         if command == "FCUnpublish" {
             return self.handle_fc_unpublish_request(rtmp_context, buffer)
@@ -289,6 +300,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         );
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("_result"));
+        buffer.encode(&rtmp_context.get_transaction_id());
         buffer.encode(&ConnectResult::new(properties.clone(), information.clone()));
         write_chunk(self.0.as_mut(), rtmp_context, ConnectResult::CHANNEL.into(), Duration::default(), ConnectResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
         rtmp_context.set_properties(properties);
@@ -302,7 +314,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn write_release_stream_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("_result"));
-        buffer.encode(&ReleaseStreamResult::new(rtmp_context.get_transaction_id()));
+        buffer.encode(&rtmp_context.get_transaction_id());
+        buffer.encode(&ReleaseStreamResult);
         write_chunk(self.0.as_mut(), rtmp_context, ReleaseStreamResult::CHANNEL.into(), Duration::default(), ReleaseStreamResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         rtmp_context.set_publisher_status(PublisherStatus::Released);
@@ -325,7 +338,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         let message_id = provide_message_id();
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("_result"));
-        buffer.encode(&CreateStreamResult::new(rtmp_context.get_transaction_id(), message_id.into()));
+        buffer.encode(&rtmp_context.get_transaction_id());
+        buffer.encode(&CreateStreamResult::new(message_id.into()));
         write_chunk(self.0.as_mut(), rtmp_context, CreateStreamResult::CHANNEL.into(), Duration::default(), CreateStreamResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
         rtmp_context.set_message_id(message_id);
 
@@ -357,6 +371,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         );
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("onStatus"));
+        buffer.encode(&Number::from(0));
         buffer.encode(&OnStatus::new(information.clone()));
         write_chunk(self.0.as_mut(), rtmp_context, OnStatus::CHANNEL.into(), Duration::default(), OnStatus::MESSAGE_TYPE, message_id, &Vec::<u8>::from(buffer)).await?;
         rtmp_context.set_information(information);
@@ -472,7 +487,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("FCUnpublish"));
-        buffer.encode(&FcUnpublish::new(rtmp_context.get_transaction_id(), playpath));
+        buffer.encode(&rtmp_context.get_transaction_id());
+        buffer.encode(&FcUnpublish::new(playpath));
         write_chunk(self.0.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await
     }
 
@@ -482,7 +498,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("deleteStream"));
-        buffer.encode(&DeleteStream::new(rtmp_context.get_transaction_id(), message_id.into()));
+        buffer.encode(&rtmp_context.get_transaction_id());
+        buffer.encode(&DeleteStream::new(message_id.into()));
         write_chunk(self.0.as_mut(), rtmp_context, DeleteStream::CHANNEL.into(), Duration::default(), DeleteStream::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await
     }
 }
@@ -550,6 +567,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> ErrorHandler for CloseHandler<'_, RW> {
 /// [`CreateStream`]: sheave_core::messages::CreateStream
 /// [`Publish`]: sheave_core::messages::Publish
 /// [`Acknowledgement`]: sheave_core::messages::Acknowledgement
+/// [`FcUnpublish`]: sheave_core::messages::FcUnpublish
+/// [`DeleteStream`]: sheave_core::messages::DeleteStream
 #[derive(Debug)]
 pub struct RtmpHandler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<StreamWrapper<RW>>);
 

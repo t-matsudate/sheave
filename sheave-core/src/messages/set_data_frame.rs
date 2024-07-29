@@ -7,8 +7,6 @@ use crate::{
 use super::{
     Channel,
     ChunkData,
-    amf::v0::AmfString,
-    ensure_command_name,
     headers::MessageType
 };
 
@@ -66,22 +64,14 @@ impl Decoder<SetDataFrame> for ByteBuffer {
     ///     ByteBuffer,
     ///     Decoder,
     ///     Encoder,
-    ///     messages::{
-    ///         SetDataFrame,
-    ///         amf::v0::AmfString,
-    ///     }
+    ///     messages::SetDataFrame
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
     /// let mut bytes: [u8; 128] = [0; 128];
     /// bytes.try_fill(&mut thread_rng()).unwrap();
-    /// buffer.encode(&AmfString::from("@setDataFrame"));
     /// buffer.put_bytes(&bytes);
     /// assert!(Decoder::<SetDataFrame>::decode(&mut buffer).is_ok());
-    ///
-    /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&AmfString::from("something else"));
-    /// assert!(Decoder::<SetDataFrame>::decode(&mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
@@ -89,10 +79,6 @@ impl Decoder<SetDataFrame> for ByteBuffer {
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     /// [`InconsistentCommand`]: super::InconsistentCommand
     fn decode(&mut self) -> IOResult<SetDataFrame> {
-        Decoder::<AmfString>::decode(self).and_then(
-            |command| ensure_command_name("@setDataFrame", command)
-        )?;
-
         let remained = self.remained();
         let bytes = self.get_bytes(remained)?.to_vec();
         Ok(SetDataFrame(bytes))
@@ -102,7 +88,6 @@ impl Decoder<SetDataFrame> for ByteBuffer {
 impl Encoder<SetDataFrame> for ByteBuffer {
     /// Encodes a SetDataFrame message into bytes.
     fn encode(&mut self, set_data_frame: &SetDataFrame) {
-        self.encode(&AmfString::from("@setDataFrame"));
         self.put_bytes(&set_data_frame.0);
     }
 }
@@ -120,7 +105,6 @@ mod tests {
         let mut buffer = ByteBuffer::default();
         let mut bytes: [u8; 128] = [0; 128];
         bytes.try_fill(&mut thread_rng()).unwrap();
-        buffer.encode(&AmfString::from("@setDataFrame"));
         buffer.put_bytes(&bytes);
         let result: IOResult<SetDataFrame> = buffer.decode();
         assert!(result.is_ok());
@@ -136,8 +120,6 @@ mod tests {
         expected_bytes.try_fill(&mut thread_rng()).unwrap();
         let expected = SetDataFrame::new(expected_bytes.to_vec());
         buffer.encode(&expected);
-        let message_name: AmfString = buffer.decode().unwrap();
-        assert_eq!("@setDataFrame", message_name);
         let actual_data: Vec<u8> = buffer.into();
         assert_eq!(expected_bytes.as_slice(), &actual_data)
     }

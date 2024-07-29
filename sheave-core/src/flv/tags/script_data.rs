@@ -120,10 +120,7 @@ impl TryFrom<ScriptDataTag> for SetDataFrame {
 mod tests {
     use crate::{
         ecma_array,
-        messages::amf::v0::{
-            Number,
-            Boolean
-        }
+        messages::amf::v0::Number,
     };
     use super::*;
 

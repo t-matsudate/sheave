@@ -10,7 +10,6 @@ use crate::{
         ChunkData,
         Command,
         amf::v0::{
-            Number,
             Object,
             Null
         },
@@ -24,8 +23,6 @@ pub use self::publishing_failure::*;
 pub struct OnStatus(Object);
 
 impl OnStatus {
-    const TRANSACTION_ID: f64 = 0f64;
-
     /// Constructs an OnStatus command.
     pub fn new(info_object: Object) -> Self {
         Self(info_object)
@@ -48,11 +45,7 @@ impl ChunkData for OnStatus {
     const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
-impl Command for OnStatus {
-    fn get_transaction_id(&self) -> Number {
-        Number::new(Self::TRANSACTION_ID)
-    }
-}
+impl Command for OnStatus {}
 
 impl Decoder<OnStatus> for ByteBuffer {
     /// Decodes bytes into an OnStatus command.
@@ -77,7 +70,6 @@ impl Decoder<OnStatus> for ByteBuffer {
     ///     messages::{
     ///         OnStatus,
     ///         amf::v0::{
-    ///             Number,
     ///             Object,
     ///             Null
     ///         }
@@ -85,7 +77,6 @@ impl Decoder<OnStatus> for ByteBuffer {
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Number::from(0u8));
     /// buffer.encode(&Null);
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<OnStatus>::decode(&mut buffer).is_ok());
@@ -97,7 +88,6 @@ impl Decoder<OnStatus> for ByteBuffer {
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     fn decode(&mut self) -> IOResult<OnStatus> {
-        Decoder::<Number>::decode(self)?;
         Decoder::<Null>::decode(self)?;
         let info_object: Object = self.decode()?;
 
@@ -108,7 +98,6 @@ impl Decoder<OnStatus> for ByteBuffer {
 impl Encoder<OnStatus> for ByteBuffer {
     /// Encodes an OnStatus command into bytes.
     fn encode(&mut self, on_status: &OnStatus) {
-        self.encode(&on_status.get_transaction_id());
         self.encode(&Null);
         self.encode(on_status.get_info_object());
     }
@@ -125,7 +114,6 @@ mod tests {
     #[test]
     fn decode_on_status() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&Number::from(0u8));
         buffer.encode(&Null);
         buffer.encode(
             &object!(
@@ -152,7 +140,6 @@ mod tests {
     #[test]
     fn encode_on_status() {
         let mut buffer = ByteBuffer::default();
-        let expected_transaction_id = f64::default();
         let expected_info_object = object!(
             "level" => AmfString::from("status"),
             "code" => AmfString::from("NetStream.Publish.Start"),
@@ -160,8 +147,6 @@ mod tests {
             "details" => AmfString::from("filename")
         );
         buffer.encode(&OnStatus::new(expected_info_object.clone()));
-        let actual_transaction_id: Number = buffer.decode().unwrap();
-        assert_eq!(expected_transaction_id, actual_transaction_id);
         Decoder::<Null>::decode(&mut buffer).unwrap();
         let actual_info_object: Object = buffer.decode().unwrap();
         assert_eq!(expected_info_object, actual_info_object)

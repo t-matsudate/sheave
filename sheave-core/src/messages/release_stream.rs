@@ -10,7 +10,6 @@ use crate::{
     Encoder,
     ByteBuffer,
     messages::amf::v0::{
-        Number,
         AmfString,
         Null
     }
@@ -18,26 +17,23 @@ use crate::{
 
 /// The command to tell the Play Path (e.g. something file name).
 #[derive(Debug, Clone, PartialEq)]
-pub struct ReleaseStream {
-    transaction_id: Number,
-    play_path: AmfString
-}
+pub struct ReleaseStream(AmfString);
 
 impl ReleaseStream {
     /// Constructs a ReleaseStream command.
-    pub fn new(transaction_id: Number, play_path: AmfString) -> Self {
-        Self { transaction_id, play_path }
+    pub fn new(playpath: AmfString) -> Self {
+        Self(playpath)
     }
 
     /// Gets the Play Path.
-    pub fn get_play_path(&self) -> &AmfString {
-        &self.play_path
+    pub fn get_playpath(&self) -> &AmfString {
+        &self.0
     }
 }
 
 impl From<ReleaseStream> for AmfString {
     fn from(release_stream: ReleaseStream) -> Self {
-        release_stream.play_path
+        release_stream.0
     }
 }
 
@@ -46,11 +42,7 @@ impl ChunkData for ReleaseStream {
     const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
-impl Command for ReleaseStream {
-    fn get_transaction_id(&self) -> Number {
-        self.transaction_id
-    }
-}
+impl Command for ReleaseStream {}
 
 impl Decoder<ReleaseStream> for ByteBuffer {
     /// Decodes bytes into a ReleaseStream command.
@@ -79,7 +71,6 @@ impl Decoder<ReleaseStream> for ByteBuffer {
     ///     messages::{
     ///         ReleaseStream,
     ///         amf::v0::{
-    ///             Number,
     ///             AmfString,
     ///             Null
     ///         }
@@ -87,7 +78,6 @@ impl Decoder<ReleaseStream> for ByteBuffer {
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Number::new(2f64));
     /// buffer.encode(&Null);
     /// buffer.encode(&AmfString::default());
     /// assert!(Decoder::<ReleaseStream>::decode(&mut buffer).is_ok());
@@ -100,19 +90,17 @@ impl Decoder<ReleaseStream> for ByteBuffer {
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<ReleaseStream> {
-        let transaction_id: Number = self.decode()?;
         Decoder::<Null>::decode(self)?;
-        let play_path: AmfString = self.decode()?;
-        Ok(ReleaseStream { transaction_id, play_path })
+        let playpath: AmfString = self.decode()?;
+        Ok(ReleaseStream(playpath))
     }
 }
 
 impl Encoder<ReleaseStream> for ByteBuffer {
     /// Encodes a ReleaseStream command into bytes.
     fn encode(&mut self, release_stream: &ReleaseStream) {
-        self.encode(&release_stream.get_transaction_id());
         self.encode(&Null);
-        self.encode(release_stream.get_play_path());
+        self.encode(release_stream.get_playpath());
     }
 }
 
@@ -123,27 +111,23 @@ mod tests {
     #[test]
     fn decode_release_stream() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&Number::new(2f64));
         buffer.encode(&Null);
         buffer.encode(&AmfString::default());
         let result: IOResult<ReleaseStream> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = ReleaseStream::new(2.into(), AmfString::default());
+        let expected = ReleaseStream::new(AmfString::default());
         assert_eq!(expected, actual)
     }
 
     #[test]
     fn encode_release_stream() {
         let mut buffer = ByteBuffer::default();
-        let expected_transaction_id = 2f64;
-        let expected_play_path = "";
-        let expected = ReleaseStream::new(Number::new(expected_transaction_id), AmfString::from(expected_play_path));
+        let expected_playpath = "";
+        let expected = ReleaseStream::new(AmfString::from(expected_playpath));
         buffer.encode(&expected);
-        let actual_transaction_id: Number = buffer.decode().unwrap();
-        assert_eq!(expected_transaction_id, actual_transaction_id);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_play_path: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_play_path, actual_play_path)
+        let actual_playpath: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_playpath, actual_playpath)
     }
 }

@@ -9,10 +9,7 @@ use crate::{
     Decoder,
     Encoder,
     ByteBuffer,
-    messages::amf::v0::{
-        Number,
-        Object
-    }
+    messages::amf::v0::Object,
 };
 
 /// The command to tell the information that where connects from/to.
@@ -20,8 +17,6 @@ use crate::{
 pub struct Connect(Object);
 
 impl Connect {
-    const TRANSACTION_ID: f64 = 1f64;
-
     /// Constructs a Connect command.
     pub fn new(command_object: Object) -> Self {
         Self(command_object)
@@ -61,15 +56,11 @@ impl Decoder<Connect> for ByteBuffer {
     ///     Encoder,
     ///     messages::{
     ///         Connect,
-    ///         amf::v0::{
-    ///             Number,
-    ///             Object
-    ///         }
+    ///         amf::v0::Object,
     ///     }
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Number::new(1f64));
     /// buffer.encode(&Object::default());
     /// assert!(Decoder::<Connect>::decode(&mut buffer).is_ok());
     ///
@@ -80,8 +71,6 @@ impl Decoder<Connect> for ByteBuffer {
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     fn decode(&mut self) -> IOResult<Connect> {
-        // Skips because the transaction ID in the Connect command is fixed to `1`.
-        Decoder::<Number>::decode(self)?;
         let command_object: Object = self.decode()?;
         Ok(Connect(command_object))
     }
@@ -90,7 +79,6 @@ impl Decoder<Connect> for ByteBuffer {
 impl Encoder<Connect> for ByteBuffer {
     /// Encodes a Connect command into bytes.
     fn encode(&mut self, connect: &Connect) {
-        self.encode(&connect.get_transaction_id());
         self.encode(connect.get_command_object());
     }
 }
@@ -100,13 +88,7 @@ impl ChunkData for Connect {
     const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
-impl Command for Connect {
-    /// Gets the transaction ID.
-    /// In this request, it's fixed to `1`.
-    fn get_transaction_id(&self) -> Number {
-        Number::new(Self::TRANSACTION_ID)
-    }
-}
+impl Command for Connect {}
 
 #[cfg(test)]
 mod tests {
@@ -119,7 +101,6 @@ mod tests {
     #[test]
     fn decode_connect_input() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&Number::new(1f64));
         buffer.encode(
             &object!(
                 "app" => AmfString::from("ondemand"),
@@ -145,7 +126,6 @@ mod tests {
     #[test]
     fn encode_connect_input() {
         let mut buffer = ByteBuffer::default();
-        let expected_transaction_id = 1f64;
         let expected_command_object = object!(
             "app" => AmfString::from("ondemand"),
             "type" => AmfString::from("nonprivate"),
@@ -154,8 +134,6 @@ mod tests {
         );
         let expected = Connect::new(expected_command_object.clone());
         buffer.encode(&expected);
-        let actual_transaction_id: Number = buffer.decode().unwrap();
-        assert_eq!(expected_transaction_id, actual_transaction_id);
         let actual_command_object: Object = buffer.decode().unwrap();
         assert_eq!(expected_command_object, actual_command_object)
     }

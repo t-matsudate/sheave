@@ -10,7 +10,6 @@ use crate::{
     Encoder,
     ByteBuffer,
     messages::amf::v0::{
-        Number,
         AmfString,
         Null
     }
@@ -20,26 +19,23 @@ use crate::{
 ///
 /// [`FcPublish`]: super::FcPublish
 #[derive(Debug, Clone, PartialEq)]
-pub struct FcUnpublish {
-    transaction_id: Number,
-    playpath: AmfString
-}
+pub struct FcUnpublish(AmfString);
 
 impl FcUnpublish {
     /// Constructs a FcUnpublish command.
-    pub fn new(transaction_id: Number, playpath: AmfString) -> Self {
-        Self { transaction_id, playpath }
+    pub fn new(playpath: AmfString) -> Self {
+        Self(playpath)
     }
 
     /// Gets the playpath.
     pub fn get_playpath(&self) -> &AmfString {
-        &self.playpath
+        &self.0
     }
 }
 
 impl From<FcUnpublish> for AmfString {
     fn from(fc_unpublish: FcUnpublish) -> Self {
-        fc_unpublish.playpath
+        fc_unpublish.0
     }
 }
 
@@ -48,11 +44,7 @@ impl ChunkData for FcUnpublish {
     const MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
-impl Command for FcUnpublish {
-    fn get_transaction_id(&self) -> Number {
-        self.transaction_id
-    }
-}
+impl Command for FcUnpublish {}
 
 impl Decoder<FcUnpublish> for ByteBuffer {
     /// Decodes bytes into a FcUnpublish command.
@@ -81,7 +73,6 @@ impl Decoder<FcUnpublish> for ByteBuffer {
     ///     messages::{
     ///         FcUnpublish,
     ///         amf::v0::{
-    ///             Number,
     ///             AmfString,
     ///             Null
     ///         }
@@ -89,7 +80,6 @@ impl Decoder<FcUnpublish> for ByteBuffer {
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&Number::new(6f64));
     /// buffer.encode(&Null);
     /// buffer.encode(&AmfString::default());
     /// assert!(Decoder::<FcUnpublish>::decode(&mut buffer).is_ok());
@@ -102,18 +92,16 @@ impl Decoder<FcUnpublish> for ByteBuffer {
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<FcUnpublish> {
-        let transaction_id: Number = self.decode()?;
         Decoder::<Null>::decode(self)?;
         let playpath: AmfString = self.decode()?;
 
-        Ok(FcUnpublish { transaction_id, playpath })
+        Ok(FcUnpublish(playpath))
     }
 }
 
 impl Encoder<FcUnpublish> for ByteBuffer {
     /// Encodes a FcUnpublish command into bytes.
     fn encode(&mut self, fc_unpublish: &FcUnpublish) {
-        self.encode(&fc_unpublish.get_transaction_id());
         self.encode(&Null);
         self.encode(fc_unpublish.get_playpath());
     }
@@ -126,27 +114,22 @@ mod tests {
     #[test]
     fn decode_fc_unpublish() {
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&Number::new(6f64));
         buffer.encode(&Null);
         buffer.encode(&AmfString::default());
 
         let result: IOResult<FcUnpublish> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = FcUnpublish::new(6.into(), AmfString::default());
+        let expected = FcUnpublish::new(AmfString::default());
         assert_eq!(expected, actual)
     }
 
     #[test]
     fn encode_fc_unpublish() {
         let mut buffer = ByteBuffer::default();
-        let expected_transaction_id = 6f64;
         let expected_playpath = "";
-        let expected = FcUnpublish::new(Number::new(expected_transaction_id), AmfString::from(expected_play_path));
+        let expected = FcUnpublish::new(AmfString::from(expected_playpath));
         buffer.encode(&expected);
-
-        let actual_transaction_id: Number = buffer.decode().unwrap();
-        assert_eq!(expected_transaction_id, actual_transaction_id);
         Decoder::<Null>::decode(&mut buffer).unwrap();
         let actual_playpath: AmfString = buffer.decode().unwrap();
         assert_eq!(expected_playpath, actual_playpath)
