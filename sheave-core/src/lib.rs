@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 pub mod handshake;
 pub mod net;
 pub mod readers;
