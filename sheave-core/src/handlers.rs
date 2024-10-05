@@ -293,7 +293,7 @@ pub trait AsyncHandlerExt: AsyncHandler {
         wrap(middleware, self)
     }
 
-    /// Loops while conditional handler returns `Ok(())`.
+    /// Loops while the body returns `Ok(())` or `Pending`.
     ///
     /// # Examples
     ///
@@ -301,6 +301,7 @@ pub trait AsyncHandlerExt: AsyncHandler {
     /// use std::{
     ///     io::{
     ///         Error as IOError,
+    ///         ErrorKind,
     ///         Result as IOResult
     ///     },
     ///     pin::Pin,
@@ -331,19 +332,11 @@ pub trait AsyncHandlerExt: AsyncHandler {
     ///     }
     /// }
     ///
-    /// struct ConditionalHandler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<StreamWrapper<RW>>, usize);
+    /// struct AnotherHandler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<RW>);
     ///
-    /// impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for ConditionalHandler<RW> {
-    ///     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, _rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
-    ///         if self.1 < 32 {
-    ///             // Discards written size which `poll_write` returns because is required `()`.
-    ///             self.0.make_weak_pin().poll_write(cx, "y".as_bytes()).map_ok(|_| {
-    ///                 self.1 += 1;
-    ///                 ()
-    ///             })
-    ///         } else {
-    ///             Poll::Ready(Err(IOError::other("The handler terminated.")))
-    ///         }
+    /// impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for AnotherHandler<RW> {
+    ///     fn poll_handle(self: Pin<&mut Self>, _cx: &mut FutureContext<'_>, _rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
+    ///         Poll::Ready(Err(IOError::from(ErrorKind::Other)))
     ///     }
     /// }
     ///
@@ -358,22 +351,21 @@ pub trait AsyncHandlerExt: AsyncHandler {
     ///             };
     ///
     ///             let stream = Arc::new(StreamWrapper::new(VecStream::default()));
-    ///             // Frist, SomethingHandler is handled, then "y" is written into streams while `Ok` is returned.
     ///             pin!(
     ///                 SomethingHandler(Arc::clone(&stream))
-    ///                     .while_ok(ConditionalHandler(Arc::clone(&stream), usize::default()))
+    ///                     .while_ok(AnotherHandler(Arc::clone(&stream)))
     ///             ).poll_handle(cx, &mut RtmpContext::default())
     ///         }
     ///     ).await;
     ///     assert!(result.is_err())
     /// }
     /// ```
-    fn while_ok<H>(self, condition: H) -> WhileOk<Self, H>
+    fn while_ok<H>(self, body: H) -> WhileOk<Self, H>
     where
         H: AsyncHandler + Unpin,
         Self: Sized + Unpin
     {
-        while_ok(self, condition)
+        while_ok(self, body)
     }
 
     /// Handles some error when previous handler returns `Err`.

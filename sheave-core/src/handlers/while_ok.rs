@@ -18,15 +18,15 @@ pin_project! {
     #[derive(Debug)]
     pub struct WhileOk<H1, H2> {
         #[pin] before: H1,
-        #[pin] condition: H2
+        #[pin] body: H2
     }
 }
 
 #[doc(hidden)]
-impl<H, I> AsyncHandler for WhileOk<H, I>
+impl<H1, H2> AsyncHandler for WhileOk<H1, H2>
 where
-    H: AsyncHandler + Unpin,
-    I: AsyncHandler + Unpin
+    H1: AsyncHandler + Unpin,
+    H2: AsyncHandler + Unpin,
 {
     fn poll_handle(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         let mut this = self.project();
@@ -34,15 +34,19 @@ where
         ready!(this.before.poll_handle(cx, rtmp_context))?;
 
         loop {
-            ready!(this.condition.as_mut().poll_handle(cx, rtmp_context))?;
+            match this.body.as_mut().poll_handle(cx, rtmp_context) {
+                Poll::Pending => continue,
+                Poll::Ready(result) => result?
+            }
         }
     }
 }
 
-pub fn while_ok<H1, H2>(before: H1, condition: H2) -> WhileOk<H1, H2>
+#[doc(hidden)]
+pub fn while_ok<H1, H2>(before: H1, body: H2) -> WhileOk<H1, H2>
 where
     H1: AsyncHandler + Unpin,
-    H2: AsyncHandler + Unpin
+    H2: AsyncHandler + Unpin,
 {
-    WhileOk { before, condition }
+    WhileOk { before, body }
 }
