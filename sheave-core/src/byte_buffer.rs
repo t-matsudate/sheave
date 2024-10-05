@@ -162,6 +162,45 @@ impl ByteBuffer {
         ).ok_or(insufficient_buffer_length(3, self.remained()))
     }
 
+    /// Tries getting 3 bytes from buffer, as the big endian.
+    ///
+    /// # Errors
+    ///
+    /// * [`InsufficientBufferLength`]
+    ///
+    /// When buffer isn't remained at least 2 bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use rand::{
+    ///     Fill,
+    ///     thread_rng
+    /// };
+    /// use sheave_core::ByteBuffer;
+    ///
+    /// let mut bytes: [u8; 3] = [0; 3];
+    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// let mut buffer: ByteBuffer = bytes.to_vec().into();
+    /// assert!(buffer.get_u24_be().is_ok());
+    ///
+    /// let mut buffer: ByteBuffer = Vec::new().into();
+    /// assert!(buffer.get_u24_be().is_err());
+    /// ```
+    ///
+    /// [`InsufficientBufferLength`]: InsufficientBufferLength
+    pub fn get_u24_be(&mut self) -> IOResult<u32> {
+        let offset = self.offset;
+        self.bytes.get(offset..(offset + 3)).map(
+            |bytes| {
+                self.offset += bytes.len();
+                let mut _bytes: [u8; 4] = [0; 4];
+                _bytes[1..].copy_from_slice(bytes);
+                u32::from_be_bytes(_bytes)
+            }
+        ).ok_or(insufficient_buffer_length(3, self.remained()))
+    }
+
     /// Tries getting 4 bytes from buffer, as the big endian.
     ///
     /// # Errors
@@ -296,6 +335,33 @@ impl ByteBuffer {
     /// ```
     pub fn put_i24_be(&mut self, n: i32) {
         assert!(n <= U24_MAX as i32);
+        self.bytes.extend_from_slice(&n.to_be_bytes()[1..]);
+    }
+
+    /// Puts 3 bytes into buffer, as the big endian.
+    ///
+    /// # Panics
+    ///
+    /// Its value must be the range of 24 bits.
+    /// If it exceeds, a panic is occured.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::panic::catch_unwind;
+    ///
+    /// let result = catch_unwind(
+    ///     || {
+    ///         use sheave_core::ByteBuffer;
+    ///
+    ///         let mut buffer = ByteBuffer::default();
+    ///         buffer.put_u24_be((0x00ffffff + 1) as u32);
+    ///     }
+    /// );
+    /// assert!(result.is_err())
+    /// ```
+    pub fn put_u24_be(&mut self, n: u32) {
+        assert!(n <= U24_MAX as u32);
         self.bytes.extend_from_slice(&n.to_be_bytes()[1..]);
     }
 
