@@ -45,7 +45,7 @@ use tokio::{
 
 pin_project! {
     /// A stream for RTMP that wrapped Tokio's `TcpStream`.
-    /// If you constructs this struct from some address,  use `RtmpStream::connect("aaa.bbb.ccc,ddd:1935")`.
+    /// If you constructs this struct from some address,  use `RtmpStream::connect("aaa.bbb.ccc.ddd:1935")`.
     /// If you do it from already created std's TCPStream. use `RtmpStream::from_std(std_stream)`
     pub struct RtmpStream {
         #[pin]
@@ -243,11 +243,12 @@ impl From<TokioStream> for RtmpStream {
 }
 
 impl AsyncRead for RtmpStream {
-    /// Reads RTMP data asynchronously.
-    /// Note this stream awaits until reading completed.
-    /// Because of uniforming timings to communicate with other RTMP tools.
+    /// Reads a RTMP data.
+    /// This awaits until reading completed.
+    /// Because unifies timing of communication with other RTMP tools.
     fn poll_read(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &mut ReadBuf<'_>) -> Poll<IOResult<()>> {
         let mut this = self.project();
+
         loop {
             match this.tokio_stream.as_mut().poll_read(cx, buf) {
                 Poll::Pending => continue,
@@ -258,9 +259,9 @@ impl AsyncRead for RtmpStream {
 }
 
 impl AsyncWrite for RtmpStream {
-    /// Writes RTMP data asynchronously.
-    /// Note this stream awaits until writing completed.
-    /// Because of uniforming timings to communicate with other RTMP tools.
+    /// Writes a RTMP data.
+    /// This awaits until writing completed.
+    /// Because unifies timing of communication with other RTMP tools.
     fn poll_write(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &[u8]) -> Poll<IOResult<usize>> {
         let mut this = self.project();
 
@@ -270,23 +271,6 @@ impl AsyncWrite for RtmpStream {
                 result => return result
             }
         }
-    }
-
-    /// Writes **plural** RTMP data asynchronously.
-    /// Note this stream awaits until writing completed.
-    /// Because of uniforming timings to communicate with other RTMP tools.
-    fn poll_write_vectored(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, bufs: &[IoSlice<'_>]) -> Poll<IOResult<usize>> {
-        let mut this = self.project();
-        loop {
-            match this.tokio_stream.as_mut().poll_write_vectored(cx, bufs) {
-                Poll::Pending => continue,
-                result => return result
-            }
-        }
-    }
-
-    fn is_write_vectored(&self) -> bool {
-        self.tokio_stream.is_write_vectored()
     }
 
     fn poll_flush(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<IOResult<()>> {
