@@ -19,16 +19,23 @@ use std::{
         Instant
     }
 };
-use futures::ready;
-use tokio::io::{
-    AsyncRead,
-    AsyncWrite
+use futures::{
+    TryStreamExt,
+    ready
+};
+use tokio::{
+    io::{
+        AsyncRead,
+        AsyncWrite
+    },
+    time::timeout
 };
 use sheave_core::{
     ByteBuffer,
     Decoder,
     Encoder,
     U24_MAX,
+    flv::tags::*,
     handlers::{
         AsyncHandler,
         AsyncHandlerExt,
@@ -62,6 +69,9 @@ use sheave_core::{
         ReleaseStream,
         ReleaseStreamResult,
         StreamBegin,
+        Audio,
+        Video,
+        SetDataFrame,
         amf::v0::{
             Number,
             AmfString,
@@ -241,9 +251,37 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_flv(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        /* Somehow reading Audio/Video stream is required. */
+        let flv_tag = rtmp_context.get_input_mut().unwrap().try_next().await?;
 
-        Err(ErrorKind::Other.into())
+        if let Some(flv_tag) = flv_tag {
+            let message_id = rtmp_context.get_message_id().unwrap();
+            let channel;
+            let message_type;
+
+            match flv_tag.get_tag_type() {
+                TagType::Audio => {
+                    channel = Audio::CHANNEL;
+                    message_type = Audio::MESSAGE_TYPE;
+                },
+                TagType::Video => {
+                    channel = Video::CHANNEL;
+                    message_type = Video::MESSAGE_TYPE;
+                },
+                TagType::ScriptData => {
+                    channel = SetDataFrame::CHANNEL;
+                    message_type = SetDataFrame::MESSAGE_TYPE;
+                },
+                _ => unreachable!("We never get other type from FlvTag::get_tag_type().")
+            }
+
+            let timestamp = flv_tag.get_timestamp();
+            let mut buffer = ByteBuffer::default();
+            buffer.encode(&flv_tag);
+
+            write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, &Vec::<u8>::from(buffer)).await
+        } else {
+            Ok(())
+        }
     }
 
     fn handle_acknowledgement(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -394,7 +432,19 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW>
             ready!(pin!(self.write_connect_request(rtmp_context)).poll(cx))?;
         }
 
-        let basic_header = ready!(pin!(read_basic_header(self.0.as_mut())).poll(cx))?;
+        // NOTE:
+        //  Basically, we receive nothing while sending FLV data.
+        //  However server may sned either Acknowledgement or FCUnpublish/deleteStream.
+        //  This timeout considers when we get something above.
+        let basic_header = if let Some(Published) = rtmp_context.get_publisher_status() {
+            if let Ok(result) = ready!(pin!(timeout(rtmp_context.get_timeout_duration(), read_basic_header(self.0.as_mut()))).poll(cx)) {
+                result?
+            } else {
+                return Poll::Pending
+            }
+        } else {
+            ready!(pin!(read_basic_header(self.0.as_mut())).poll(cx))?
+        };
         let message_header = ready!(pin!(read_message_header(self.0.as_mut(), basic_header.get_message_format())).poll(cx))?;
         let extended_timestamp = if let Some(timestamp) = message_header.get_timestamp() {
             if timestamp.as_millis() == U24_MAX as u128 {
@@ -473,7 +523,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("FCUnpublish"));
-        buffer.encode(&FcUnpublish::new(rtmp_context.get_transaction_id(), rtmp_context.get_playpath().unwrap().clone()));
+        buffer.encode(&FcUnpublish::new(rtmp_context.get_playpath().unwrap().clone()));
         write_chunk(self.0.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await
     }
 
@@ -484,7 +534,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("deleteStream"));
-        buffer.encode(&DeleteStream::new(rtmp_context.get_transaction_id(), message_id.into()));
+        buffer.encode(&DeleteStream::new(message_id.into()));
         write_chunk(self.0.as_mut(), rtmp_context, DeleteStream::CHANNEL.into(), Duration::default(), DeleteStream::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await
     }
 }
