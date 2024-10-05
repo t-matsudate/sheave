@@ -2,7 +2,8 @@ mod last_chunk;
 
 use std::{
     collections::HashMap,
-    sync::Arc
+    sync::Arc,
+    time::Duration
 };
 use crate::{
     handshake::{
@@ -39,8 +40,9 @@ pub use self::last_chunk::*;
 /// // When you create this struct.
 /// RtmpContext::default();
 /// ```
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct RtmpContext {
+    timeout: Duration,
     signed: bool,
     receiving_chunk_size: ChunkSize,
     sending_chunk_size: ChunkSize,
@@ -61,9 +63,40 @@ pub struct RtmpContext {
     message_id: Option<u32>,
     publishing_name: Option<AmfString>,
     publishing_type: Option<AmfString>,
-    flv: Flv,
+    input: Option<Flv>,
     last_received_chunks: HashMap<u16, LastChunk>,
     last_sent_chunks: HashMap<u16, LastChunk>
+}
+
+impl Default for RtmpContext {
+    fn default() -> Self {
+        Self {
+            timeout: Duration::default(),
+            signed: bool::default(),
+            receiving_chunk_size: ChunkSize::default(),
+            sending_chunk_size: ChunkSize::default(),
+            window_acknowledgement_size: WindowAcknowledgementSize::default(),
+            peer_bandwidth: PeerBandwidth::default(),
+            last_transaction_id: Number::default(),
+            app: Option::default(),
+            playpath: Option::default(),
+            tc_url: Option::default(),
+            publisher_status: Option::default(),
+            last_sent_channel: Option::default(),
+            encryption_algorithm: Option::default(),
+            client_handshake: Option::default(),
+            server_handshake: Option::default(),
+            command_object: Option::default(),
+            properties: Option::default(),
+            information: Option::default(),
+            message_id: Option::default(),
+            publishing_name: Option::default(),
+            publishing_type: Option::default(),
+            input: Option::default(),
+            last_received_chunks: HashMap::default(),
+            last_sent_chunks: HashMap::default()
+        }
+    }
 }
 
 impl RtmpContext {
@@ -72,6 +105,16 @@ impl RtmpContext {
     /// Because of making this shareable between every handling steps.
     pub fn make_weak_mut<'a>(self: &'a Arc<Self>) -> &'a mut Self {
         unsafe { &mut *(Arc::downgrade(self).as_ptr() as *mut Self) }
+    }
+
+    /// Sets the timeout duration of communication.
+    pub fn set_timeout_duration(&mut self, timeout: Duration) {
+        self.timeout = timeout;
+    }
+
+    /// Gets the timeout duration of communication.
+    pub fn get_timeout_duration(&mut self) -> Duration {
+        self.timeout
     }
 
     /// Stores a flag to mean this handshake is signed.
@@ -461,14 +504,39 @@ impl RtmpContext {
         self.publishing_type.as_ref()
     }
 
-    /// Gets the FLV data.
-    pub fn get_flv(&mut self) -> &Flv {
-        &self.flv
+    /// Sets input file/device.
+    pub fn set_input(&mut self, input: Flv) {
+        self.input = Some(input);
     }
 
-    /// Gets the FLV data as mutable.
-    pub fn get_flv_mut(&mut self) -> &mut Flv {
-        &mut self.flv
+    /// Gets input file/device.
+    /// Note this can return `None`. e.g. When it is the default as is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_input().is_none())
+    /// ```
+    pub fn get_input(&mut self) -> Option<&Flv> {
+        self.input.as_ref()
+    }
+
+    /// Gets input file/device as mutable.
+    /// Note this can return `None`. e.g. When it is the default as is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_input_mut().is_none())
+    /// ```
+    pub fn get_input_mut(&mut self) -> Option<&mut Flv> {
+        self.input.as_mut()
     }
 
     /// Stores a last received chunk.
