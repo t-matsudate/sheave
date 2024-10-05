@@ -7,6 +7,7 @@ use std::{
         Poll
     }
 };
+use futures::ready;
 use tokio::io::{
     AsyncRead,
     AsyncWrite,
@@ -76,13 +77,13 @@ impl<RW: Unpin> MeasureAcknowledgement for StreamWrapper<RW> {
 
 impl<R: AsyncRead + Unpin> AsyncRead for StreamWrapper<R> {
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<IOResult<()>> {
-        let result = Pin::new(&mut self.stream).poll_read(cx, buf);
+        ready!(Pin::new(&mut self.stream).poll_read(cx, buf))?;
 
         if self.is_measured {
             self.add_amount(buf.filled().len() as u32);
         }
 
-        result
+        Poll::Ready(Ok(()))
     }
 }
 
