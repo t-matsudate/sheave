@@ -216,7 +216,7 @@ impl Flv {
     /// This imprints an empty header byte at creating its container.
     /// Because its header is written before shutting down streams.
     pub async fn create_from_name(name: &str) -> IOResult<Self> {
-        let body = File::create(name).await?;
+        let mut body = File::create(name).await?;
         body.write([0u8; 13].as_slice()).await?;
         body.flush().await?;
 
