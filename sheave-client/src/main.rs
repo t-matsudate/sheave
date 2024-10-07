@@ -143,7 +143,7 @@ async fn main() -> IOResult<()> {
 
     let input = File::open(&options.input[0]).await?;
     let input = match options.format[0] {
-        FileFormat::Flv => Flv::new(input).await?,
+        FileFormat::Flv => Flv::create_from_file(input).await?,
     }
 
     let (protocol, addr, app, playpath) = split_uri(&options.uri)?;

@@ -120,7 +120,7 @@ impl Flv {
     pub const LATEST_VERSION: u8 = 10;
     pub const LEN: usize = 9;
 
-    /// Constructs a FLV container.
+    /// Constructs a FLV container from a file.
     ///
     /// # Errors
     ///
@@ -153,7 +153,7 @@ impl Flv {
     ///         .write(true)
     ///         .create(true)
     ///         .open("/tmp/err1.flv").await.unwrap();
-    ///     let result = Flv::new(input).await;
+    ///     let result = Flv::create_from_file(input).await;
     ///     assert!(result.is_err());
     ///
     ///     // When the signature isn't "FLV".
@@ -165,7 +165,7 @@ impl Flv {
     ///     input.write("F4V".as_bytes()).await.unwrap();
     ///     input.flush().await.unwrap();
     ///     input.seek(SeekFrom::Start(0)).await.unwrap();
-    ///     let result = Flv::new(input).await;
+    ///     let result = Flv::create_from_file(input).await;
     ///     assert!(result.is_err());
     ///
     ///     // Ok.
@@ -181,13 +181,13 @@ impl Flv {
     ///     input.write(&bytes).await.unwrap();
     ///     input.flush().await.unwrap();
     ///     input.seek(SeekFrom::Start(0)).await.unwrap();
-    ///     let result = Flv::new(input).await;
+    ///     let result = Flv::create_from_file(input).await;
     ///     assert!(result.is_ok())
     /// }
     /// ```
-    pub async fn new(mut input: File) -> IOResult<Self> {
+    pub async fn create_from_file(mut file: File) -> IOResult<Self> {
         let mut flv_header: [u8; Self::LEN] = [0; Self::LEN];
-        input.read(&mut flv_header).await?;
+        file.read(&mut flv_header).await?;
 
         let signature = &flv_header[..3];
 
@@ -195,7 +195,7 @@ impl Flv {
             Err(not_flv_container(&flv_header[..3]))
         } else {
             // NOTE: This is a previous tag size at the head position.
-            input.seek(SeekFrom::Current(4)).await?;
+            file.seek(SeekFrom::Current(4)).await?;
 
             let version = flv_header[3];
             let flags = flv_header[4];
@@ -206,10 +206,28 @@ impl Flv {
                     version,
                     has_audio,
                     has_video,
-                    body: input
+                    body: file
                 }
             )
         }
+    }
+
+    /// Constructs an empty FLV container from a name.
+    /// This imprints an empty header byte at creating its container.
+    /// Because its header is written before shutting down streams.
+    pub async fn create_from_name(name: &str) -> IOResult<Self> {
+        let body = File::create(name).await?;
+        body.write([0u8; 13].as_slice()).await?;
+        body.flush().await?;
+
+        Ok(
+            Self {
+                version: Self::LATEST_VERSION,
+                has_audio: false,
+                has_video: false,
+                body
+            }
+        )
     }
 
     async fn compute_timestamp(&self) -> Duration {
@@ -281,6 +299,23 @@ impl Flv {
         self.body.write(&data).await?;
         self.body.write_u32(11 + data.len() as u32).await?;
         self.body.flush().await
+    }
+
+    /// Shuts down writing stream for this container.
+    /// Note that FLV header fields are written in this moment.
+    pub async fn shutdown(&mut self) -> IOResult<()> {
+        self.body.rewind().await?;
+
+        self.body.write(Self::SIGNATURE.as_bytes()).await?;
+        let version = self.version;
+        self.body.write_u8(version).await?;
+        let has_audio = self.has_audio as u8;
+        let has_video = self.has_video as u8;
+        self.body.write_u8((has_audio << 2) | has_video).await?;
+        self.body.write_u32(9).await?;
+        self.body.write_u32(0).await?;
+
+        self.body.shutdown().await
     }
 }
 
