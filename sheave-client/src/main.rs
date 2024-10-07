@@ -3,10 +3,7 @@ mod client;
 mod invalid_uri;
 
 use std::{
-    io::{
-        Result as IOResult,
-        SeekFrom
-    },
+    io::Result as IOResult,
     marker::PhantomData,
     time::Duration
 };
@@ -17,10 +14,6 @@ use clap::{
 };
 use tokio::{
     fs::File,
-    io::{
-        AsyncReadExt,
-        AsyncSeekExt
-    },
     spawn
 };
 use sheave_core::{
@@ -144,7 +137,7 @@ async fn main() -> IOResult<()> {
     let input = File::open(&options.input[0]).await?;
     let input = match options.format[0] {
         FileFormat::Flv => Flv::create_from_file(input).await?,
-    }
+    };
 
     let (protocol, addr, app, playpath) = split_uri(&options.uri)?;
 

@@ -26,12 +26,22 @@ pub use self::server::*;
 #[derive(Debug, Clone, Args)]
 #[group(required = true)]
 struct Listeners {
-    #[arg(long, value_name = "Address", default_values_t=[String::from("127.0.0.1:1935")])]
+    /// Listening addresses/ports via RTMP.
+    /// Currently only a address/port is allowed and plural addresses/ports are available.
+    /// Because of unimplemented the connection pool yet.
+    #[arg(num_args(1..), long, value_name = "Address")]
     rtmp: Vec<String>
 }
 
+/// Command line options for the Sheave Server.
+///
+/// # Required Arguments
+///
+/// * Listening protocols and addresses/ports
+///
+/// `sheave-server --rtmp 127.0.0.1:1935`
 #[derive(Debug, Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version)]
 struct ServerOptions {
     #[command(flatten)]
     listeners: Listeners,
@@ -48,6 +58,7 @@ async fn run_as_rtmp(address: &str) -> IOResult<()> {
     }
 }
 
+// TODO: Runs server actually.
 #[tokio::main]
 async fn main() -> IOResult<()> {
     let options = ServerOptions::parse();
@@ -56,4 +67,27 @@ async fn main() -> IOResult<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::CommandFactory;
+    use super::*;
+
+    #[test]
+    fn err_missing_group() {
+        let result = ServerOptions::command()
+            .try_get_matches_from(vec!["sheave-server"]);
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn ok_presenting_hosts() {
+        let result = ServerOptions::command()
+            .try_get_matches_from(vec!["sheave-server", "--rtmp", "127.0.0.1:1935"]);
+        assert!(result.is_ok());
+        let result = ServerOptions::command()
+            .try_get_matches_from(vec!["sheave-server", "--rtmp", "127.0.0.1:1935", "0.0.0.0:1935"]);
+        assert!(result.is_ok())
+    }
 }
