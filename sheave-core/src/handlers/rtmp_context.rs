@@ -11,7 +11,6 @@ use crate::{
         Handshake
     },
     messages::{
-        Channel,
         ChunkSize,
         WindowAcknowledgementSize,
         PeerBandwidth,
@@ -26,6 +25,7 @@ use crate::{
 use super::PublisherStatus;
 pub use self::last_chunk::*;
 
+// TODO: Imprints a timestamp into FLV tag for not FLV inputs.
 /// RTMP's common contexts.
 ///
 /// Many fields are optional by default.
@@ -53,7 +53,6 @@ pub struct RtmpContext {
     playpath: Option<AmfString>,
     tc_url: Option<AmfString>,
     publisher_status: Option<PublisherStatus>,
-    last_sent_channel: Option<Channel>,
     encryption_algorithm: Option<EncryptionAlgorithm>,
     client_handshake: Option<Handshake>,
     server_handshake: Option<Handshake>,
@@ -82,7 +81,6 @@ impl Default for RtmpContext {
             playpath: Option::default(),
             tc_url: Option::default(),
             publisher_status: Option::default(),
-            last_sent_channel: Option::default(),
             encryption_algorithm: Option::default(),
             client_handshake: Option::default(),
             server_handshake: Option::default(),
@@ -251,26 +249,6 @@ impl RtmpContext {
     /// ```
     pub fn get_publisher_status(&mut self) -> Option<PublisherStatus> {
         self.publisher_status
-    }
-
-    /// Sets the last sent chunk channel.
-    pub fn set_last_sent_channel(&mut self, channel: Channel) {
-        self.last_sent_channel = Some(channel);
-    }
-
-    /// Gets the last sent chunk channel.
-    /// Note this can return `None`. e.g. When this field is default as it is.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::handlers::RtmpContext;
-    ///
-    /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_last_sent_channel().is_none())
-    /// ```
-    pub fn get_last_sent_channel(&mut self) -> Option<Channel> {
-        self.last_sent_channel
     }
 
     /// Stores the algorithm to encrypt this handshake.
