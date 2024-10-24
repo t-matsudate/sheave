@@ -11,3 +11,4 @@ futures.workspace = true
 pin-project-lite.workspace = true
 sheave-core = { path = "../sheave-core" }
 tokio.workspace = true
+uuid = { version = "1.10.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
