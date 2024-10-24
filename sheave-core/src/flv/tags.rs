@@ -135,29 +135,17 @@ mod audio;
 mod video;
 mod script_data;
 
-use std::{
-    io::Result as IOResult,
-    time::Duration
-};
-use crate::{
-    ByteBuffer,
-    Decoder,
-    Encoder
-};
-use super::unknown_tag;
+use std::time::Duration;
 pub use self::{
     audio::*,
     video::*,
     script_data::*
 };
 
-/// The tag body.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum InnerTag {
-    Audio(AudioTag),
-    Video(VideoTag),
-    ScriptData(ScriptDataTag)
-}
+/// The length of metadata which are common to every FLV tag.
+pub const METADATA_LEN: usize = 11;
+/// The Message ID which is written into FLV metadata (however this will never be read).
+pub const DEFAULT_MESSAGE_ID: u32 = 0;
 
 /// Representation of TagType bits of the FLV tag.
 ///
@@ -167,14 +155,14 @@ pub enum InnerTag {
 /// | :- | :- |
 /// |`Audio`|`8`|
 /// |`Video`|`9`|
-/// |`ScriptData`|`16`|
+/// |`ScriptData`|`18`|
 /// |`Other`|other numbers|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TagType {
     Audio = 8,
     Video = 9,
-    ScriptData = 16,
+    ScriptData = 18,
     Other = 31
 }
 
@@ -185,7 +173,7 @@ impl From<u8> for TagType {
         match tag_type {
             8 => Audio,
             9 => Video,
-            16 => ScriptData,
+            18 => ScriptData,
             _ => Other
         }
     }
@@ -197,156 +185,35 @@ impl From<TagType> for u8 {
     }
 }
 
-/// The FLV body.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// The FLV tag element.
 pub struct FlvTag {
+    tag_type: TagType,
     timestamp: Duration,
-    inner_tag: InnerTag
+    data: Vec<u8>
 }
 
 impl FlvTag {
-    const MESSAGE_ID: u32 = 0;
-
     /// Constructs a FlvTag.
-    pub fn new(timestamp: Duration, inner_tag: InnerTag) -> Self {
-        Self { timestamp, inner_tag }
-    }
-
-    /// Gets the type of this tag.
-    /// See [`TagType`] for detail what's returned.
-    ///
-    /// [`TagType`]: TagType
-    pub fn get_tag_type(&self) -> TagType {
-        match self.inner_tag {
-            InnerTag::Audio(_) => TagType::Audio,
-            InnerTag::Video(_) => TagType::Video,
-            InnerTag::ScriptData(_) => TagType::ScriptData
+    pub fn new(tag_type: TagType, timestamp: Duration, data: Vec<u8>) -> Self {
+        Self {
+            tag_type,
+            timestamp,
+            data
         }
     }
 
-    /// Gets the timestamp that created this tag.
+    /// Gets the tag type.
+    pub fn get_tag_type(&self) -> TagType {
+        self.tag_type
+    }
+
+    /// Gets the timestamp.
     pub fn get_timestamp(&self) -> Duration {
         self.timestamp
     }
 
-    pub fn get_inner_tag(&self) -> &InnerTag {
-        &self.inner_tag
-    }
-}
-
-impl Decoder<FlvTag> for ByteBuffer {
-    fn decode(&mut self) -> IOResult<FlvTag> {
-        let tag_type = self.get_u8()?;
-        // NOTE: This is a data size not to be used.
-        self.get_u24_be()?;
-        let mut timestamp = self.get_u24_be()? as u32;
-        let timestamp_extended = self.get_u8()? as u32;
-        // NOTE: This is the message ID that is always 0.
-        self.get_u24_be()?;
-        let inner_tag: InnerTag = match TagType::from(tag_type) {
-            TagType::Audio => Decoder::<AudioTag>::decode(self).map(InnerTag::Audio)?,
-            TagType::Video => Decoder::<VideoTag>::decode(self).map(InnerTag::Video)?,
-            TagType::ScriptData => Decoder::<ScriptDataTag>::decode(self).map(InnerTag::ScriptData)?,
-            _ => return Err(unknown_tag(tag_type))
-        };
-
-        timestamp |= timestamp_extended << 23;
-        Ok(FlvTag::new(Duration::from_millis(timestamp as u64), inner_tag))
-    }
-}
-
-impl Encoder<FlvTag> for ByteBuffer {
-    fn encode(&mut self, flv_tag: &FlvTag) {
-        let timestamp = flv_tag.get_timestamp().as_millis() as u32;
-        let data: Vec<u8> = match flv_tag.get_inner_tag() {
-            InnerTag::Audio(ref audio_tag) => {
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(audio_tag);
-                buffer.into()
-            },
-            InnerTag::Video(ref video_tag) => {
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(video_tag);
-                buffer.into()
-            },
-            InnerTag::ScriptData(ref script_data_tag) => {
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(script_data_tag);
-                buffer.into()
-            }
-        };
-
-        self.put_u8(flv_tag.get_tag_type().into());
-        self.put_u24_be(data.len() as u32);
-        self.put_u24_be(timestamp & 0x00FFFFFF);
-        self.put_u8((timestamp >> 23) as u8);
-        // NOTE: This is the message ID that is always 0.
-        self.put_u24_be(0);
-        self.put_bytes(&data);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        ecma_array,
-        messages::amf::v0::Number
-    };
-    use super::*;
-
-    #[test]
-    fn decode_flv_tag() {
-        let mut buffer = ByteBuffer::default();
-        buffer.encode(
-            &ScriptDataTag::new(
-                "onMetaData".into(),
-                ecma_array!(
-                    "audiocodecid" => Number::from(0),
-                    "videocodecid" => Number::from(2)
-                )
-            )
-        );
-        let data: Vec<u8> = buffer.into();
-
-        let mut buffer = ByteBuffer::default();
-        buffer.put_u8(TagType::ScriptData.into());
-        buffer.put_u24_be(data.len() as u32);
-        // NOTE: This is the timestamp in a flv tag which is at the head position.
-        buffer.put_u32_be(0);
-        buffer.put_u24_be(0);
-        buffer.put_bytes(&data);
-        assert!(Decoder::<FlvTag>::decode(&mut buffer).is_ok());
-
-        let mut buffer = ByteBuffer::default();
-        buffer.put_u8(TagType::Other.into());
-        buffer.put_u24_be(data.len() as u32);
-        buffer.put_u32_be(0);
-        buffer.put_u24_be(0);
-        buffer.put_bytes(&data);
-        assert!(Decoder::<FlvTag>::decode(&mut buffer).is_err())
-    }
-
-    #[test]
-    fn encode_flv_tag() {
-        let expected_data = ScriptDataTag::new(
-            "onMetaData".into(),
-            ecma_array!(
-                "audiocodecid" => Number::from(0),
-                "videocodecid" => Number::from(2)
-            )
-        );
-        let mut buffer = ByteBuffer::default();
-        buffer.encode(&FlvTag::new(Duration::default(), InnerTag::ScriptData(expected_data.clone())));
-        let tag_type: TagType = buffer.get_u8().unwrap().into();
-        let data_size = buffer.get_u24_be().unwrap();
-        let timestamp = buffer.get_u32_be().unwrap();
-        let message_id = buffer.get_u24_be().unwrap();
-        let remained = buffer.remained() as u32;
-        let actual_data: ScriptDataTag = buffer.decode().unwrap();
-        assert_eq!(TagType::ScriptData, tag_type);
-        assert_eq!(data_size, remained);
-        assert_eq!(0, timestamp);
-        assert_eq!(0, message_id);
-        assert_eq!(expected_data, actual_data)
+    /// Gets a message data. 
+    pub fn get_data(&self) -> &[u8] {
+        &self.data
     }
 }

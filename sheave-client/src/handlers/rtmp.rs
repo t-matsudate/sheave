@@ -19,10 +19,7 @@ use std::{
         Instant
     }
 };
-use futures::{
-    TryStreamExt,
-    ready
-};
+use futures::ready;
 use tokio::{
     io::{
         AsyncRead,
@@ -54,6 +51,7 @@ use sheave_core::{
     },
     messages::{
         Acknowledgement,
+        Channel,
         ChunkData,
         Connect,
         ConnectResult,
@@ -251,13 +249,12 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_flv(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let flv_tag = rtmp_context.get_input_mut().unwrap().try_next().await?;
-
-        if let Some(flv_tag) = flv_tag {
+        for next in rtmp_context.get_input_mut().unwrap() {
+            let flv_tag = next?;
             let message_id = rtmp_context.get_message_id().unwrap();
+
             let channel;
             let message_type;
-
             match flv_tag.get_tag_type() {
                 TagType::Audio => {
                     channel = Audio::CHANNEL;
@@ -271,17 +268,18 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
                     channel = SetDataFrame::CHANNEL;
                     message_type = SetDataFrame::MESSAGE_TYPE;
                 },
-                _ => unreachable!("We never get other type from FlvTag::get_tag_type().")
+                TagType::Other => {
+                    channel = Channel::Other;
+                    message_type = MessageType::Other;
+                }
             }
-
             let timestamp = flv_tag.get_timestamp();
-            let mut buffer = ByteBuffer::default();
-            buffer.encode(&flv_tag);
-
-            write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, &Vec::<u8>::from(buffer)).await
-        } else {
-            Ok(())
+            let data = flv_tag.get_data();
+            return write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, data).await
         }
+
+        // NOTE: Default return value when no FLV tag exists.
+        Ok(())
     }
 
     fn handle_acknowledgement(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {

@@ -26,12 +26,16 @@ use tokio::{
         AsyncWrite
     }
 };
+use uuid::Uuid;
 use sheave_core::{
     ByteBuffer,
     Decoder,
     Encoder,
     U24_MAX,
-    flv::*,
+    flv::{
+        Flv,
+        tags::*
+    },
     handlers::{
         AsyncHandler,
         AsyncHandlerExt,
@@ -171,15 +175,7 @@ struct MessageHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn handle_acknowledgement(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<Acknowledgement>::decode(&mut buffer)?;
-
-        Ok(())
-    }
-
-    async fn handle_flv(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        let flv_tag: FlvTag = buffer.decode()?;
-
-        rtmp_context.get_input_mut().unwrap().append_flv_tag(flv_tag).await
+        Decoder::<Acknowledgement>::decode(&mut buffer).map(|_| ())
     }
 
     async fn handle_connect_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -190,25 +186,26 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn handle_release_stream_request(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<ReleaseStream>::decode(&mut buffer)?;
-
-        Ok(())
+        Decoder::<ReleaseStream>::decode(&mut buffer).map(|_| ())
     }
 
     async fn handle_fc_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let fc_publish_request: FcPublish = buffer.decode()?;
-        let play_path: AmfString = fc_publish_request.into();
-        let input = Flv::create_from_name(&play_path).await?;
+        let mut playpath: AmfString = fc_publish_request.into();
+
+        if playpath.is_empty() {
+            playpath = AmfString::new(format!("/tmp/{}.flv", Uuid::new_v4()));
+        }
+
+        let input = Flv::create(&playpath)?;
         rtmp_context.set_input(input);
-        rtmp_context.set_playpath(play_path);
+        rtmp_context.set_playpath(playpath);
 
         Ok(())
     }
 
     async fn handle_create_stream_request(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<CreateStream>::decode(&mut buffer)?;
-
-        Ok(())
+        Decoder::<CreateStream>::decode(&mut buffer).map(|_| ())
     }
 
     async fn handle_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -262,6 +259,26 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         } else {
             self.handle_connect_request(rtmp_context, buffer).await
         }
+    }
+
+    async fn handle_flv(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, message_type: MessageType, timestamp: Duration) -> IOResult<()> {
+        let input = rtmp_context.get_input().unwrap();
+
+        let tag_type = match message_type {
+            MessageType::Audio => TagType::Audio,
+            MessageType::Video => TagType::Video,
+            MessageType::Data => TagType::ScriptData,
+            _ => TagType::Other
+        };
+
+        if let TagType::ScriptData = tag_type {
+            // NOTE: Currently @setDataFrame command is used for nothing.
+            Decoder::<AmfString>::decode(&mut buffer)?;
+        }
+
+        let data: Vec<u8> = buffer.into();
+        let flv_tag = FlvTag::new(tag_type, timestamp, data);
+        input.append_flv_tag(flv_tag)
     }
 
     async fn write_connect_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
@@ -415,12 +432,16 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW>
                 )
             ).poll(cx)
         )?;
+        println!("{data:x?}");
         let buffer: ByteBuffer = data.into();
 
         let message_type = rtmp_context.get_last_received_chunk(&chunk_id).unwrap().get_message_type();
         match message_type {
             MessageType::Acknowledgement => ready!(pin!(self.handle_acknowledgement(rtmp_context, buffer)).poll(cx))?,
-            MessageType::Audio | MessageType::Video | MessageType::Data => ready!(pin!(self.handle_flv(rtmp_context, buffer)).poll(cx))?,
+            MessageType::Audio | MessageType::Video | MessageType::Data => {
+                let timestamp = rtmp_context.get_last_received_chunk(&chunk_id).unwrap().get_timestamp();
+                ready!(pin!(self.handle_flv(rtmp_context, buffer, message_type, timestamp)).poll(cx))?
+            },
             MessageType::Command => ready!(pin!(self.handle_command_request(rtmp_context, buffer)).poll(cx))?,
             other => unimplemented!("Undefined Message: {other:?}")
         }

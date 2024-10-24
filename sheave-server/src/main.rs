@@ -64,6 +64,8 @@ async fn main() -> IOResult<()> {
     let options = ServerOptions::parse();
     if let Err(e) = run_as_rtmp(&options.listeners.rtmp[0]).await {
         println!("{e}");
+    } else {
+        println!("OK");
     }
 
     Ok(())

@@ -40,45 +40,25 @@ use std::{
         Formatter,
         Result as FormatResult
     },
+    fs::OpenOptions,
     io::{
+        Read,
         Result as IOResult,
-        SeekFrom
+        Seek,
+        SeekFrom,
+        Write
     },
-    pin::Pin,
-    task::{
-        Context as FutureContext,
-        Poll
-    },
-    time::{
-        Duration,
-        Instant
-    }
-};
-use futures::{
-    Stream,
-    ready
-};
-use tokio::{
-    fs::File,
-    io::{
-        AsyncRead,
-        AsyncReadExt,
-        AsyncSeek,
-        AsyncSeekExt,
-        AsyncWriteExt,
-        ReadBuf
-    }
+    time::Duration,
 };
 use super::{
     ByteBuffer,
-    Decoder,
-    Encoder
+    Decoder
 };
+use self::tags::*;
 pub use self::{
     not_flv_container::*,
     unknown_tag::*,
     encryption_header::*,
-    tags::*
 };
 
 /// Patterns of the FilterName field.
@@ -107,18 +87,23 @@ impl Display for FilterName {
 }
 
 /// The FLV container.
-#[derive(Debug)]
+/// This holds just 2 elements:
+///
+/// * Playpath to actual FLV file
+/// * Offset in FLV file (for reading).
+///
+/// By not to hold actual file handle, this makes plural users to read/write FLV file not to bump.
+/// Actual file handle is gotten only while file opens/creates and file reads/writes.
+#[derive(Debug, Clone)]
 pub struct Flv {
-    version: u8,
-    has_audio: bool,
-    has_video: bool,
-    body: File
+    offset: u64,
+    playpath: String
 }
 
 impl Flv {
-    pub const SIGNATURE: &'static str = "FLV";
-    pub const LATEST_VERSION: u8 = 10;
-    pub const LEN: usize = 9;
+    const SIGNATURE: &'static str = "FLV";
+    const LATEST_VERSION: u8 = 10;
+    const HEADER_LEN: usize = 9;
 
     /// Constructs a FLV container from a file.
     ///
@@ -132,132 +117,142 @@ impl Flv {
     /// # Examples
     ///
     /// ```rust
-    /// use std::io::SeekFrom;
-    /// use tokio::{
+    /// use std::{
     ///     fs::{
     ///         File,
     ///         OpenOptions
     ///     },
     ///     io::{
-    ///         AsyncSeekExt,
-    ///         AsyncWriteExt
+    ///         Read,
+    ///         Seek,
+    ///         SeekFrom,
+    ///         Write
     ///     }
     /// };
     /// use sheave_core::flv::*;
     ///
-    /// #[tokio::main]
-    /// async fn main() {
-    ///     // When the input length less than 13.
-    ///     let mut input = OpenOptions::new()
-    ///         .read(true)
-    ///         .write(true)
-    ///         .create(true)
-    ///         .open("/tmp/err1.flv").await.unwrap();
-    ///     let result = Flv::create_from_file(input).await;
-    ///     assert!(result.is_err());
+    /// // When the input length less than 13.
+    /// let mut input = OpenOptions::new()
+    ///     .write(true)
+    ///     .create(true)
+    ///     .truncate(true)
+    ///     .open("/tmp/err1.flv").unwrap();
+    /// let result = Flv::open("/tmp/err1.flv");
+    /// assert!(result.is_err());
     ///
-    ///     // When the signature isn't "FLV".
-    ///     let mut input = OpenOptions::new()
-    ///         .read(true)
-    ///         .write(true)
-    ///         .create(true)
-    ///         .open("/tmp/err2.flv").await.unwrap();
-    ///     input.write("F4V".as_bytes()).await.unwrap();
-    ///     input.flush().await.unwrap();
-    ///     input.seek(SeekFrom::Start(0)).await.unwrap();
-    ///     let result = Flv::create_from_file(input).await;
-    ///     assert!(result.is_err());
+    /// // When the signature isn't "FLV".
+    /// let mut input = OpenOptions::new()
+    ///     .write(true)
+    ///     .create(true)
+    ///     .truncate(true)
+    ///     .open("/tmp/err2.flv").unwrap();
+    /// input.write("F4V".as_bytes()).unwrap();
+    /// input.flush().unwrap();
+    /// input.seek(SeekFrom::Start(0)).unwrap();
+    /// let result = Flv::open("/tmp/err2.flv");
+    /// assert!(result.is_err());
     ///
-    ///     // Ok.
-    ///     let mut input = OpenOptions::new()
-    ///         .read(true)
-    ///         .write(true)
-    ///         .create(true)
-    ///         .open("/tmp/ok.flv").await.unwrap();
-    ///     let mut bytes: [u8; 13] = [0; 13];
-    ///     bytes[0] = b'F';
-    ///     bytes[1] = b'L';
-    ///     bytes[2] = b'V';
-    ///     input.write(&bytes).await.unwrap();
-    ///     input.flush().await.unwrap();
-    ///     input.seek(SeekFrom::Start(0)).await.unwrap();
-    ///     let result = Flv::create_from_file(input).await;
-    ///     assert!(result.is_ok())
-    /// }
+    /// // Ok.
+    /// let mut input = OpenOptions::new()
+    ///     .write(true)
+    ///     .create(true)
+    ///     .truncate(true)
+    ///     .open("/tmp/ok.flv").unwrap();
+    /// let mut bytes: [u8; 9] = [0; 9];
+    /// bytes[..3].copy_from_slice("FLV".as_bytes());
+    /// input.write(&bytes).unwrap();
+    /// // NOTE: This is a previous tag size at the head position.
+    /// input.write(&0u32.to_be_bytes()).unwrap();
+    /// input.flush().unwrap();
+    /// input.seek(SeekFrom::Start(0)).unwrap();
+    /// let result = Flv::open("/tmp/ok.flv");
+    /// assert!(result.is_ok())
     /// ```
-    pub async fn create_from_file(mut file: File) -> IOResult<Self> {
-        let mut flv_header: [u8; Self::LEN] = [0; Self::LEN];
-        file.read(&mut flv_header).await?;
+    pub fn open(playpath: &str) -> IOResult<Self> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(playpath)?;
+        let mut flv_header: [u8; Self::HEADER_LEN] = [0; Self::HEADER_LEN];
+        file.read(&mut flv_header)?;
 
         let signature = &flv_header[..3];
 
-        if signature != Flv::SIGNATURE.as_bytes() {
+        if signature != Self::SIGNATURE.as_bytes() {
             Err(not_flv_container(&flv_header[..3]))
         } else {
-            // NOTE: This is a previous tag size at the head position.
-            file.seek(SeekFrom::Current(4)).await?;
-
-            let version = flv_header[3];
-            let flags = flv_header[4];
-            let has_audio = (flags & 0x03) != 0;
-            let has_video = (flags & 0x01) != 0;
             Ok(
-                Self {
-                    version,
-                    has_audio,
-                    has_video,
-                    body: file
+                Self{
+                    // NOTE: Seeks to the position of first FLV tag.
+                    offset: 13,
+                    playpath: playpath.into()
                 }
             )
         }
     }
 
     /// Constructs an empty FLV container from a name.
-    /// This imprints an empty header byte at creating its container.
-    /// Because its header is written before shutting down streams.
-    pub async fn create_from_name(name: &str) -> IOResult<Self> {
-        let mut body = File::create(name).await?;
-        body.write([0u8; 13].as_slice()).await?;
-        body.flush().await?;
-
+    pub fn create(playpath: &str) -> IOResult<Self> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .open(playpath)?;
+        let mut flv_header: [u8; Self::HEADER_LEN] = [0; Self::HEADER_LEN];
+        flv_header[..3].copy_from_slice(Self::SIGNATURE.as_bytes());
+        flv_header[3] = Self::LATEST_VERSION;
+        flv_header[8] = Self::HEADER_LEN as u8;
+        file.write(&flv_header)?;
+        file.write(&0u32.to_be_bytes())?;
+        file.flush()?;
         Ok(
-            Self {
-                version: Self::LATEST_VERSION,
-                has_audio: false,
-                has_video: false,
-                body
+            Self{
+                // NOTE: Seeks to the position of first FLV tag.
+                offset: 13,
+                playpath: playpath.into()
             }
         )
     }
 
-    async fn compute_timestamp(&self) -> Duration {
-        let metadata = self.body.metadata().await.unwrap();
-
-        // NOTE: 13 is the length of FLV header and a length of previous tag size following it.
-        // We can ignore these by following reasons:
-        //
-        // * We send/receive only FLV tags while communication.
-        // * the tag size at the head position indicates nothing.
-        if metadata.len() > 13 {
-            Instant::now().elapsed()
-        } else {
-            Duration::default()
-        }
-    }
-
     /// Gets the current FLV version.
-    pub fn get_version(&self) -> u8 {
-        self.version
+    pub fn get_version(&self) -> IOResult<u8> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&self.playpath)?;
+        file.seek(SeekFrom::Start(3))?;
+        let mut version_byte: [u8; 1] = [0; 1];
+        file.read(&mut version_byte)?;
+        Ok(u8::from_be_bytes(version_byte))
     }
 
-    /// Checks whether this contains audio data.
-    pub fn has_audio(&self) -> bool {
-        self.has_audio
+    fn set_flags(&self, flags: u8) -> IOResult<()> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .open(&self.playpath)?;
+        file.seek(SeekFrom::Start(4))?;
+        file.write(&flags.to_be_bytes())?;
+        file.flush()
     }
 
-    /// Checks whether this contains video data.
-    pub fn has_video(&self) -> bool {
-        self.has_video
+    /// Checks whether FLV container has audio data.
+    pub fn has_audio(&self) -> IOResult<bool> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&self.playpath)?;
+        file.seek(SeekFrom::Start(4))?;
+        let mut flags_byte: [u8; 1] = [0; 1];
+        file.read(&mut flags_byte)?;
+        Ok((flags_byte[0] & 0x04) != 0)
+    }
+
+    /// Checks whether FLV container has video data.
+    pub fn has_video(&self) -> IOResult<bool> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&self.playpath)?;
+        file.seek(SeekFrom::Start(4))?;
+        let mut flags_byte: [u8; 1] = [0; 1];
+        file.read(&mut flags_byte)?;
+        Ok((flags_byte[0] & 0x01) != 0)
     }
 
     /// Appends a FLV tag into the tag container.
@@ -267,108 +262,97 @@ impl Flv {
     /// If `audiocodecid` exists, FLV contains auduo data.
     /// Or if `videocodecid` exists, FLV contains video data.
     /// Otherwise FLV consists of just script data.
-    pub async fn append_flv_tag(&mut self, flv_tag: FlvTag) -> IOResult<()> {
-        let data: Vec<u8> = match flv_tag.get_inner_tag() {
-            InnerTag::Audio(ref audio_tag) => {
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(audio_tag);
-                buffer.into()
-            },
-            InnerTag::Video(ref video_tag) => {
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(video_tag);
-                buffer.into()
-            },
-            InnerTag::ScriptData(ref script_data_tag) => {
-                self.has_audio = script_data_tag.get_value().get_properties().get("audiocodecid").is_some();
-                self.has_video = script_data_tag.get_value().get_properties().get("videocodecid").is_some();
+    pub fn append_flv_tag(&self, flv_tag: FlvTag) -> IOResult<()> {
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(&self.playpath)?;
 
-                let mut buffer = ByteBuffer::default();
-                buffer.encode(script_data_tag);
-                buffer.into()
-            }
-        };
-        let timestamp = (self.compute_timestamp().await.as_millis() as u32).to_be_bytes();
+        if let TagType::ScriptData = flv_tag.get_tag_type() {
+            let mut buffer: ByteBuffer = flv_tag.get_data().to_vec().into();
+            let script_data: ScriptDataTag = buffer.decode()?;
+            let has_audio = script_data.get_value().get_properties().get("audiocodecid").is_some() as u8;
+            let has_video = script_data.get_value().get_properties().get("videocodecid").is_some() as u8;
+            self.set_flags((has_audio << 2) | has_video)?;
+        }
 
-        self.body.write_u8(flv_tag.get_tag_type().into()).await?;
-        self.body.write(&(data.len() as u32).to_be_bytes()[1..]).await?;
-        self.body.write(&timestamp[1..]).await?;
-        self.body.write_u8(timestamp[0]).await?;
-        // NOTE: This is the message ID that is always 0.
-        self.body.write(&0u32.to_be_bytes()[1..]).await?;
-        self.body.write(&data).await?;
-        self.body.write_u32(11 + data.len() as u32).await?;
-        self.body.flush().await
-    }
+        let timestamp_bytes = (flv_tag.get_timestamp().as_millis() as u32).to_be_bytes();
+        let data_size = flv_tag.get_data().len();
+        let mut metadata: [u8; METADATA_LEN] = [0; METADATA_LEN];
+        metadata[0] = flv_tag.get_tag_type().into();
+        metadata[1..4].copy_from_slice(&data_size.to_be_bytes()[5..]);
+        metadata[4..7].copy_from_slice(&timestamp_bytes[1..]);
+        metadata[7] = timestamp_bytes[0];
+        // NOTE: This is the message ID that is currently always 0.
+        metadata[8..].copy_from_slice(&DEFAULT_MESSAGE_ID.to_be_bytes()[..3]);
 
-    /// Shuts down writing stream for this container.
-    /// Note that FLV header fields are written in this moment.
-    pub async fn shutdown(&mut self) -> IOResult<()> {
-        self.body.rewind().await?;
-
-        self.body.write(Self::SIGNATURE.as_bytes()).await?;
-        let version = self.version;
-        self.body.write_u8(version).await?;
-        let has_audio = self.has_audio as u8;
-        let has_video = self.has_video as u8;
-        self.body.write_u8((has_audio << 2) | has_video).await?;
-        self.body.write_u32(9).await?;
-        self.body.write_u32(0).await?;
-
-        self.body.shutdown().await
+        file.write(&metadata)?;
+        file.write(flv_tag.get_data())?;
+        file.write(&(METADATA_LEN + data_size).to_be_bytes()[4..])?;
+        file.flush()
     }
 }
 
-impl Stream for Flv {
+impl Iterator for Flv {
     type Item = IOResult<FlvTag>;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<Option<Self::Item>> {
-        let mut body = Pin::new(&mut self.body);
-        let mut metadata_bytes: [u8; 11] = [0; 11];
-        let mut buf = ReadBuf::new(&mut metadata_bytes);
+    /// Reads a FLV tag from the playpath.
+    /// Note this can return some error when following causes:
+    ///
+    /// * `UnknownTag`
+    ///
+    /// When any undefined tag type found.
+    /// Currently, the tag type should be one of 8(Audio), 9(Video) or 18(Data) in the FLV container.
+    /// That is, this library doesn't know any way of handling other type.
+    ///
+    /// * Something else
+    ///
+    /// When reading/seeking got failed by some cause.
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut file = match OpenOptions::new().read(true).open(&self.playpath) {
+            Ok(file) => file,
+            Err(e) => return Some(Err(e))
+        };
 
-        if let Err(e) = ready!(body.as_mut().poll_read(cx, &mut buf)) {
-            return Poll::Ready(Some(Err(e)))
-        } else if buf.filled().len() == 0 {
-            return Poll::Ready(None)
+        if let Err(e) = file.seek(SeekFrom::Start(self.offset)) {
+            return Some(Err(e))
         }
+
+        let mut metadata_bytes: [u8; METADATA_LEN] = [0; METADATA_LEN];
+        match file.read(&mut metadata_bytes) {
+            Err(e) => return Some(Err(e)),
+            Ok(0) => return None,
+            _ => {}
+        }
+
+        let tag_type_byte = metadata_bytes[0] & 0x1f;
+        let tag_type: TagType = match tag_type_byte {
+            8 | 9 | 18 => tag_type_byte.into(),
+            other => return Some(Err(unknown_tag(other)))
+        };
 
         let mut data_size_bytes: [u8; 4] = [0; 4];
         data_size_bytes[1..].copy_from_slice(&metadata_bytes[1..4]);
         let data_size = u32::from_be_bytes(data_size_bytes);
-        let mut data_bytes: Vec<u8> = Vec::with_capacity(data_size as usize);
-        unsafe { data_bytes.set_len(data_size as usize); }
-        let mut buf = ReadBuf::new(&mut data_bytes);
-
-        if let Err(e) = ready!(body.as_mut().poll_read(cx, &mut buf)) {
-            return Poll::Ready(Some(Err(e)))
+        let mut data: Vec<u8> = Vec::with_capacity(data_size as usize);
+        unsafe { data.set_len(data_size as usize); }
+        if let Err(e) = file.read(&mut data) {
+            return Some(Err(e))
         }
 
         // NOTE: Previous Tag Size is unnecessary in reading.
-        body.as_mut().start_seek(SeekFrom::Current(4))?;
+        if let Err(e) = file.seek(SeekFrom::Current(4)) {
+            return Some(Err(e))
+        }
 
-        let tag_type_byte = metadata_bytes[0] & 0x1f;
         let mut timestamp_bytes: [u8; 4] = [0; 4];
         timestamp_bytes[1..].copy_from_slice(&metadata_bytes[4..7]);
         let timestamp = u32::from_be_bytes(timestamp_bytes) | ((metadata_bytes[8] as u32) << 23);
 
-        let mut buffer: ByteBuffer = data_bytes.into();
-        let inner_tag = match TagType::from(tag_type_byte) {
-            TagType::Audio => match Decoder::<AudioTag>::decode(&mut buffer) {
-                Ok(audio_tag) => InnerTag::Audio(audio_tag),
-                Err(e) => return Poll::Ready(Some(Err(e)))
-            },
-            TagType::Video => match Decoder::<VideoTag>::decode(&mut buffer) {
-                Ok(video_tag) => InnerTag::Video(video_tag),
-                Err(e) => return Poll::Ready(Some(Err(e)))
-            },
-            TagType::ScriptData => match Decoder::<ScriptDataTag>::decode(&mut buffer) {
-                Ok(script_data_tag) => InnerTag::ScriptData(script_data_tag),
-                Err(e) => return Poll::Ready(Some(Err(e)))
-            },
-            _ => return Poll::Ready(Some(Err(unknown_tag(tag_type_byte))))
-        };
 
-        Poll::Ready(Some(Ok(FlvTag::new(Duration::from_millis(timestamp as u64), inner_tag))))
+        self.offset = match file.stream_position() {
+            Err(e) => return Some(Err(e)),
+            Ok(offset) => offset
+        };
+        Some(Ok(FlvTag::new(tag_type, Duration::from_millis(timestamp as u64), data)))
     }
 }

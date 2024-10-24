@@ -12,10 +12,7 @@ use clap::{
     Parser,
     ValueEnum
 };
-use tokio::{
-    fs::File,
-    spawn
-};
+use tokio::spawn;
 use sheave_core::{
     flv::*,
     handlers::RtmpContext,
@@ -134,9 +131,8 @@ async fn run_as_rtmp(input: Flv, addr: &str, app: &str, playpath: &str, tc_url: 
 async fn main() -> IOResult<()> {
     let options = ClientOptions::parse();
 
-    let input = File::open(&options.input[0]).await?;
     let input = match options.format[0] {
-        FileFormat::Flv => Flv::create_from_file(input).await?,
+        FileFormat::Flv => Flv::open(&options.input[0])?,
     };
 
     let (protocol, addr, app, playpath) = split_uri(&options.uri)?;
