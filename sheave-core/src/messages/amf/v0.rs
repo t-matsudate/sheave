@@ -10,6 +10,7 @@
 //! |`2`|[`AmfString`]|The string that is limited its length the range of 2 bytes.|
 //! |`3`|[`Object`]|The key/value-paired object that its value type is flexible.|
 //! |`5`|[`Null`]|Only the marker. Any value doesn't contain.|
+//! |`8`|[`EcmaArray`]|Same as the [`Object`] except this has its length.|
 //! |`9`|Object End|Indicates a stream of object terminaites there.|
 //!
 //! These are checked whether matched its marker with an actual data, by the receiver-side.
