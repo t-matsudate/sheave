@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
       - id: setup
         name: Setup Rust
-        uses: docker://rust:1.80.0
+        uses: docker://rust:1.82.0
       - id: test-core
         name: Test the core crate
         run: |
@@ -23,7 +23,7 @@ jobs:
         name: Cargo check to the server crate
         run: |
           cargo check -p sheave-server
-          cargo test -p sheave-server --doc
+          cargo test -p sheave-server
       - id: check-client
         name: Cargo check to the client crate
         run: |
