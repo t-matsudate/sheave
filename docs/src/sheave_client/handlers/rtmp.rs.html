@@ -618,6 +618,13 @@
 <a href="#618" id="618">618</a>
 <a href="#619" id="619">619</a>
 <a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     future::Future,
     io::{
@@ -894,8 +901,15 @@
                 }
             }
             <span class="kw">let </span>timestamp = flv_tag.get_timestamp();
-            <span class="kw">let </span>data = flv_tag.get_data();
-            <span class="kw">return </span>write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, data).<span class="kw">await
+            <span class="kw">let </span>data: Vec&lt;u8&gt; = <span class="kw">if let </span>MessageType::Data = message_type {
+                <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
+                buffer.encode(<span class="kw-2">&amp;</span>AmfString::from(<span class="string">"@setDataFrame"</span>));
+                buffer.put_bytes(flv_tag.get_data());
+                buffer.into()
+            } <span class="kw">else </span>{
+                flv_tag.get_data().to_vec()
+            };
+            <span class="kw">return </span>write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, <span class="kw-2">&amp;</span>data).<span class="kw">await
         </span>}
 
         <span class="comment">// NOTE: Default return value when no FLV tag exists.
