@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["inconsistent_sha"],"struct":["InconsistentSha","LastChunk","RtmpContext","StreamWrapper","VecStream"],"trait":["AsyncHandler","AsyncHandlerExt"]};
+window.SIDEBAR_ITEMS = {"enum":["PublisherStatus"],"fn":["inconsistent_sha"],"struct":["InconsistentSha","LastChunk","RtmpContext","StreamWrapper","VecStream"],"trait":["AsyncHandler","AsyncHandlerExt","ErrorHandler","HandlerConstructor","MeasureAcknowledgement","Middleware"]};

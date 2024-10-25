@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/messages.rs`."><title>messages.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/messages.rs`."><title>messages.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -362,6 +361,45 @@
 <a href="#361" id="361">361</a>
 <a href="#362" id="362">362</a>
 <a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # The RTMP Messages
 //!
 //! After handshake, both are required to negosiate what are needed for sending/receiving.
@@ -576,15 +614,16 @@
 <span class="kw">mod </span>stream_begin;
 <span class="kw">mod </span>on_status;
 <span class="kw">mod </span>set_data_frame;
+<span class="kw">mod </span>audio;
+<span class="kw">mod </span>video;
+<span class="kw">mod </span>acknowledgement;
+<span class="kw">mod </span>window_acknowledgement_size;
+<span class="kw">mod </span>peer_bandwidth;
+<span class="kw">mod </span>fc_unpublish;
+<span class="kw">mod </span>delete_stream;
 
-<span class="kw">use </span>std::io::Result <span class="kw">as </span>IOResult;
-<span class="kw">use </span><span class="self">self</span>::{
-    amf::v0::{
-        AmfString,
-        Number,
-    },
-    headers::MessageType
-};
+<span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span><span class="self">self</span>::headers::MessageType;
 <span class="kw">pub use </span><span class="self">self</span>::{
     inconsistent_command::<span class="kw-2">*</span>,
     connect::<span class="kw-2">*</span>,
@@ -600,18 +639,15 @@
     inconsistent_event_type::<span class="kw-2">*</span>,
     stream_begin::<span class="kw-2">*</span>,
     on_status::<span class="kw-2">*</span>,
-    set_data_frame::*
+    set_data_frame::<span class="kw-2">*</span>,
+    audio::<span class="kw-2">*</span>,
+    video::<span class="kw-2">*</span>,
+    acknowledgement::<span class="kw-2">*</span>,
+    window_acknowledgement_size::<span class="kw-2">*</span>,
+    peer_bandwidth::<span class="kw-2">*</span>,
+    fc_unpublish::<span class="kw-2">*</span>,
+    delete_stream::*
 };
-
-<span class="attr">#[doc(hidden)]
-</span><span class="kw">pub</span>(<span class="self">self</span>) <span class="kw">fn </span>ensure_command_name(expected: <span class="kw-2">&amp;</span>str, actual: AmfString) -&gt; IOResult&lt;()&gt; {
-    (expected == actual).then_some(()).ok_or(inconsistent_command(expected, actual))
-}
-
-<span class="attr">#[doc(hidden)]
-</span><span class="kw">pub</span>(<span class="self">self</span>) <span class="kw">fn </span>ensure_event_type(expected: EventType, actual: u16) -&gt; IOResult&lt;()&gt; {
-    (expected == EventType::from(actual)).then_some(()).ok_or(inconsistent_event_type(expected, actual))
-}
 
 <span class="doccomment">/// The IDs which are assigned every roles of chunks.
 /// This is mainly used for the `BasicHeader`'s chunk ID.
@@ -622,18 +658,22 @@
 /// | :- | :- |
 /// |`Network`|[`ChunkSize`]|
 /// |`System`|[`Command`]|
-/// |`Audio`|[`SetDataFrame`]|
+/// |`Audio`|[`SetDataFrame`], [`Audio`]|
+/// |`Video`|[`Video`]|
 /// |`Other`|other chunks|
 ///
 /// [`ChunkSize`]: ChunkSize
 /// [`Command`]: Command
 /// [`SetDataFrame`]: SetDataFrame
+/// [`Audio`]: Audio
+/// [`Video`]: Video
 </span><span class="attr">#[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 </span><span class="kw">pub enum </span>Channel {
     Network = <span class="number">2</span>,
     System = <span class="number">3</span>,
     Audio = <span class="number">4</span>,
+    Video = <span class="number">6</span>,
     Source = <span class="number">8</span>,
     Other = <span class="number">0xffff
 </span>}
@@ -646,6 +686,7 @@
             <span class="number">2 </span>=&gt; Network,
             <span class="number">3 </span>=&gt; System,
             <span class="number">4 </span>=&gt; Audio,
+            <span class="number">6 </span>=&gt; Video,
             <span class="number">8 </span>=&gt; Source,
             <span class="kw">_ </span>=&gt; Other
         }
@@ -660,29 +701,17 @@
 
 <span class="doccomment">/// Uniforms chunk data by a channel numbers and a message type.
 ///
-/// When reading from streams or writing into streams, we are required to imprint a chunk ID and a message type ID into their headers.
+/// When writing into streams, we are required to imprint a chunk ID and a message type ID into their headers.
 /// This makes you to reduce its cost.
-/// For example, [`read_chunk`] and [`write_chunk`] use this for reading/writing chunks correctly.
+/// For example, [`write_chunk`] use this for writing chunks correctly.
 ///
-/// [`read_chunk`]: crate::readers::read_chunk
 /// [`write_chunk`]: crate::writers::write_chunk
 </span><span class="kw">pub trait </span>ChunkData {
     <span class="kw">const </span>CHANNEL: Channel;
     <span class="kw">const </span>MESSAGE_TYPE: MessageType;
 }
 
-<span class="doccomment">/// The accessor for common fields in every command chunk.
-///
-/// All command chunk but onFCPublish has its command name and identifier for the transaction (only onFCPublish has just its command name).
-/// This provide ways for accessing to their common fields of command chunks uniformly.
-/// For example, [`decode`] and [`encode`] which are implemented for them use this for reading them from streams or writing them into streams.
-///
-/// [`decode`]: crate::Decoder
-/// [`encode`]: crate::Encoder
-</span><span class="kw">pub trait </span>Command {
-    <span class="kw">fn </span>get_command_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str;
-    <span class="kw">fn </span>get_transaction_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Number;
-}
+<span class="kw">pub trait </span>Command {}
 
 <span class="doccomment">/// The IDs which are types of user control messages.
 ///
@@ -724,5 +753,53 @@
 /// This makes you to reduce its cost.
 </span><span class="kw">pub trait </span>UserControl {
     <span class="kw">const </span>EVENT_TYPE: EventType;
+}
+
+<span class="kw">impl </span>PartialEq&lt;WindowAcknowledgementSize&gt; <span class="kw">for </span>Acknowledgement {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>WindowAcknowledgementSize) -&gt; bool {
+        <span class="self">self</span>.get_inner().eq(<span class="kw-2">&amp;</span>other.get_inner())
+    }
+}
+
+<span class="kw">impl </span>PartialOrd&lt;WindowAcknowledgementSize&gt; <span class="kw">for </span>Acknowledgement {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>WindowAcknowledgementSize) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="self">self</span>.get_inner().partial_cmp(<span class="kw-2">&amp;</span>other.get_inner())
+    }
+}
+
+<span class="kw">impl </span>PartialEq&lt;Acknowledgement&gt; <span class="kw">for </span>WindowAcknowledgementSize {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Acknowledgement) -&gt; bool {
+        <span class="self">self</span>.get_inner().eq(<span class="kw-2">&amp;</span>other.get_inner())
+    }
+}
+
+<span class="kw">impl </span>PartialOrd&lt;Acknowledgement&gt; <span class="kw">for </span>WindowAcknowledgementSize {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Acknowledgement) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="self">self</span>.get_inner().partial_cmp(<span class="kw-2">&amp;</span>other.get_inner())
+    }
+}
+
+<span class="kw">impl </span>PartialEq&lt;PeerBandwidth&gt; <span class="kw">for </span>Acknowledgement {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>PeerBandwidth) -&gt; bool {
+        <span class="self">self</span>.get_inner().eq(<span class="kw-2">&amp;</span>other.get_inner_bandwidth())
+    }
+}
+
+<span class="kw">impl </span>PartialOrd&lt;PeerBandwidth&gt; <span class="kw">for </span>Acknowledgement {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>PeerBandwidth) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="self">self</span>.get_inner().partial_cmp(<span class="kw-2">&amp;</span>other.get_inner_bandwidth())
+    }
+}
+
+<span class="kw">impl </span>PartialEq&lt;Acknowledgement&gt; <span class="kw">for </span>PeerBandwidth {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Acknowledgement) -&gt; bool {
+        <span class="self">self</span>.get_inner_bandwidth().eq(<span class="kw-2">&amp;</span>other.get_inner())
+    }
+}
+
+<span class="kw">impl </span>PartialOrd&lt;Acknowledgement&gt; <span class="kw">for </span>PeerBandwidth {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Acknowledgement) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="self">self</span>.get_inner_bandwidth().partial_cmp(<span class="kw-2">&amp;</span>other.get_inner())
+    }
 }
 </code></pre></div></section></main></body></html>

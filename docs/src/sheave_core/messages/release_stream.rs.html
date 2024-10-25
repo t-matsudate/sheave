@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/messages/release_stream.rs`."><title>release_stream.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/messages/release_stream.rs`."><title>release_stream.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -132,53 +131,11 @@
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::Result <span class="kw">as </span>IOResult;
 <span class="kw">use super</span>::{
     Channel,
     ChunkData,
     Command,
-    ensure_command_name,
     headers::MessageType
 };
 <span class="kw">use crate</span>::{
@@ -186,7 +143,6 @@
     Encoder,
     ByteBuffer,
     messages::amf::v0::{
-        Number,
         AmfString,
         Null
     }
@@ -194,29 +150,24 @@
 
 <span class="doccomment">/// The command to tell the Play Path (e.g. something file name).
 </span><span class="attr">#[derive(Debug, Clone, PartialEq)]
-</span><span class="kw">pub struct </span>ReleaseStream {
-    transaction_id: Number,
-    play_path: AmfString
-}
+</span><span class="kw">pub struct </span>ReleaseStream(AmfString);
 
 <span class="kw">impl </span>ReleaseStream {
-    <span class="kw">const </span>COMMAND_NAME: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"releaseStream"</span>;
-
     <span class="doccomment">/// Constructs a ReleaseStream command.
-    </span><span class="kw">pub fn </span>new(transaction_id: Number, play_path: AmfString) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ transaction_id, play_path }
+    </span><span class="kw">pub fn </span>new(playpath: AmfString) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(playpath)
     }
 
     <span class="doccomment">/// Gets the Play Path.
-    </span><span class="kw">pub fn </span>get_play_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>AmfString {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.play_path
-    }
+    </span><span class="kw">pub fn </span>get_playpath(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>AmfString {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
+    </span>}
 }
 
 <span class="kw">impl </span>From&lt;ReleaseStream&gt; <span class="kw">for </span>AmfString {
     <span class="kw">fn </span>from(release_stream: ReleaseStream) -&gt; <span class="self">Self </span>{
-        release_stream.play_path
-    }
+        release_stream.<span class="number">0
+    </span>}
 }
 
 <span class="kw">impl </span>ChunkData <span class="kw">for </span>ReleaseStream {
@@ -224,15 +175,7 @@
     <span class="kw">const </span>MESSAGE_TYPE: MessageType = MessageType::Command;
 }
 
-<span class="kw">impl </span>Command <span class="kw">for </span>ReleaseStream {
-    <span class="kw">fn </span>get_command_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="self">Self</span>::COMMAND_NAME
-    }
-
-    <span class="kw">fn </span>get_transaction_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Number {
-        <span class="self">self</span>.transaction_id
-    }
-}
+<span class="kw">impl </span>Command <span class="kw">for </span>ReleaseStream {}
 
 <span class="kw">impl </span>Decoder&lt;ReleaseStream&gt; <span class="kw">for </span>ByteBuffer {
     <span class="doccomment">/// Decodes bytes into a ReleaseStream command.
@@ -251,10 +194,6 @@
     ///
     /// When some value is invalid for UTF-8 string.
     ///
-    /// * [`InconsistentCommand`]
-    ///
-    /// When the command name isn't `"releaseStream"`.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -265,7 +204,6 @@
     ///     messages::{
     ///         ReleaseStream,
     ///         amf::v0::{
-    ///             Number,
     ///             AmfString,
     ///             Null
     ///         }
@@ -273,43 +211,29 @@
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&amp;AmfString::from("releaseStream"));
-    /// buffer.encode(&amp;Number::new(2f64));
     /// buffer.encode(&amp;Null);
     /// buffer.encode(&amp;AmfString::default());
     /// assert!(Decoder::&lt;ReleaseStream&gt;::decode(&amp;mut buffer).is_ok());
     ///
     /// let mut buffer = ByteBuffer::default();
-    /// buffer.encode(&amp;AmfString::from("something else"));
-    /// buffer.encode(&amp;Number::new(2f64));
-    /// buffer.encode(&amp;Null);
-    /// buffer.encode(&amp;AmfString::default());
     /// assert!(Decoder::&lt;ReleaseStream&gt;::decode(&amp;mut buffer).is_err())
     /// ```
     ///
     /// [`InsufficientBufferLength`]: crate::byte_buffer::InsufficientBufferLength
     /// [`InconsistentMarker`]: crate::messages::amf::InconsistentMarker
     /// [`InvalidString`]: crate::messages::amf::InvalidString
-    /// [`InconsistentCommand`]: super::InconsistentCommand
     </span><span class="kw">fn </span>decode(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IOResult&lt;ReleaseStream&gt; {
-        Decoder::&lt;AmfString&gt;::decode(<span class="self">self</span>).and_then(
-            |command| ensure_command_name(<span class="string">"releaseStream"</span>, command)
-        )<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>transaction_id: Number = <span class="self">self</span>.decode()<span class="question-mark">?</span>;
         Decoder::&lt;Null&gt;::decode(<span class="self">self</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>play_path: AmfString = <span class="self">self</span>.decode()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(ReleaseStream { transaction_id, play_path })
+        <span class="kw">let </span>playpath: AmfString = <span class="self">self</span>.decode()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(ReleaseStream(playpath))
     }
 }
 
 <span class="kw">impl </span>Encoder&lt;ReleaseStream&gt; <span class="kw">for </span>ByteBuffer {
     <span class="doccomment">/// Encodes a ReleaseStream command into bytes.
     </span><span class="kw">fn </span>encode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, release_stream: <span class="kw-2">&amp;</span>ReleaseStream) {
-        <span class="self">self</span>.encode(<span class="kw-2">&amp;</span>AmfString::from(release_stream.get_command_name()));
-        <span class="self">self</span>.encode(<span class="kw-2">&amp;</span>release_stream.get_transaction_id());
         <span class="self">self</span>.encode(<span class="kw-2">&amp;</span>Null);
-        <span class="self">self</span>.encode(release_stream.get_play_path());
+        <span class="self">self</span>.encode(release_stream.get_playpath());
     }
 }
 
@@ -320,31 +244,24 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>decode_release_stream() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        buffer.encode(<span class="kw-2">&amp;</span>AmfString::from(<span class="string">"releaseStream"</span>));
-        buffer.encode(<span class="kw-2">&amp;</span>Number::new(<span class="number">2f64</span>));
         buffer.encode(<span class="kw-2">&amp;</span>Null);
         buffer.encode(<span class="kw-2">&amp;</span>AmfString::default());
         <span class="kw">let </span>result: IOResult&lt;ReleaseStream&gt; = buffer.decode();
         <span class="macro">assert!</span>(result.is_ok());
         <span class="kw">let </span>actual = result.unwrap();
-        <span class="kw">let </span>expected = ReleaseStream::new(<span class="number">2</span>.into(), AmfString::default());
+        <span class="kw">let </span>expected = ReleaseStream::new(AmfString::default());
         <span class="macro">assert_eq!</span>(expected, actual)
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>encode_release_stream() {
         <span class="kw">let </span><span class="kw-2">mut </span>buffer = ByteBuffer::default();
-        <span class="kw">let </span>expected_transaction_id = <span class="number">2f64</span>;
-        <span class="kw">let </span>expected_play_path = <span class="string">""</span>;
-        <span class="kw">let </span>expected = ReleaseStream::new(Number::new(expected_transaction_id), AmfString::from(expected_play_path));
+        <span class="kw">let </span>expected_playpath = <span class="string">""</span>;
+        <span class="kw">let </span>expected = ReleaseStream::new(AmfString::from(expected_playpath));
         buffer.encode(<span class="kw-2">&amp;</span>expected);
-        <span class="kw">let </span>command_name: AmfString = buffer.decode().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="string">"releaseStream"</span>, command_name);
-        <span class="kw">let </span>actual_transaction_id: Number = buffer.decode().unwrap();
-        <span class="macro">assert_eq!</span>(expected_transaction_id, actual_transaction_id);
         Decoder::&lt;Null&gt;::decode(<span class="kw-2">&amp;mut </span>buffer).unwrap();
-        <span class="kw">let </span>actual_play_path: AmfString = buffer.decode().unwrap();
-        <span class="macro">assert_eq!</span>(expected_play_path, actual_play_path)
+        <span class="kw">let </span>actual_playpath: AmfString = buffer.decode().unwrap();
+        <span class="macro">assert_eq!</span>(expected_playpath, actual_playpath)
     }
 }
 </code></pre></div></section></main></body></html>

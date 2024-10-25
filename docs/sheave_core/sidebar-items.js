@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["insufficient_buffer_length"],"macro":["ecma_array","object"],"mod":["cli","handlers","handshake","messages","net","readers","writers"],"struct":["ByteBuffer","InsufficientBufferLength"],"trait":["Decoder","Encoder"]};
+window.SIDEBAR_ITEMS = {"constant":["U24_MAX"],"fn":["insufficient_buffer_length"],"macro":["ecma_array","object"],"mod":["flv","handlers","handshake","messages","net","readers","writers"],"struct":["ByteBuffer","InsufficientBufferLength"],"trait":["Decoder","Encoder"]};

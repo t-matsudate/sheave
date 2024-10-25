@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/writers/message_header.rs`."><title>message_header.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/writers/message_header.rs`."><title>message_header.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -252,6 +251,10 @@
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     future::Future,
     io::Result <span class="kw">as </span>IOResult,
@@ -264,12 +267,15 @@
 };
 <span class="kw">use </span>futures::ready;
 <span class="kw">use </span>tokio::io::AsyncWrite;
-<span class="kw">use </span><span class="kw">crate</span>::messages::headers::{
-    MessageHeader,
-    New,
-    SameSource,
-    TimerChange,
-    MessageType
+<span class="kw">use crate</span>::{
+    U24_MAX,
+    messages::headers::{
+        MessageHeader,
+        New,
+        SameSource,
+        TimerChange,
+        MessageType
+    }
 };
 
 <span class="attr">#[doc(hidden)]
@@ -279,14 +285,15 @@
     message_header: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>MessageHeader
 }
 
-<span class="kw">impl</span>&lt;W: AsyncWrite&gt; MessageHeaderWriter&lt;<span class="lifetime">'_</span>, W&gt; {
+<span class="attr">#[doc(hidden)]
+</span><span class="kw">impl</span>&lt;W: AsyncWrite&gt; MessageHeaderWriter&lt;<span class="lifetime">'_</span>, W&gt; {
     <span class="kw">fn </span>write_timestamp(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, timestamp: Duration) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
-        <span class="macro">assert!</span>(<span class="number">0x00ffffff </span>&gt;= timestamp.as_millis() <span class="kw">as </span>u32);
+        <span class="macro">assert!</span>(timestamp.as_millis() &lt;= U24_MAX <span class="kw">as </span>u128);
         <span class="self">self</span>.writer.as_mut().poll_write(cx, <span class="kw-2">&amp;</span>(timestamp.as_millis() <span class="kw">as </span>u32).to_be_bytes()[<span class="number">1</span>..]).map_ok(|<span class="kw">_</span>| ())
     }
 
     <span class="kw">fn </span>write_message_length(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, message_length: u32) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
-        <span class="macro">assert!</span>(<span class="number">0x00ffffff </span>&gt;= message_length);
+        <span class="macro">assert!</span>(message_length &lt;= U24_MAX);
         <span class="self">self</span>.writer.as_mut().poll_write(cx, <span class="kw-2">&amp;</span>message_length.to_be_bytes()[<span class="number">1</span>..]).map_ok(|<span class="kw">_</span>| ())
     }
 
@@ -335,7 +342,7 @@
     }
 }
 
-<span class="doccomment">/// Writes message header from stream.
+<span class="doccomment">/// Writes a message header into streams.
 ///
 /// # Panics
 ///
@@ -440,8 +447,8 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>write_new() {
         <span class="kw">let </span><span class="kw-2">mut </span>writer: Pin&lt;<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;&gt; = <span class="macro">pin!</span>(Vec::new());
-        <span class="kw">let </span>timestamp = Duration::from_millis(min(<span class="number">0x00ffffff</span>, random::&lt;u32&gt;()) <span class="kw">as </span>u64);
-        <span class="kw">let </span>message_length = min(<span class="number">0x00ffffff</span>, random::&lt;u32&gt;());
+        <span class="kw">let </span>timestamp = Duration::from_millis(min(U24_MAX, random::&lt;u32&gt;()) <span class="kw">as </span>u64);
+        <span class="kw">let </span>message_length = min(U24_MAX, random::&lt;u32&gt;());
         <span class="kw">let </span>message_type = random::&lt;u8&gt;();
         <span class="kw">let </span>message_id = random::&lt;u32&gt;();
         <span class="kw">let </span>message_header = MessageHeader::New((timestamp, message_length, message_type.into(), message_id).into());
@@ -466,8 +473,8 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>write_same_source() {
         <span class="kw">let </span><span class="kw-2">mut </span>writer: Pin&lt;<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;&gt; = <span class="macro">pin!</span>(Vec::new());
-        <span class="kw">let </span>timestamp = Duration::from_millis(min(<span class="number">0x00ffffff</span>, random::&lt;u32&gt;()) <span class="kw">as </span>u64);
-        <span class="kw">let </span>message_length = min(<span class="number">0x00ffffff</span>, random::&lt;u32&gt;());
+        <span class="kw">let </span>timestamp = Duration::from_millis(min(U24_MAX, random::&lt;u32&gt;()) <span class="kw">as </span>u64);
+        <span class="kw">let </span>message_length = min(U24_MAX, random::&lt;u32&gt;());
         <span class="kw">let </span>message_type = random::&lt;u8&gt;();
         <span class="kw">let </span>message_header = MessageHeader::SameSource((timestamp, message_length, message_type.into()).into());
         <span class="kw">let </span>result = write_message_header(writer.as_mut(), <span class="kw-2">&amp;</span>message_header).<span class="kw">await</span>;
@@ -487,7 +494,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>write_timer_change() {
         <span class="kw">let </span><span class="kw-2">mut </span>writer: Pin&lt;<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;&gt; = <span class="macro">pin!</span>(Vec::new());
-        <span class="kw">let </span>timestamp = Duration::from_millis(min(<span class="number">0x00ffffff</span>, random::&lt;u32&gt;()) <span class="kw">as </span>u64);
+        <span class="kw">let </span>timestamp = Duration::from_millis(min(U24_MAX, random::&lt;u32&gt;()) <span class="kw">as </span>u64);
         <span class="kw">let </span>message_header = MessageHeader::TimerChange(timestamp.into());
         <span class="kw">let </span>result = write_message_header(writer.as_mut(), <span class="kw-2">&amp;</span>message_header).<span class="kw">await</span>;
         <span class="macro">assert!</span>(result.is_ok());

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["handlers"]};
+window.SIDEBAR_ITEMS = {"fn":["invalid_uri"],"mod":["handlers"],"struct":["Client","InvalidUri"]};

@@ -1,3 +1,9 @@
-(function() {var implementors = {
-"sheave_core":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.76.0/core/ops/index/trait.Index.html\" title=\"trait core::ops::index::Index\">Index</a>&lt;&amp;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.76.0/std/primitive.str.html\">str</a>&gt; for <a class=\"struct\" href=\"sheave_core/messages/amf/v0/struct.Object.html\" title=\"struct sheave_core::messages::amf::v0::Object\">Object</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {
+    var implementors = Object.fromEntries([["sheave_core",[["impl&lt;I: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.82.0/core/slice/index/trait.SliceIndex.html\" title=\"trait core::slice::index::SliceIndex\">SliceIndex</a>&lt;[<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.82.0/std/primitive.u8.html\">u8</a>]&gt;&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.82.0/core/ops/index/trait.Index.html\" title=\"trait core::ops::index::Index\">Index</a>&lt;I&gt; for <a class=\"struct\" href=\"sheave_core/messages/struct.Audio.html\" title=\"struct sheave_core::messages::Audio\">Audio</a>"],["impl&lt;I: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.82.0/core/slice/index/trait.SliceIndex.html\" title=\"trait core::slice::index::SliceIndex\">SliceIndex</a>&lt;[<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.82.0/std/primitive.u8.html\">u8</a>]&gt;&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.82.0/core/ops/index/trait.Index.html\" title=\"trait core::ops::index::Index\">Index</a>&lt;I&gt; for <a class=\"struct\" href=\"sheave_core/messages/struct.Video.html\" title=\"struct sheave_core::messages::Video\">Video</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1145]}

@@ -1,5 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/handlers/rtmp_context/last_chunk.rs`."><title>last_chunk.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-core/src/handlers/rtmp_context/last_chunk.rs`."><title>last_chunk.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -59,56 +58,8 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
-<a href="#61" id="61">61</a>
-<a href="#62" id="62">62</a>
-<a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    time::Duration
-};
-<span class="kw">use crate</span>::{
-    messages::headers::{
-        MessageHeader,
-        MessageType,
-    },
-};
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span><span class="kw">crate</span>::messages::headers::MessageType;
 
 <span class="doccomment">/// The chunk information which is sent/received last.
 </span><span class="attr">#[derive(Debug, Clone, Copy)]
@@ -123,13 +74,13 @@
     <span class="doccomment">/// Constructs a LastChunk.
     /// Note the message ID is set 0 when message header isn't `New`.
     /// e.g. On receiving `StreamBegin`.
-    </span><span class="kw">pub fn </span>new(message_header: MessageHeader) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            timestamp: message_header.get_timestamp().unwrap(),
-            message_length: message_header.get_message_length().unwrap(),
-            message_type: message_header.get_message_type().unwrap(),
-            message_id: message_header.get_message_id().unwrap_or_default()
-        }
+    </span><span class="kw">pub fn </span>new(timestamp: Duration, message_length: u32, message_type: MessageType, message_id: u32) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ timestamp, message_length, message_type, message_id }
+    }
+
+    <span class="doccomment">/// Sets a timestamp.
+    </span><span class="kw">pub fn </span>set_timestamp(<span class="kw-2">&amp;mut </span><span class="self">self</span>, timestamp: Duration) {
+        <span class="self">self</span>.timestamp = timestamp;
     }
 
     <span class="doccomment">/// Gets a timestamp.
@@ -137,9 +88,19 @@
         <span class="self">self</span>.timestamp
     }
 
+    <span class="doccomment">/// Sets a message length.
+    </span><span class="kw">pub fn </span>set_message_length(<span class="kw-2">&amp;mut </span><span class="self">self</span>, message_length: u32) {
+        <span class="self">self</span>.message_length = message_length;
+    }
+
     <span class="doccomment">/// Gets a message length.
     </span><span class="kw">pub fn </span>get_message_length(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="self">self</span>.message_length
+    }
+
+    <span class="doccomment">/// Sets a message type.
+    </span><span class="kw">pub fn </span>set_message_type(<span class="kw-2">&amp;mut </span><span class="self">self</span>, message_type: MessageType) {
+        <span class="self">self</span>.message_type = message_type;
     }
 
     <span class="doccomment">/// Gets a message type.
@@ -147,58 +108,14 @@
         <span class="self">self</span>.message_type
     }
 
+    <span class="doccomment">/// Sets a message ID.
+    </span><span class="kw">pub fn </span>set_message_id(<span class="kw-2">&amp;mut </span><span class="self">self</span>, message_id: u32) {
+        <span class="self">self</span>.message_id = message_id;
+    }
+
     <span class="doccomment">/// Gets a message ID.
     </span><span class="kw">pub fn </span>get_message_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="self">self</span>.message_id
-    }
-
-    <span class="doccomment">/// Updates this chunk information into a new one passed.
-    /// Note if any extended timestamp is passed, this increases its timestamp using it instead.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::time::Duration;
-    /// use sheave_core::{
-    ///     handlers::LastChunk,
-    ///     messages::headers::{
-    ///         MessageHeader,
-    ///         MessageType
-    ///     }
-    /// };
-    ///
-    /// let mut last_chunk = LastChunk::new(MessageHeader::New((Duration::default(), u32::default(), MessageType::Command, u32::default()).into()));
-    ///
-    /// last_chunk.update(&amp;MessageHeader::New((Duration::from_millis(1), 1, MessageType::Command, 1).into()), None);
-    /// assert_eq!(Duration::from_millis(1), last_chunk.get_timestamp());
-    /// assert_eq!(1, last_chunk.get_message_length());
-    /// assert_eq!(MessageType::Command, last_chunk.get_message_type());
-    /// assert_eq!(1, last_chunk.get_message_id());
-    ///
-    /// last_chunk.update(&amp;MessageHeader::New((Duration::from_millis(2), 2, MessageType::Other, 2).into()), Some(Duration::from_millis(0x01000000 as u64)));
-    /// assert_eq!(Duration::from_millis(0x01000000 as u64), last_chunk.get_timestamp());
-    /// assert_eq!(2, last_chunk.get_message_length());
-    /// assert_eq!(MessageType::Other, last_chunk.get_message_type());
-    /// assert_eq!(2, last_chunk.get_message_id())
-    /// ```
-    </span><span class="kw">pub fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, message_header: <span class="kw-2">&amp;</span>MessageHeader, extended_timestamp: <span class="prelude-ty">Option</span>&lt;Duration&gt;) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(extended_timestamp) = extended_timestamp {
-            <span class="self">self</span>.timestamp = extended_timestamp;
-        } <span class="kw">else </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(timestamp) = message_header.get_timestamp() {
-                <span class="self">self</span>.timestamp = timestamp;
-            }
-        }
-
-        message_header.get_message_length().map(
-            |message_length| <span class="self">self</span>.message_length = message_length
-        );
-        message_header.get_message_type().map(
-            |message_type| <span class="self">self</span>.message_type = message_type
-        );
-        message_header.get_message_id().map(
-            |message_id| <span class="self">self</span>.message_id = message_id
-        );
     }
 }
 </code></pre></div></section></main></body></html>

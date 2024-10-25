@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["handlers","net","server"]};
+window.SIDEBAR_ITEMS = {"fn":["provide_message_id","return_message_id"],"mod":["handlers","net"],"struct":["Server"]};
