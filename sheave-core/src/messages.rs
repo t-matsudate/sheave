@@ -299,11 +299,10 @@ impl From<Channel> for u16 {
 
 /// Uniforms chunk data by a channel numbers and a message type.
 ///
-/// When reading from streams or writing into streams, we are required to imprint a chunk ID and a message type ID into their headers.
+/// When writing into streams, we are required to imprint a chunk ID and a message type ID into their headers.
 /// This makes you to reduce its cost.
-/// For example, [`read_chunk`] and [`write_chunk`] use this for reading/writing chunks correctly.
+/// For example, [`write_chunk`] use this for writing chunks correctly.
 ///
-/// [`read_chunk`]: crate::readers::read_chunk
 /// [`write_chunk`]: crate::writers::write_chunk
 pub trait ChunkData {
     const CHANNEL: Channel;
