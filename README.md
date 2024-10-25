@@ -10,7 +10,7 @@ The RTMP server/client written by Rust.
 
 1. `git clone https://github.com/t-matsudate/sheave`
 2. `cd ./sheave/sheave-server`
-3. `cargo run -- --protocol rtmp -a 127.0.0.1 -p 1935`
+3. `cargo run -- --rtmp 127.0.0.1:1935`
 
 * On the docker image
 
@@ -22,7 +22,7 @@ The RTMP server/client written by Rust.
 
 1. `git clone https://github.com/t-matsudate/sheave`
 2. `cd ./sheave/sheave-client`
-3. `cargo run -- -protocol rtmp -a 127.0.0.1 -p 1935`
+3. `cargo run -- -i filename.flv -f flv rtmp://127.0.0.1:1935`
 
 ## Documentation
 
@@ -42,7 +42,8 @@ The third choice for personal use of RTMP tools.
 
 - [x] RTMP handshake.
 - [x] Configuration exchange.
-- [ ] Storing audio/video data.
+- [x] Storing audio/video data.
+- [ ] Outputting in detail by loggers.
 
 ## License
 
