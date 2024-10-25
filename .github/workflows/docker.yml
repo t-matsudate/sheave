@@ -82,4 +82,4 @@ jobs:
         run: cargo update && cargo build -p sheave-client --release --bins
       - id: run
         name: Runs Sheave client with examples
-        run: ./target/release/sheave-client -i ./resources/test.flv -f flv rtmp://127.0.0.1:1935
+        run: ./target/release/sheave-client -i ./resources/test.flv -f flv rtmp://localhost
