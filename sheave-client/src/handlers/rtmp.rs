@@ -274,8 +274,15 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
                 }
             }
             let timestamp = flv_tag.get_timestamp();
-            let data = flv_tag.get_data();
-            return write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, data).await
+            let data: Vec<u8> = if let MessageType::Data = message_type {
+                let mut buffer = ByteBuffer::default();
+                buffer.encode(&AmfString::from("@setDataFrame"));
+                buffer.put_bytes(flv_tag.get_data());
+                buffer.into()
+            } else {
+                flv_tag.get_data().to_vec()
+            };
+            return write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, &data).await
         }
 
         // NOTE: Default return value when no FLV tag exists.
