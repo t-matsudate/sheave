@@ -13,7 +13,7 @@
 //! 3. Tag type (5 bits. these are same as RTMP's message types. See [`MessageType`].)
 //!   * Audio (8)
 //!   * Video (9)
-//!   * ScriptData (16)
+//!   * ScriptData (18)
 //! 4. Actual tag size (subtracts this header size from the total)
 //! 5. Timestamp (24 bits)
 //! 6. Timestamp(extended) (8 bits)
@@ -130,7 +130,7 @@
 //! [`Audio`]: AudioTag
 //! [`Video`]: VideoTag
 //! [`ScriptData`]: ScriptDataTag
-//! [`MessageType`]: crate::messages::headers::message::message_type::MessageType
+//! [`MessageType`]: crate::messages::headers::MessageType
 mod audio;
 mod video;
 mod script_data;
