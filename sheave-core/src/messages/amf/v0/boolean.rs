@@ -1,5 +1,10 @@
 use std::{
     cmp::Ordering,
+    fmt::{
+        Display,
+        Formatter,
+        Result as FormatResult
+    },
     io::Result as IOResult
 };
 use super::{
@@ -37,6 +42,12 @@ impl Boolean {
     /// Gets an inner value as a boolean value.
     pub fn as_boolean(&self) -> bool {
         self.0 > 0
+    }
+}
+
+impl Display for Boolean {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
+        writeln!(f, "{}", self.0 != 0)
     }
 }
 

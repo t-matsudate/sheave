@@ -1,5 +1,10 @@
 use std::{
     cmp::Ordering,
+    fmt::{
+        Display,
+        Formatter,
+        Result as FormatResult
+    },
     io::Result as IOResult,
     ops::{
         Add,
@@ -78,6 +83,12 @@ impl From<u16> for Number {
 impl From<u32> for Number {
     fn from(number: u32) -> Self {
         Self(number.into())
+    }
+}
+
+impl Display for Number {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
+        writeln!(f, "{}", self.0)
     }
 }
 
