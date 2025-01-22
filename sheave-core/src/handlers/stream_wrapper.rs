@@ -76,6 +76,11 @@ impl<RW: Unpin> MeasureAcknowledgement for StreamWrapper<RW> {
 }
 
 impl<R: AsyncRead + Unpin> AsyncRead for StreamWrapper<R> {
+    /// Wraps a stream to make it able to measure the amount of bytes.
+    ///
+    /// When bytes read exceeded some bandwidth limit, RTMP peers are required to send the `Acknowldgement` message to the other peer.
+    /// But prepared stream like Vec, slice, or TCP streams has no implementation above.
+    /// Therefore, StreamWrapper measures amounts of bytes read and writes `Acknowledgement` messages instead.
     fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<IOResult<()>> {
         ready!(Pin::new(&mut self.stream).poll_read(cx, buf))?;
 
