@@ -25,7 +25,6 @@ use crate::{
 use super::PublisherStatus;
 pub use self::last_chunk::*;
 
-// TODO: Imprints a timestamp into FLV tag for not FLV inputs.
 /// RTMP's common contexts.
 ///
 /// Many fields are optional by default.
@@ -42,7 +41,6 @@ pub use self::last_chunk::*;
 /// ```
 #[derive(Debug)]
 pub struct RtmpContext {
-    timeout: Duration,
     signed: bool,
     receiving_chunk_size: ChunkSize,
     sending_chunk_size: ChunkSize,
@@ -62,6 +60,7 @@ pub struct RtmpContext {
     message_id: Option<u32>,
     publishing_name: Option<AmfString>,
     publishing_type: Option<AmfString>,
+    await_duration: Option<Duration>,
     input: Option<Flv>,
     last_received_chunks: HashMap<u16, LastChunk>,
     last_sent_chunks: HashMap<u16, LastChunk>
@@ -70,7 +69,6 @@ pub struct RtmpContext {
 impl Default for RtmpContext {
     fn default() -> Self {
         Self {
-            timeout: Duration::default(),
             signed: bool::default(),
             receiving_chunk_size: ChunkSize::default(),
             sending_chunk_size: ChunkSize::default(),
@@ -90,6 +88,7 @@ impl Default for RtmpContext {
             message_id: Option::default(),
             publishing_name: Option::default(),
             publishing_type: Option::default(),
+            await_duration: Option::default(),
             input: Option::default(),
             last_received_chunks: HashMap::default(),
             last_sent_chunks: HashMap::default()
@@ -103,16 +102,6 @@ impl RtmpContext {
     /// Because of making this shareable between every handling steps.
     pub fn make_weak_mut<'a>(self: &'a Arc<Self>) -> &'a mut Self {
         unsafe { &mut *(Arc::downgrade(self).as_ptr() as *mut Self) }
-    }
-
-    /// Sets the timeout duration of communication.
-    pub fn set_timeout_duration(&mut self, timeout: Duration) {
-        self.timeout = timeout;
-    }
-
-    /// Gets the timeout duration of communication.
-    pub fn get_timeout_duration(&mut self) -> Duration {
-        self.timeout
     }
 
     /// Stores a flag to mean this handshake is signed.
@@ -371,7 +360,6 @@ impl RtmpContext {
 
     /// Sets a information object of a server.
     pub fn set_information(&mut self, information: Object) {
-        // TODO: Logging information object.
         self.information = Some(information);
     }
 
@@ -480,6 +468,20 @@ impl RtmpContext {
     /// ```
     pub fn get_publishing_type(&mut self) -> Option<&AmfString> {
         self.publishing_type.as_ref()
+    }
+
+    /// Sets a duration for awaiting of receiving some message.
+    ///
+    /// Currently, this is used only clients during publishing audio/video data.
+    pub fn set_await_duration(&mut self, await_duration: Duration) {
+        self.await_duration = Some(await_duration);
+    }
+
+    /// Gets a duration for awaiting of receiving some message.
+    ///
+    /// Currently, this is used only clients during publishing audio/video data.
+    pub fn get_await_duration(&mut self) -> Option<Duration> {
+        self.await_duration
     }
 
     /// Sets input file/device.

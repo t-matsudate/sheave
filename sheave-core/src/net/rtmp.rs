@@ -243,34 +243,16 @@ impl From<TokioStream> for RtmpStream {
 }
 
 impl AsyncRead for RtmpStream {
-    /// Reads a RTMP data.
-    /// This awaits until reading completed.
-    /// Because unifies timing of communication with other RTMP tools.
     fn poll_read(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &mut ReadBuf<'_>) -> Poll<IOResult<()>> {
-        let mut this = self.project();
-
-        loop {
-            match this.tokio_stream.as_mut().poll_read(cx, buf) {
-                Poll::Pending => continue,
-                result => return result
-            }
-        }
+        let this = self.project();
+        this.tokio_stream.poll_read(cx, buf)
     }
 }
 
 impl AsyncWrite for RtmpStream {
-    /// Writes a RTMP data.
-    /// This awaits until writing completed.
-    /// Because unifies timing of communication with other RTMP tools.
     fn poll_write(self: Pin<&mut Self>, cx: &mut FutureContext<'_>, buf: &[u8]) -> Poll<IOResult<usize>> {
-        let mut this = self.project();
-
-        loop {
-            match this.tokio_stream.as_mut().poll_write(cx, buf) {
-                Poll::Pending => continue,
-                result => return result
-            }
-        }
+        let this = self.project();
+        this.tokio_stream.poll_write(cx, buf)
     }
 
     fn poll_flush(self: Pin<&mut Self>, cx: &mut FutureContext<'_>) -> Poll<IOResult<()>> {
