@@ -26,6 +26,7 @@ mod chain;
 mod while_ok;
 mod middlewares;
 mod map_err;
+mod stream_got_exhausted;
 
 use std::{
     io::Result as IOResult,
@@ -61,6 +62,7 @@ pub use self::{
     middlewares::Middleware,
     map_err::ErrorHandler,
     measure_acknowledgement::*,
+    stream_got_exhausted::*
 };
 
 /// The interface for handling RTMP connection steps with `Future`.
