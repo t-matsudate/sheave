@@ -48,7 +48,7 @@ use std::{
         SeekFrom,
         Write
     },
-    time::Duration,
+    time::Duration
 };
 use super::{
     ByteBuffer,
@@ -181,7 +181,7 @@ impl Flv {
             Err(not_flv_container(&flv_header[..3]))
         } else {
             Ok(
-                Self{
+                Self {
                     // NOTE: Seeks to the position of first FLV tag.
                     offset: 13,
                     playpath: playpath.into()
@@ -205,7 +205,7 @@ impl Flv {
         file.write(&0u32.to_be_bytes())?;
         file.flush()?;
         Ok(
-            Self{
+            Self {
                 // NOTE: Seeks to the position of first FLV tag.
                 offset: 13,
                 playpath: playpath.into()
