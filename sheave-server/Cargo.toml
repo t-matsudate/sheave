@@ -7,8 +7,10 @@ edition = "2021"
 
 [dependencies]
 clap.workspace = true
+env_logger.workspace = true
 futures.workspace = true
+log.workspace = true
 pin-project-lite.workspace = true
 sheave-core = { path = "../sheave-core" }
 tokio.workspace = true
-uuid = { version = "1.10.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
+uuid = { version = "1.12.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
