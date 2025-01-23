@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["rtmp"]};
+window.SIDEBAR_ITEMS = {"mod":["rtmp"],"trait":["RtmpReadExt"]};

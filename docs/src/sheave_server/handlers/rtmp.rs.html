@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-server/src/handlers/rtmp.rs`."><title>rtmp.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_server" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `sheave-server/src/handlers/rtmp.rs`."><title>rtmp.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_server" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0 (9fc6b4312 2025-01-07)" data-channel="1.84.0" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">sheave_server/handlers/</div>rtmp.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -583,7 +584,45 @@
 <a href="#583" id="583">583</a>
 <a href="#584" id="584">584</a>
 <a href="#585" id="585">585</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     future::Future,
     io::{
         Error <span class="kw">as </span>IOError,
@@ -603,6 +642,11 @@
         Duration,
         Instant
     }
+};
+<span class="kw">use </span>log::{
+    debug,
+    error,
+    info
 };
 <span class="kw">use </span>futures::ready;
 <span class="kw">use </span>tokio::{
@@ -659,6 +703,7 @@
         },
         headers::MessageType
     },
+    net::RtmpReadExt,
     object,
     readers::<span class="kw-2">*</span>,
     writers::*
@@ -676,8 +721,8 @@
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; HandshakeHandler&lt;<span class="lifetime">'_</span>, RW&gt; {
     <span class="kw">async fn </span>handle_first_handshake(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; IOResult&lt;()&gt; {
-        <span class="kw">let </span>encryption_algorithm = read_encryption_algorithm(<span class="self">self</span>.<span class="number">0</span>.as_mut()).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>client_request = read_handshake(<span class="self">self</span>.<span class="number">0</span>.as_mut()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>encryption_algorithm = read_encryption_algorithm(<span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving())).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>client_request = read_handshake(<span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving())).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>client_request.get_version() == Version::UNSIGNED {
             <span class="kw">let </span>server_request = Handshake::new(Instant::now().elapsed(), Version::UNSIGNED);
@@ -690,6 +735,7 @@
             rtmp_context.set_client_handshake(client_request);
         } <span class="kw">else </span>{
             <span class="kw">if </span>!client_request.did_digest_match(encryption_algorithm, Handshake::CLIENT_KEY) {
+                <span class="macro">error!</span>(<span class="string">"Client side digest is inconsistent!\nencryption_algorithm: {:?}\ndigest: {:x?}"</span>, encryption_algorithm, client_request.get_digest(encryption_algorithm));
                 <span class="kw">return </span><span class="prelude-val">Err</span>(
                     IOError::new(
                         ErrorKind::InvalidData,
@@ -714,11 +760,12 @@
             }
         }
 
+        <span class="macro">info!</span>(<span class="string">"First handshake got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>handle_second_handshake(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; IOResult&lt;()&gt; {
-        <span class="kw">let </span>client_response = read_handshake(<span class="self">self</span>.<span class="number">0</span>.as_mut()).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>client_response = read_handshake(<span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving())).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>!rtmp_context.is_signed() {
             rtmp_context.set_server_handshake(client_response);
@@ -728,14 +775,17 @@
             client_response_key.extend_from_slice(Handshake::CLIENT_KEY);
             client_response_key.extend_from_slice(Handshake::COMMON_KEY);
             <span class="kw">let </span>server_request = rtmp_context.get_server_handshake().unwrap();
-            <span class="comment">// Note the FFmpeg acts the handshake but imprints no signature.
+            <span class="comment">// NOTE: FFmpeg acts the handshake but imprints no signature.
             </span><span class="kw">if </span>!client_response.did_signature_match(encryption_algorithm, <span class="kw-2">&amp;</span>client_response_key) &amp;&amp; server_request.get_signature() != client_response.get_signature() {
+                <span class="macro">error!</span>(<span class="string">"Client side signature is inconsistent!\nencryption_algorithm: {:?}, signature: {:x?}"</span>, encryption_algorithm, client_response.get_signature());
                 <span class="kw">return </span><span class="prelude-val">Err</span>(inconsistent_sha(client_response.get_signature().to_vec()))
             } <span class="kw">else </span>{
+                <span class="macro">debug!</span>(<span class="string">"Handshake version: {:?}\nSignature: {:x?}"</span>, client_response.get_version(), client_response.get_signature());
                 rtmp_context.set_server_handshake(client_response);
             }
         }
 
+        <span class="macro">info!</span>(<span class="string">"Second handshake got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -760,18 +810,25 @@
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; MessageHandler&lt;<span class="lifetime">'_</span>, RW&gt; {
     <span class="kw">async fn </span>handle_acknowledgement(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>RtmpContext, <span class="kw-2">mut </span>buffer: ByteBuffer) -&gt; IOResult&lt;()&gt; {
-        Decoder::&lt;Acknowledgement&gt;::decode(<span class="kw-2">&amp;mut </span>buffer).map(|<span class="kw">_</span>| ())
+        Decoder::&lt;Acknowledgement&gt;::decode(<span class="kw-2">&amp;mut </span>buffer)<span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">"Acknowledgement got handled."</span>);
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>handle_connect_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext, <span class="kw-2">mut </span>buffer: ByteBuffer) -&gt; IOResult&lt;()&gt; {
         <span class="kw">let </span>connect_request: Connect = buffer.decode()<span class="question-mark">?</span>;
         rtmp_context.set_command_object(connect_request.into());
 
+        <span class="macro">info!</span>(<span class="string">"connect got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>handle_release_stream_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>RtmpContext, <span class="kw-2">mut </span>buffer: ByteBuffer) -&gt; IOResult&lt;()&gt; {
-        Decoder::&lt;ReleaseStream&gt;::decode(<span class="kw-2">&amp;mut </span>buffer).map(|<span class="kw">_</span>| ())
+        Decoder::&lt;ReleaseStream&gt;::decode(<span class="kw-2">&amp;mut </span>buffer)<span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">"releaseStream got handled."</span>);
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>handle_fc_publish_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext, <span class="kw-2">mut </span>buffer: ByteBuffer) -&gt; IOResult&lt;()&gt; {
@@ -786,11 +843,15 @@
         rtmp_context.set_input(input);
         rtmp_context.set_playpath(playpath);
 
+        <span class="macro">info!</span>(<span class="string">"FCPublish got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>handle_create_stream_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>RtmpContext, <span class="kw-2">mut </span>buffer: ByteBuffer) -&gt; IOResult&lt;()&gt; {
-        Decoder::&lt;CreateStream&gt;::decode(<span class="kw-2">&amp;mut </span>buffer).map(|<span class="kw">_</span>| ())
+        Decoder::&lt;CreateStream&gt;::decode(<span class="kw-2">&amp;mut </span>buffer)<span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">"createStream got handled."</span>);
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>handle_publish_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext, <span class="kw-2">mut </span>buffer: ByteBuffer) -&gt; IOResult&lt;()&gt; {
@@ -799,6 +860,7 @@
         rtmp_context.set_publishing_name(publishing_name);
         rtmp_context.set_publishing_type(publishing_type);
 
+        <span class="macro">info!</span>(<span class="string">"publish got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -807,6 +869,7 @@
 
         rtmp_context.reset_playpath();
 
+        <span class="macro">info!</span>(<span class="string">"FCUnpublish got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -815,6 +878,7 @@
         return_message_id(delete_stream_request.into());
         rtmp_context.reset_message_id();
 
+        <span class="macro">info!</span>(<span class="string">"deleteStream got handled."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -863,7 +927,10 @@
 
         <span class="kw">let </span>data: Vec&lt;u8&gt; = buffer.into();
         <span class="kw">let </span>flv_tag = FlvTag::new(tag_type, timestamp, data);
-        input.append_flv_tag(flv_tag)
+        input.append_flv_tag(flv_tag)<span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">"FLV chunk got handled."</span>);
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async fn </span>write_connect_response(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; IOResult&lt;()&gt; {
@@ -887,6 +954,7 @@
 
         rtmp_context.set_publisher_status(PublisherStatus::Connected);
 
+        <span class="macro">info!</span>(<span class="string">"connect result got sent."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -899,6 +967,7 @@
 
         rtmp_context.set_publisher_status(PublisherStatus::Released);
 
+        <span class="macro">info!</span>(<span class="string">"releaseStream result got sent."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -910,6 +979,7 @@
 
         rtmp_context.set_publisher_status(PublisherStatus::FcPublished);
 
+        <span class="macro">info!</span>(<span class="string">"onFCPublish got sent."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -924,6 +994,7 @@
 
         rtmp_context.set_publisher_status(PublisherStatus::Created);
 
+        <span class="macro">info!</span>(<span class="string">"createStream result got sent."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -936,6 +1007,7 @@
 
         rtmp_context.set_publisher_status(PublisherStatus::Began);
 
+        <span class="macro">info!</span>(<span class="string">"Stream Begin got sent."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -957,6 +1029,7 @@
 
         rtmp_context.set_publisher_status(PublisherStatus::Published);
 
+        <span class="macro">info!</span>(<span class="string">"onStatus got sent."</span>);
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -966,11 +1039,11 @@
     <span class="kw">fn </span>poll_handle(<span class="kw-2">mut </span><span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
         <span class="kw">use </span>PublisherStatus::<span class="kw-2">*</span>;
 
-        <span class="kw">let </span>basic_header = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_basic_header(<span class="self">self</span>.<span class="number">0</span>.as_mut())).poll(cx))<span class="question-mark">?</span>;
-        <span class="kw">let </span>message_header = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_message_header(<span class="self">self</span>.<span class="number">0</span>.as_mut(), basic_header.get_message_format())).poll(cx))<span class="question-mark">?</span>;
+        <span class="kw">let </span>basic_header = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_basic_header(<span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving()))).poll(cx))<span class="question-mark">?</span>;
+        <span class="kw">let </span>message_header = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_message_header(<span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving()), basic_header.get_message_format())).poll(cx))<span class="question-mark">?</span>;
         <span class="kw">let </span>extended_timestamp = <span class="kw">if let </span><span class="prelude-val">Some</span>(timestamp) = message_header.get_timestamp() {
             <span class="kw">if </span>timestamp.as_millis() == U24_MAX <span class="kw">as </span>u128 {
-                <span class="kw">let </span>extended_timestamp = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_extended_timestamp(<span class="self">self</span>.<span class="number">0</span>.as_mut())).poll(cx))<span class="question-mark">?</span>;
+                <span class="kw">let </span>extended_timestamp = <span class="macro">ready!</span>(<span class="macro">pin!</span>(read_extended_timestamp(<span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving()))).poll(cx))<span class="question-mark">?</span>;
                 <span class="prelude-val">Some</span>(extended_timestamp)
             } <span class="kw">else </span>{
                 <span class="prelude-val">None
@@ -1011,13 +1084,12 @@
         <span class="kw">let </span>data = <span class="macro">ready!</span>(
             <span class="macro">pin!</span>(
                 read_chunk_data(
-                    <span class="self">self</span>.<span class="number">0</span>.as_mut(),
+                    <span class="macro">pin!</span>(<span class="self">self</span>.<span class="number">0</span>.await_until_receiving()),
                     rtmp_context.get_receiving_chunk_size(),
                     rtmp_context.get_last_received_chunk(<span class="kw-2">&amp;</span>chunk_id).unwrap().get_message_length()
                 )
             ).poll(cx)
         )<span class="question-mark">?</span>;
-        <span class="macro">println!</span>(<span class="string">"{data:x?}"</span>);
         <span class="kw">let </span>buffer: ByteBuffer = data.into();
 
         <span class="kw">let </span>message_type = rtmp_context.get_last_received_chunk(<span class="kw-2">&amp;</span>chunk_id).unwrap().get_message_type();
@@ -1070,8 +1142,11 @@
         buffer.encode(<span class="kw-2">&amp;</span>AmfString::from(<span class="string">"FCUnpublish"</span>));
         buffer.encode(<span class="kw-2">&amp;</span>rtmp_context.get_transaction_id());
         buffer.encode(<span class="kw-2">&amp;</span>FcUnpublish::new(playpath));
-        write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), <span class="kw-2">&amp;</span>Vec::&lt;u8&gt;::from(buffer)).<span class="kw">await
-    </span>}
+        write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), <span class="kw-2">&amp;</span>Vec::&lt;u8&gt;::from(buffer)).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">"FCUnpublish got sent."</span>);
+        <span class="prelude-val">Ok</span>(())
+    }
 
     <span class="kw">async fn </span>write_delete_stream_request(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; IOResult&lt;()&gt; {
         <span class="kw">let </span>message_id = rtmp_context.get_message_id().unwrap();
@@ -1081,8 +1156,11 @@
         buffer.encode(<span class="kw-2">&amp;</span>AmfString::from(<span class="string">"deleteStream"</span>));
         buffer.encode(<span class="kw-2">&amp;</span>rtmp_context.get_transaction_id());
         buffer.encode(<span class="kw-2">&amp;</span>DeleteStream::new(message_id.into()));
-        write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, DeleteStream::CHANNEL.into(), Duration::default(), DeleteStream::MESSAGE_TYPE, u32::default(), <span class="kw-2">&amp;</span>Vec::&lt;u8&gt;::from(buffer)).<span class="kw">await
-    </span>}
+        write_chunk(<span class="self">self</span>.<span class="number">0</span>.as_mut(), rtmp_context, DeleteStream::CHANNEL.into(), Duration::default(), DeleteStream::MESSAGE_TYPE, u32::default(), <span class="kw-2">&amp;</span>Vec::&lt;u8&gt;::from(buffer)).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="macro">info!</span>(<span class="string">"deleteStream got sent."</span>);
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 
 <span class="attr">#[doc(hidden)]

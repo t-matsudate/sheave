@@ -1,9 +1,0 @@
-(function() {
-    var implementors = Object.fromEntries([["sheave_client",[["impl&lt;W: AsyncWrite + <a class=\"trait\" href=\"sheave_core/handlers/measure_acknowledgement/trait.MeasureAcknowledgement.html\" title=\"trait sheave_core::handlers::measure_acknowledgement::MeasureAcknowledgement\">MeasureAcknowledgement</a> + <a class=\"trait\" href=\"https://doc.rust-lang.org/1.82.0/core/marker/trait.Unpin.html\" title=\"trait core::marker::Unpin\">Unpin</a>&gt; <a class=\"trait\" href=\"sheave_core/handlers/middlewares/trait.Middleware.html\" title=\"trait sheave_core::handlers::middlewares::Middleware\">Middleware</a> for <a class=\"struct\" href=\"sheave_client/handlers/middlewares/struct.AcknowledgementWriter.html\" title=\"struct sheave_client::handlers::middlewares::AcknowledgementWriter\">AcknowledgementWriter</a>&lt;'_, W&gt;"]]],["sheave_server",[["impl&lt;W: AsyncWrite + <a class=\"trait\" href=\"sheave_core/handlers/measure_acknowledgement/trait.MeasureAcknowledgement.html\" title=\"trait sheave_core::handlers::measure_acknowledgement::MeasureAcknowledgement\">MeasureAcknowledgement</a> + <a class=\"trait\" href=\"https://doc.rust-lang.org/1.82.0/core/marker/trait.Unpin.html\" title=\"trait core::marker::Unpin\">Unpin</a>&gt; <a class=\"trait\" href=\"sheave_core/handlers/middlewares/trait.Middleware.html\" title=\"trait sheave_core::handlers::middlewares::Middleware\">Middleware</a> for <a class=\"struct\" href=\"sheave_server/handlers/middlewares/struct.AcknowledgementWriter.html\" title=\"struct sheave_server::handlers::middlewares::AcknowledgementWriter\">AcknowledgementWriter</a>&lt;'_, W&gt;"]]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[789,790]}

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["write_acknowledgement"],"struct":["AcknowledgementWriter"]};
+window.SIDEBAR_ITEMS = {};
