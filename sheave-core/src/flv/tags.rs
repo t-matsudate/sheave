@@ -186,6 +186,7 @@ impl From<TagType> for u8 {
 }
 
 /// The FLV tag element.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FlvTag {
     tag_type: TagType,
     timestamp: Duration,
