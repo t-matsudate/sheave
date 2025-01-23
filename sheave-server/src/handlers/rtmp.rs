@@ -19,6 +19,11 @@ use std::{
         Instant
     }
 };
+use log::{
+    debug,
+    error,
+    info
+};
 use futures::ready;
 use tokio::{
     io::{
@@ -74,6 +79,7 @@ use sheave_core::{
         },
         headers::MessageType
     },
+    net::RtmpReadExt,
     object,
     readers::*,
     writers::*
@@ -91,8 +97,8 @@ struct HandshakeHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>)
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
     async fn handle_first_handshake(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let encryption_algorithm = read_encryption_algorithm(self.0.as_mut()).await?;
-        let mut client_request = read_handshake(self.0.as_mut()).await?;
+        let encryption_algorithm = read_encryption_algorithm(pin!(self.0.await_until_receiving())).await?;
+        let mut client_request = read_handshake(pin!(self.0.await_until_receiving())).await?;
 
         if client_request.get_version() == Version::UNSIGNED {
             let server_request = Handshake::new(Instant::now().elapsed(), Version::UNSIGNED);
@@ -105,6 +111,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
             rtmp_context.set_client_handshake(client_request);
         } else {
             if !client_request.did_digest_match(encryption_algorithm, Handshake::CLIENT_KEY) {
+                error!("Client side digest is inconsistent!\nencryption_algorithm: {:?}\ndigest: {:x?}", encryption_algorithm, client_request.get_digest(encryption_algorithm));
                 return Err(
                     IOError::new(
                         ErrorKind::InvalidData,
@@ -129,11 +136,12 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
             }
         }
 
+        info!("First handshake got handled.");
         Ok(())
     }
 
     async fn handle_second_handshake(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let client_response = read_handshake(self.0.as_mut()).await?;
+        let client_response = read_handshake(pin!(self.0.await_until_receiving())).await?;
 
         if !rtmp_context.is_signed() {
             rtmp_context.set_server_handshake(client_response);
@@ -143,14 +151,17 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
             client_response_key.extend_from_slice(Handshake::CLIENT_KEY);
             client_response_key.extend_from_slice(Handshake::COMMON_KEY);
             let server_request = rtmp_context.get_server_handshake().unwrap();
-            // Note the FFmpeg acts the handshake but imprints no signature.
+            // NOTE: FFmpeg acts the handshake but imprints no signature.
             if !client_response.did_signature_match(encryption_algorithm, &client_response_key) && server_request.get_signature() != client_response.get_signature() {
+                error!("Client side signature is inconsistent!\nencryption_algorithm: {:?}, signature: {:x?}", encryption_algorithm, client_response.get_signature());
                 return Err(inconsistent_sha(client_response.get_signature().to_vec()))
             } else {
+                debug!("Handshake version: {:?}\nSignature: {:x?}", client_response.get_version(), client_response.get_signature());
                 rtmp_context.set_server_handshake(client_response);
             }
         }
 
+        info!("Second handshake got handled.");
         Ok(())
     }
 }
@@ -175,18 +186,25 @@ struct MessageHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn handle_acknowledgement(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<Acknowledgement>::decode(&mut buffer).map(|_| ())
+        Decoder::<Acknowledgement>::decode(&mut buffer)?;
+
+        info!("Acknowledgement got handled.");
+        Ok(())
     }
 
     async fn handle_connect_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let connect_request: Connect = buffer.decode()?;
         rtmp_context.set_command_object(connect_request.into());
 
+        info!("connect got handled.");
         Ok(())
     }
 
     async fn handle_release_stream_request(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<ReleaseStream>::decode(&mut buffer).map(|_| ())
+        Decoder::<ReleaseStream>::decode(&mut buffer)?;
+
+        info!("releaseStream got handled.");
+        Ok(())
     }
 
     async fn handle_fc_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -201,11 +219,15 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         rtmp_context.set_input(input);
         rtmp_context.set_playpath(playpath);
 
+        info!("FCPublish got handled.");
         Ok(())
     }
 
     async fn handle_create_stream_request(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<CreateStream>::decode(&mut buffer).map(|_| ())
+        Decoder::<CreateStream>::decode(&mut buffer)?;
+
+        info!("createStream got handled.");
+        Ok(())
     }
 
     async fn handle_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -214,6 +236,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         rtmp_context.set_publishing_name(publishing_name);
         rtmp_context.set_publishing_type(publishing_type);
 
+        info!("publish got handled.");
         Ok(())
     }
 
@@ -222,6 +245,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.reset_playpath();
 
+        info!("FCUnpublish got handled.");
         Ok(())
     }
 
@@ -230,6 +254,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         return_message_id(delete_stream_request.into());
         rtmp_context.reset_message_id();
 
+        info!("deleteStream got handled.");
         Ok(())
     }
 
@@ -278,7 +303,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         let data: Vec<u8> = buffer.into();
         let flv_tag = FlvTag::new(tag_type, timestamp, data);
-        input.append_flv_tag(flv_tag)
+        input.append_flv_tag(flv_tag)?;
+
+        info!("FLV chunk got handled.");
+        Ok(())
     }
 
     async fn write_connect_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
@@ -302,6 +330,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_publisher_status(PublisherStatus::Connected);
 
+        info!("connect result got sent.");
         Ok(())
     }
 
@@ -314,6 +343,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_publisher_status(PublisherStatus::Released);
 
+        info!("releaseStream result got sent.");
         Ok(())
     }
 
@@ -325,6 +355,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_publisher_status(PublisherStatus::FcPublished);
 
+        info!("onFCPublish got sent.");
         Ok(())
     }
 
@@ -339,6 +370,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_publisher_status(PublisherStatus::Created);
 
+        info!("createStream result got sent.");
         Ok(())
     }
 
@@ -351,6 +383,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_publisher_status(PublisherStatus::Began);
 
+        info!("Stream Begin got sent.");
         Ok(())
     }
 
@@ -372,6 +405,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_publisher_status(PublisherStatus::Published);
 
+        info!("onStatus got sent.");
         Ok(())
     }
 }
@@ -381,11 +415,11 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW>
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
         use PublisherStatus::*;
 
-        let basic_header = ready!(pin!(read_basic_header(self.0.as_mut())).poll(cx))?;
-        let message_header = ready!(pin!(read_message_header(self.0.as_mut(), basic_header.get_message_format())).poll(cx))?;
+        let basic_header = ready!(pin!(read_basic_header(pin!(self.0.await_until_receiving()))).poll(cx))?;
+        let message_header = ready!(pin!(read_message_header(pin!(self.0.await_until_receiving()), basic_header.get_message_format())).poll(cx))?;
         let extended_timestamp = if let Some(timestamp) = message_header.get_timestamp() {
             if timestamp.as_millis() == U24_MAX as u128 {
-                let extended_timestamp = ready!(pin!(read_extended_timestamp(self.0.as_mut())).poll(cx))?;
+                let extended_timestamp = ready!(pin!(read_extended_timestamp(pin!(self.0.await_until_receiving()))).poll(cx))?;
                 Some(extended_timestamp)
             } else {
                 None
@@ -426,13 +460,12 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW>
         let data = ready!(
             pin!(
                 read_chunk_data(
-                    self.0.as_mut(),
+                    pin!(self.0.await_until_receiving()),
                     rtmp_context.get_receiving_chunk_size(),
                     rtmp_context.get_last_received_chunk(&chunk_id).unwrap().get_message_length()
                 )
             ).poll(cx)
         )?;
-        println!("{data:x?}");
         let buffer: ByteBuffer = data.into();
 
         let message_type = rtmp_context.get_last_received_chunk(&chunk_id).unwrap().get_message_type();
@@ -485,7 +518,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
         buffer.encode(&AmfString::from("FCUnpublish"));
         buffer.encode(&rtmp_context.get_transaction_id());
         buffer.encode(&FcUnpublish::new(playpath));
-        write_chunk(self.0.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await
+        write_chunk(self.0.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
+        info!("FCUnpublish got sent.");
+        Ok(())
     }
 
     async fn write_delete_stream_request(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
@@ -496,7 +532,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
         buffer.encode(&AmfString::from("deleteStream"));
         buffer.encode(&rtmp_context.get_transaction_id());
         buffer.encode(&DeleteStream::new(message_id.into()));
-        write_chunk(self.0.as_mut(), rtmp_context, DeleteStream::CHANNEL.into(), Duration::default(), DeleteStream::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await
+        write_chunk(self.0.as_mut(), rtmp_context, DeleteStream::CHANNEL.into(), Duration::default(), DeleteStream::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
+        info!("deleteStream got sent.");
+        Ok(())
     }
 }
 
