@@ -5,7 +5,7 @@ on:
     types: ["completed"]
 jobs:
   push-amd64:
-    name: Pushs into Docker Hub
+    name: Pushs into Docker Hub (AMD64)
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
@@ -34,8 +34,8 @@ jobs:
           push: true
           tags: tmatsudate/sheave-server:latest
   ffmpeg-amd64:
-    name: Tests with FFmpeg
-    needs: push
+    name: Tests with FFmpeg (AMD64)
+    needs: push-amd64
     runs-on: ubuntu-latest
     services:
       sheave-server:
@@ -59,8 +59,8 @@ jobs:
         name: Runs FFmpeg with examples
         run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost
   sheave-client-amd64:
-    name: Tests with Sheave client
-    needs: push
+    name: Tests with Sheave client (AMD64)
+    needs: push-amd64
     runs-on: ubuntu-latest
     services:
       sheave-server:
@@ -84,7 +84,7 @@ jobs:
         name: Runs Sheave client with examples
         run: ./target/release/sheave-client --loglevel info -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935
   push-aarch64:
-    name: Pushs into Docker Hub
+    name: Pushs into Docker Hub (AArch64)
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04-arm
     steps:
@@ -113,8 +113,8 @@ jobs:
           push: true
           tags: tmatsudate/sheave-server:latest
   ffmpeg-aarch64:
-    name: Tests with FFmpeg
-    needs: push
+    name: Tests with FFmpeg (AArch64)
+    needs: push-aarch64
     runs-on: ubuntu-24.04-arm
     services:
       sheave-server:
@@ -138,8 +138,8 @@ jobs:
         name: Runs FFmpeg with examples
         run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost
   sheave-client-aarch64:
-    name: Tests with Sheave client
-    needs: push
+    name: Tests with Sheave client (AArch64)
+    needs: push-aarch64
     runs-on: ubuntu-24.04-arm
     services:
       sheave-server:
