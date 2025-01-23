@@ -42,8 +42,9 @@ The third choice for personal use of RTMP tools.
 
 - [x] RTMP handshake.
 - [x] Configuration exchange.
-- [x] Storing audio/video data.
-- [ ] Outputting in detail by loggers.
+- [x] Storing/Publishing audio/video data.
+- [x] Outputting in detail by loggers.
+- [ ] Subscribing audio/video data.
 
 ## License
 
