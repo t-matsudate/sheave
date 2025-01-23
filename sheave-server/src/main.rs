@@ -5,12 +5,22 @@ pub mod handlers;
 mod server;
 
 use std::{
-    io::Result as IOResult,
+    io::{
+        Error as IOError,
+        Result as IOResult
+    },
     marker::PhantomData
 };
+use log::{
+    LevelFilter,
+    error,
+    info
+};
+use env_logger::builder;
 use clap::{
     Args,
-    Parser
+    Parser,
+    ValueEnum
 };
 use tokio::spawn;
 use sheave_core::{
@@ -33,6 +43,31 @@ struct Listeners {
     rtmp: Vec<String>
 }
 
+#[repr(usize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum LogLevel {
+    #[default]
+    Off,
+    Error,
+    Warn,
+    Info,
+    Debug,
+    Trace
+}
+
+impl From<LogLevel> for LevelFilter {
+    fn from(log_level: LogLevel) -> Self {
+        match log_level {
+            LogLevel::Off => LevelFilter::Off,
+            LogLevel::Error => LevelFilter::Error,
+            LogLevel::Warn => LevelFilter::Warn,
+            LogLevel::Info => LevelFilter::Info,
+            LogLevel::Debug => LevelFilter::Debug,
+            LogLevel::Trace => LevelFilter::Trace
+        }
+    }
+}
+
 /// Command line options for the Sheave Server.
 ///
 /// # Required Arguments
@@ -45,6 +80,19 @@ struct Listeners {
 struct ServerOptions {
     #[command(flatten)]
     listeners: Listeners,
+    /// Displays server status in detail by logger.
+    /// Correspondence of parameters to log kinds are following:
+    ///
+    /// |Parameter|Log Kind|
+    /// | :- | :- |
+    /// |`off`|Logs nothing.|
+    /// |`error`|<ul><li>Cause of server/connection stopping.</li></ul>|
+    /// |`warn`|<ul><li>Limit excess.</li><li>Insufficient parameter.</li></ul>|
+    /// |`info`|<ul><li>Current process</li></ul>|
+    /// |`debug`|<ul><li>Detailed data for debugging.</li></ul>|
+    /// |`trace`|<ul><li>Detailed process for tracing.</li></ul>|
+    #[arg(long, value_enum, value_name = "LogLevel", default_value_t)]
+    loglevel: LogLevel
     // TODO: Makes other options if they are required.
 }
 
@@ -58,16 +106,18 @@ async fn run_as_rtmp(address: &str) -> IOResult<()> {
     }
 }
 
-// TODO: Runs server actually.
 #[tokio::main]
 async fn main() -> IOResult<()> {
     let options = ServerOptions::parse();
+
+    builder().filter_level(options.loglevel.into()).try_init().map_err(|e| IOError::other(e))?;
+
     if let Err(e) = run_as_rtmp(&options.listeners.rtmp[0]).await {
-        println!("{e}");
-    } else {
-        println!("OK");
+        error!("Some error got occurred: {e}");
+        return Err(e)
     }
 
+    info!("RTMP communication got completed");
     Ok(())
 }
 
