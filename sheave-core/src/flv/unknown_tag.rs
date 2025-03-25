@@ -11,6 +11,7 @@ use std::{
     }
 };
 
+/// An error that some tag type is unknown/undefined.
 #[derive(Debug)]
 pub struct UnknownTag(u8);
 
@@ -22,6 +23,7 @@ impl Display for UnknownTag {
 
 impl Error for UnknownTag {}
 
+/// A utility function of constructing an `UnknownTag` error.
 pub fn unknown_tag(tag_type: u8) -> IOError {
     IOError::new(
         ErrorKind::InvalidData,
