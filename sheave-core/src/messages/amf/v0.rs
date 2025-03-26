@@ -342,6 +342,13 @@ impl From<Number> for Value {
 }
 
 #[doc(hidden)]
+impl<'a> From<&'a Value> for &'a Number {
+    fn from(value: &'a Value) -> Self {
+        value.as_number()
+    }
+}
+
+#[doc(hidden)]
 impl From<Boolean> for Value {
     fn from(value: Boolean) -> Self {
         unsafe {
