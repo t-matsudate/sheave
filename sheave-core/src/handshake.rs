@@ -81,10 +81,7 @@ mod version;
 mod encryption_algorithm;
 
 use std::time::Duration;
-use rand::{
-    Fill,
-    thread_rng
-};
+use rand::fill;
 use digest::{
     CtOutput,
     OutputSizeUser
@@ -146,7 +143,7 @@ impl Handshake {
         let version_bytes: [u8; 4] = version.into();
         handshake_bytes[..4].copy_from_slice(timestamp_bytes.as_slice());
         handshake_bytes[4..8].copy_from_slice(version_bytes.as_slice());
-        handshake_bytes[8..].try_fill(&mut thread_rng()).unwrap();
+        fill(&mut handshake_bytes[8..]);
         Self(handshake_bytes)
     }
 
