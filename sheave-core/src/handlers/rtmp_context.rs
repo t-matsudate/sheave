@@ -2,6 +2,7 @@ mod last_chunk;
 
 use std::{
     collections::HashMap,
+    net::SocketAddr,
     sync::Arc,
     time::Duration
 };
@@ -14,15 +15,21 @@ use crate::{
         ChunkSize,
         WindowAcknowledgementSize,
         PeerBandwidth,
+        PlayMode,
         amf::v0::{
             Number,
             AmfString,
-            Object
+            Object,
+            EcmaArray
         }
     },
     flv::Flv
 };
-use super::PublisherStatus;
+use super::{
+    ClientType,
+    PublisherStatus,
+    SubscriberStatus
+};
 pub use self::last_chunk::*;
 
 /// RTMP's common contexts.
@@ -47,10 +54,16 @@ pub struct RtmpContext {
     window_acknowledgement_size: WindowAcknowledgementSize,
     peer_bandwidth: PeerBandwidth,
     last_transaction_id: Number,
+    client_addr: Option<SocketAddr>,
+    topic_storage_url: Option<String>,
     app: Option<AmfString>,
     playpath: Option<AmfString>,
+    subscribepath: Option<AmfString>,
     tc_url: Option<AmfString>,
+    last_command_name: Option<AmfString>,
+    client_type: Option<ClientType>,
     publisher_status: Option<PublisherStatus>,
+    subscriber_status: Option<SubscriberStatus>,
     encryption_algorithm: Option<EncryptionAlgorithm>,
     client_handshake: Option<Handshake>,
     server_handshake: Option<Handshake>,
@@ -58,10 +71,14 @@ pub struct RtmpContext {
     properties: Option<Object>,
     information: Option<Object>,
     message_id: Option<u32>,
+    playlist: Option<EcmaArray>,
     publishing_name: Option<AmfString>,
     publishing_type: Option<AmfString>,
+    stream_name: Option<AmfString>,
+    start_time: Option<Duration>,
+    play_mode: Option<PlayMode>,
     await_duration: Option<Duration>,
-    input: Option<Flv>,
+    topic: Option<Flv>,
     last_received_chunks: HashMap<u16, LastChunk>,
     last_sent_chunks: HashMap<u16, LastChunk>
 }
@@ -75,10 +92,16 @@ impl Default for RtmpContext {
             window_acknowledgement_size: WindowAcknowledgementSize::default(),
             peer_bandwidth: PeerBandwidth::default(),
             last_transaction_id: Number::default(),
+            client_addr: Option::default(),
+            topic_storage_url: Option::default(),
             app: Option::default(),
             playpath: Option::default(),
+            subscribepath: Option::default(),
             tc_url: Option::default(),
+            last_command_name: Option::default(),
+            client_type: Option::default(),
             publisher_status: Option::default(),
+            subscriber_status: Option::default(),
             encryption_algorithm: Option::default(),
             client_handshake: Option::default(),
             server_handshake: Option::default(),
@@ -86,10 +109,14 @@ impl Default for RtmpContext {
             properties: Option::default(),
             information: Option::default(),
             message_id: Option::default(),
+            playlist: Option::default(),
             publishing_name: Option::default(),
             publishing_type: Option::default(),
+            stream_name: Option::default(),
+            start_time: Option::default(),
+            play_mode: Option::default(),
             await_duration: Option::default(),
-            input: Option::default(),
+            topic: Option::default(),
             last_received_chunks: HashMap::default(),
             last_sent_chunks: HashMap::default()
         }
@@ -173,6 +200,46 @@ impl RtmpContext {
         self.last_transaction_id += 1f64;
     }
 
+    /// Sets a client socket address.
+    pub fn set_client_addr(&mut self, client_addr: SocketAddr) {
+        self.client_addr = Some(client_addr);
+    }
+
+    /// Gets a client socket address.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_client_addr().is_none())
+    /// ```
+    pub fn get_client_addr(&mut self) -> Option<SocketAddr> {
+        self.client_addr
+    }
+
+    /// Sets the topic storage url.
+    pub fn set_topic_storage_url(&mut self, topic_storage_url: &str) {
+        self.topic_storage_url = Some(topic_storage_url.into());
+    }
+
+    /// Gets the topic storage url.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_topic_storage_url().is_none())
+    /// ```
+    pub fn get_topic_storage_url(&mut self) -> Option<&String> {
+        self.topic_storage_url.as_ref()
+    }
+
     /// Sets the `app` name.
     /// This can be contained in a request URI of RTMP.
     pub fn set_app(&mut self, app: AmfString) {
@@ -206,7 +273,7 @@ impl RtmpContext {
     }
 
     /// Gets the `tcUrl`.
-    /// Note this can return `None`. e.g. this field is default as it is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -220,12 +287,12 @@ impl RtmpContext {
         self.tc_url.as_ref()
     }
 
-    /// Sets one of status to mean which a publication client is in.
-    pub fn set_publisher_status(&mut self, status: PublisherStatus) {
-        self.publisher_status = Some(status);
+    /// Sets last command name.
+    pub fn set_command_name(&mut self, command_name: AmfString) {
+        self.last_command_name = Some(command_name);
     }
 
-    /// Gets one of status to mean which a publication client is in.
+    /// Gets last command name.
     /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
@@ -234,10 +301,72 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_publisher_status().is_none());
+    /// assert!(rtmp_context.get_command_name().is_none())
+    /// ```
+    pub fn get_command_name(&mut self) -> Option<&AmfString> {
+        self.last_command_name.as_ref()
+    }
+
+    /// Sets that its client is either publisher or subscriber.
+    /// Curently, the server distinguishes this by referring specific field in a command object which a connect command has.
+    /// e.g. "fpad", "capabilities" etc.
+    pub fn set_client_type(&mut self, client_type: ClientType) {
+        self.client_type = Some(client_type);
+    }
+
+    /// Gets the type that its client is which either publisher or subscriber.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_client_type().is_none())
+    /// ```
+    pub fn get_client_type(&mut self) -> Option<ClientType> {
+        self.client_type
+    }
+
+    /// Sets one of publisher's status.
+    pub fn set_publisher_status(&mut self, publisher_status: PublisherStatus) {
+        self.publisher_status = Some(publisher_status);
+    }
+
+    /// Gets one of publisher's status.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_publisher_status().is_none())
     /// ```
     pub fn get_publisher_status(&mut self) -> Option<PublisherStatus> {
         self.publisher_status
+    }
+
+    /// Sets one of subscriber's status.
+    pub fn set_subscriber_status(&mut self, subscriber_status: SubscriberStatus) {
+        self.subscriber_status = Some(subscriber_status);
+    }
+
+    /// Gets one of subscriber's status.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_subscriber_status().is_none())
+    /// ```
+    pub fn get_subscriber_status(&mut self) -> Option<SubscriberStatus> {
+        self.subscriber_status
     }
 
     /// Stores the algorithm to encrypt this handshake.
@@ -246,7 +375,7 @@ impl RtmpContext {
     }
 
     /// Gets specieifed algorithm to encrypt this handshake.
-    /// Note this can return `None`. e.g. When is as the default is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -266,7 +395,7 @@ impl RtmpContext {
     }
 
     /// Gets a client-side handshake bytes.
-    /// Note this can return `None`. e.g. When is as the default is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -284,7 +413,7 @@ impl RtmpContext {
     /// Note:
     ///
     /// * This is currently used for only testing (also intagration tests contained).
-    /// * This can return `None`. e.g. When is as the default is.
+    /// * This can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -304,7 +433,7 @@ impl RtmpContext {
     }
 
     /// Gets a server-side handshake bytes.
-    /// Note this can return `None`. e.g. When it is the default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -324,7 +453,7 @@ impl RtmpContext {
     }
 
     /// Gets a command object sent from a client.
-    /// Note this can return `None`. e.g. When it is default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -344,7 +473,7 @@ impl RtmpContext {
     }
 
     /// Gets a properties object of a server.
-    /// Note this can return `None`. e.g. When it is the dafault as is.
+    /// Note this can return `None`. e.g. When this field is dafault as it is.
     ///
     /// # Examples
     ///
@@ -364,7 +493,7 @@ impl RtmpContext {
     }
 
     /// Gets a information object of a server.
-    /// Note this can return `None`. e.g. When it is the default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -384,13 +513,13 @@ impl RtmpContext {
     }
 
     /// Resets a `playpath` from this context.
-    /// This is prepared for deleting the `playpath` when receives the `FCUnpublish` command.
+    /// This is prepared for deleting a `playpath` when receives the `FCUnpublish` command.
     pub fn reset_playpath(&mut self) {
         self.playpath = None;
     }
 
     /// Gets a `playpath` (e.g. filename) sent from a client.
-    /// Note this can return `None`. e.g. When it is the default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -402,6 +531,26 @@ impl RtmpContext {
     /// ```
     pub fn get_playpath(&mut self) -> Option<&AmfString> {
         self.playpath.as_ref()
+    }
+
+    /// Sets a `subscribepath` (e.g. filename) sent from a client.
+    pub fn set_subscribepath(&mut self, subscribepath: AmfString) {
+        self.subscribepath = Some(subscribepath);
+    }
+
+    /// Gets a `subscribepath` (e.g. filename) sent from a client.
+    /// Note this can return `None`. e.g. When this field is default as is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_subscribepath().is_none())
+    /// ```
+    pub fn get_subscribepath(&mut self) -> Option<&AmfString> {
+        self.subscribepath.as_ref()
     }
 
     /// Sets a message ID of this stream.
@@ -416,7 +565,7 @@ impl RtmpContext {
     }
 
     /// Gets a message ID of this stream.
-    /// Note this can return `None`. e.g. When it is the default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -424,10 +573,34 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_message_id().is_none());
+    /// assert!(rtmp_context.get_message_id().is_none())
     /// ```
     pub fn get_message_id(&mut self) -> Option<u32> {
         self.message_id
+    }
+
+    /// Sets a Playlist.
+    ///
+    /// Currently, this is sent from several client like OBS.
+    pub fn set_playlist(&mut self, playlist: EcmaArray) {
+        self.playlist = Some(playlist);
+    }
+
+    /// Gets a playlist.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_playlist().is_none())
+    /// ```
+    ///
+    /// Currently, this is sent from several client like OBS.
+    pub fn get_playlist(&mut self) -> Option<&EcmaArray> {
+        self.playlist.as_ref()
     }
 
     /// Sets a publishing name of this stream.
@@ -436,7 +609,7 @@ impl RtmpContext {
     }
 
     /// Gets a publishing name of this stream.
-    /// Note this can return `None`. e.g. When it is the default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -456,7 +629,7 @@ impl RtmpContext {
     }
 
     /// Gets a publishing type of this stream.
-    /// Note this can return `None`. e.g. When it is the default as is.
+    /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
     ///
@@ -468,6 +641,66 @@ impl RtmpContext {
     /// ```
     pub fn get_publishing_type(&mut self) -> Option<&AmfString> {
         self.publishing_type.as_ref()
+    }
+
+    /// Sets a stream name of this stream.
+    pub fn set_stream_name(&mut self, stream_name: AmfString) {
+        self.stream_name = Some(stream_name);
+    }
+
+    /// Gets a stream name of this stream.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_stream_name().is_none())
+    /// ```
+    pub fn get_stream_name(&mut self) -> Option<&AmfString> {
+        self.stream_name.as_ref()
+    }
+
+    /// Sets a start time of this stream.
+    pub fn set_start_time(&mut self, start_time: Duration) {
+        self.start_time = Some(start_time);
+    }
+
+    /// Gets a start time of this stream.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_start_time().is_none())
+    /// ```
+    pub fn get_start_time(&mut self) -> Option<Duration> {
+        self.start_time
+    }
+
+    /// Sets a play mode of this stream.
+    pub fn set_play_mode(&mut self, play_mode: PlayMode) {
+        self.play_mode = Some(play_mode);
+    }
+
+    /// Gets a play mode of this stream.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_play_mode().is_none())
+    /// ```
+    pub fn get_play_mode(&mut self) -> Option<PlayMode> {
+        self.play_mode
     }
 
     /// Sets a duration for awaiting of receiving some message.
@@ -484,12 +717,27 @@ impl RtmpContext {
         self.await_duration
     }
 
-    /// Sets input file/device.
-    pub fn set_input(&mut self, input: Flv) {
-        self.input = Some(input);
+    /// Sets a topic file/device.
+    pub fn set_topic(&mut self, topic: Flv) {
+        self.topic = Some(topic);
     }
 
-    /// Gets input file/device.
+    /// Gets a topic file/device.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_topic().is_none())
+    /// ```
+    pub fn get_topic(&mut self) -> Option<&Flv> {
+        self.topic.as_ref()
+    }
+
+    /// Gets a topic file/device as mutable.
     /// Note this can return `None`. e.g. When it is the default as is.
     ///
     /// # Examples
@@ -498,25 +746,10 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_input().is_none())
+    /// assert!(rtmp_context.get_topic_mut().is_none())
     /// ```
-    pub fn get_input(&mut self) -> Option<&Flv> {
-        self.input.as_ref()
-    }
-
-    /// Gets input file/device as mutable.
-    /// Note this can return `None`. e.g. When it is the default as is.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::handlers::RtmpContext;
-    ///
-    /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_input_mut().is_none())
-    /// ```
-    pub fn get_input_mut(&mut self) -> Option<&mut Flv> {
-        self.input.as_mut()
+    pub fn get_topic_mut(&mut self) -> Option<&mut Flv> {
+        self.topic.as_mut()
     }
 
     /// Stores a last received chunk.
