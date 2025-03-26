@@ -8,7 +8,8 @@ use std::{
     io::Result as IOResult,
     ops::{
         Add,
-        AddAssign
+        AddAssign,
+        Div
     }
 };
 use super::{
@@ -35,6 +36,10 @@ impl Number {
     /// This is prepared for converting any message ID to an integer from an AMF's number.
     pub fn as_integer(&self) -> u64 {
         self.0 as u64
+    }
+
+    pub fn as_signed_integer(&self) -> i64 {
+        self.0 as i64
     }
 }
 
@@ -141,6 +146,22 @@ impl AddAssign for Number {
 impl AddAssign<f64> for Number {
     fn add_assign(&mut self, rhs: f64) {
         self.0 += rhs;
+    }
+}
+
+impl Div for Number {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self(self.0 / rhs.0)
+    }
+}
+
+impl Div<f64> for Number {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Self(self.0 / rhs)
     }
 }
 
