@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// The response message for CreateStream requests.
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CreateStreamResult(Number);
 
 impl CreateStreamResult {
