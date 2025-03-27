@@ -12,7 +12,7 @@ use std::{
 };
 use crate::messages::amf::v0::AmfString;
 
-/// An error means that some command name differs you expect.
+/// An error that some command name differs you expect.
 #[derive(Debug)]
 pub struct InconsistentCommand {
     expected: AmfString,

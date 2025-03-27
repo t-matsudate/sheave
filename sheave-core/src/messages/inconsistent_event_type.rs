@@ -12,7 +12,7 @@ use std::{
 };
 use super::EventType;
 
-/// An error means that some event type differs you expect.
+/// An error that some event type differs you expect.
 #[derive(Debug)]
 pub struct InconsistentEventType {
     expected: EventType,
