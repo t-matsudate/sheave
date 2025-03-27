@@ -1,3 +1,13 @@
+/// Representation of the limit type field in the PeerBandwidth message.
+///
+/// Variants correspond to respectively following numbers:
+///
+/// |Pattern|Number|
+/// | :- | :- |
+/// |`Hard`|`0`|
+/// |`Soft`|`1`|
+/// |`Dynamic`|`2`|
+/// |`Other`|other numbers|
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LimitType {
