@@ -219,6 +219,14 @@ mod window_acknowledgement_size;
 mod peer_bandwidth;
 mod fc_unpublish;
 mod delete_stream;
+mod fc_subscribe;
+mod get_stream_length;
+mod get_stream_length_result;
+mod set_playlist;
+mod playlist_ready;
+mod play;
+mod set_buffer_length;
+mod command_error;
 
 use std::cmp::Ordering;
 use self::headers::MessageType;
@@ -244,7 +252,15 @@ pub use self::{
     window_acknowledgement_size::*,
     peer_bandwidth::*,
     fc_unpublish::*,
-    delete_stream::*
+    delete_stream::*,
+    fc_subscribe::*,
+    get_stream_length::*,
+    get_stream_length_result::*,
+    set_playlist::*,
+    playlist_ready::*,
+    play::*,
+    set_buffer_length::*,
+    command_error::*
 };
 
 /// The IDs which are assigned every roles of chunks.
@@ -318,13 +334,16 @@ pub trait Command {}
 /// |Patttern|Message Type|
 /// | :- | :- |
 /// |`StreamBegin`|[`StreamBegin`]|
+/// |`SetBufferLength`|[`SetBufferLength`]|
 /// |`Other`|other event type|
 ///
 /// [`StreamBegin`]: StreamBegin
+/// [`SetBufferLength`]: SetBufferLength
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EventType {
     StreamBegin,
+    SetBufferLength = 3,
     Other = 0xffff
 }
 
@@ -334,6 +353,7 @@ impl From<u16> for EventType {
 
         match event_type {
             0 => StreamBegin,
+            3 => SetBufferLength,
             _ => Other
         }
     }
