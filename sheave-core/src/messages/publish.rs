@@ -31,7 +31,7 @@ impl Publish {
         Self { publishing_name, publishing_type }
     }
 
-    /// Gets the publishing identifier. (e.g. filename, username, etc.)
+    /// Gets the publishing identifier. (e.g. filename)
     pub fn get_publishing_name(&self) -> &AmfString {
         &self.publishing_name
     }
