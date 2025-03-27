@@ -15,18 +15,18 @@ use crate::{
     }
 };
 
-/// The command to tell the Play Path. (e.g. something file name)
+/// The command to tell the PlayPath. (e.g. something file name)
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetStreamLength(AmfString);
 
 impl GetStreamLength {
     /// Constructs a GetStreamLength command.
-    pub fn new(play_path: AmfString) -> Self {
-        Self(play_path)
+    pub fn new(playpath: AmfString) -> Self {
+        Self(playpath)
     }
 
     /// Gets the Play Path.
-    pub fn get_play_path(&self) -> &AmfString {
+    pub fn get_playpath(&self) -> &AmfString {
         &self.0
     }
 }
@@ -91,8 +91,8 @@ impl Decoder<GetStreamLength> for ByteBuffer {
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<GetStreamLength> {
         Decoder::<Null>::decode(self)?;
-        let play_path: AmfString = self.decode()?;
-        Ok(GetStreamLength(play_path))
+        let playpath: AmfString = self.decode()?;
+        Ok(GetStreamLength(playpath))
     }
 }
 
@@ -100,7 +100,7 @@ impl Encoder<GetStreamLength> for ByteBuffer {
     /// Encodes a GetStreamLength command into bytes.
     fn encode(&mut self, get_stream_length: &GetStreamLength) {
         self.encode(&Null);
-        self.encode(get_stream_length.get_play_path());
+        self.encode(get_stream_length.get_playpath());
     }
 }
 
@@ -123,11 +123,11 @@ mod tests {
     #[test]
     fn encode_get_stream_length() {
         let mut buffer = ByteBuffer::default();
-        let expected_play_path = "";
-        let expected = GetStreamLength::new(AmfString::from(expected_play_path));
+        let expected_playpath = "";
+        let expected = GetStreamLength::new(AmfString::from(expected_playpath));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_play_path: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_play_path, actual_play_path)
+        let actual_playpath: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_playpath, actual_playpath)
     }
 }
