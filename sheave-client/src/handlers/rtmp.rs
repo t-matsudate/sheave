@@ -24,11 +24,9 @@ use log::{
     info
 };
 use futures::ready;
-use tokio::{
-    io::{
-        AsyncRead,
-        AsyncWrite
-    }
+use tokio::io::{
+    AsyncRead,
+    AsyncWrite
 };
 use sheave_core::{
     ByteBuffer,
@@ -54,26 +52,26 @@ use sheave_core::{
         Version
     },
     messages::{
-        Acknowledgement,
         Channel,
         ChunkData,
         Connect,
         ConnectResult,
-        CreateStream,
-        CreateStreamResult,
-        DeleteStream,
-        EventType,
-        FcPublish,
-        FcUnpublish,
-        OnFcPublish,
-        OnStatus,
-        Publish,
         ReleaseStream,
         ReleaseStreamResult,
+        FcPublish,
+        OnFcPublish,
+        CreateStream,
+        CreateStreamResult,
+        EventType,
         StreamBegin,
+        Publish,
+        OnStatus,
         Audio,
         Video,
         SetDataFrame,
+        Acknowledgement,
+        FcUnpublish,
+        DeleteStream,
         amf::v0::{
             Number,
             AmfString,
@@ -262,7 +260,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_flv(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        for next in rtmp_context.get_input_mut().unwrap() {
+        for next in rtmp_context.get_topic_mut().unwrap() {
             let flv_tag = next?;
             let message_id = rtmp_context.get_message_id().unwrap();
 
@@ -295,7 +293,6 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
             } else {
                 flv_tag.get_data().to_vec()
             };
-
             write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, &data).await?;
 
             info!("FLV chunk got sent.");
@@ -333,14 +330,18 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         }
     }
 
-    async fn handle_connect_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, command: AmfString) -> IOResult<()> {
+    async fn handle_error_response(&mut self, rtmp_context: &mut RtmpContext, information: Object) -> IOResult<()> {
+        let information: Object = buffer.decode()?;
+        error!("_error response got handled.\ninformation: {information:?}");
+
+        rtmp_context.set_information(information);
+
+        Err(error_response(information))
+    }
+
+    async fn handle_connect_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let response: ConnectResult = buffer.decode()?;
         let (properties, information): (Object, Object) = response.into();
-
-        if "_error" == command {
-            error!("connect got rejected: {information:?}");
-            return Err(connection_error(information))
-        }
 
         rtmp_context.set_properties(properties);
         rtmp_context.set_information(information);
@@ -351,7 +352,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_release_stream_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, _: AmfString) -> IOResult<()> {
+    async fn handle_release_stream_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         Decoder::<ReleaseStreamResult>::decode(&mut buffer)?;
 
         rtmp_context.set_publisher_status(PublisherStatus::Released);
@@ -360,7 +361,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_fc_publish_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, _: AmfString) -> IOResult<()> {
+    async fn handle_fc_publish_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         Decoder::<OnFcPublish>::decode(&mut buffer)?;
 
         rtmp_context.set_publisher_status(PublisherStatus::FcPublished);
@@ -369,7 +370,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_create_stream_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, _: AmfString) -> IOResult<()> {
+    async fn handle_create_stream_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let response: CreateStreamResult = buffer.decode()?;
         let message_id: u32 = response.into();
         rtmp_context.set_message_id(message_id);
@@ -380,13 +381,17 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_publish_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, _: AmfString) -> IOResult<()> {
+    async fn handle_publish_response(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let response: OnStatus = buffer.decode()?;
         let information: Object = response.into();
 
+        /*
+         *  NOTE:
+         *      Some error in publication step is checkable only by information the field.
+         *      Because the publish command doesn't have _error command.
+         */
         if information.get_properties()["level"] == AmfString::from("error") {
-            error!("publish got rejected: {information:?}");
-            return Err(publication_error(information))
+            return self.handle_error_response(information)
         }
 
         rtmp_context.set_information(information);
@@ -397,7 +402,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_fc_unpublish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, _: AmfString) -> IOResult<()> {
+    async fn handle_fc_unpublish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         Decoder::<FcUnpublish>::decode(&mut buffer)?;
         rtmp_context.reset_playpath();
 
@@ -405,7 +410,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_delete_stream_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, _: AmfString) -> IOResult<()> {
+    async fn handle_delete_stream_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         Decoder::<DeleteStream>::decode(&mut buffer)?;
         rtmp_context.reset_message_id();
 
@@ -425,23 +430,26 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         }
 
         if command == "FCUnpublish" {
-            return self.handle_fc_unpublish_request(rtmp_context, buffer, command).await
+            return self.handle_fc_unpublish_request(rtmp_context, buffer).await
         } else if command == "deleteStream" {
-            return self.handle_delete_stream_request(rtmp_context, buffer, command).await
+            return self.handle_delete_stream_request(rtmp_context, buffer).await
+        } else if command == "_error" {
+            let information: Object = buffer.decode()?;
+            return self.handle_error_repsonse(rtmp_context, information).await
         } else {
             /* In this step, does nothing unless command is either "FCUnpublish" or "deleteStream". */
         }
 
         if let Some(publisher_status) = rtmp_context.get_publisher_status() {
             match publisher_status {
-                Connected => self.handle_release_stream_response(rtmp_context, buffer, command).await,
-                Released => self.handle_fc_publish_response(rtmp_context, buffer, command).await,
-                FcPublished => self.handle_create_stream_response(rtmp_context, buffer, command).await,
-                Began => self.handle_publish_response(rtmp_context, buffer, command).await,
+                Connected => self.handle_release_stream_response(rtmp_context, buffer).await,
+                Released => self.handle_fc_publish_response(rtmp_context, buffer).await,
+                FcPublished => self.handle_create_stream_response(rtmp_context, buffer).await,
+                Began => self.handle_publish_response(rtmp_context, buffer).await,
                 _ => Ok(())
             }
         } else {
-            self.handle_connect_response(rtmp_context, buffer, command).await
+            self.handle_connect_response(rtmp_context, buffer).await
         }
     }
 }
