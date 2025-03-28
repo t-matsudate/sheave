@@ -1,5 +1,3 @@
-mod message_id_provider;
-
 use std::{
     future::Future,
     io::{
@@ -25,7 +23,6 @@ use sheave_core::handlers::{
     StreamWrapper,
     HandlerConstructor
 };
-pub use self::message_id_provider::*;
 
 /// # The server instance of the Sheave
 ///
