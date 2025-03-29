@@ -24,7 +24,7 @@ impl Display for MetadataNotFound {
 
 impl Error for MetadataNotFound {}
 
-/// A utility function of constructing an `MetadataNotFound` error.
+/// A utility function of constructing a `MetadataNotFound` error.
 pub fn metadata_not_found(playpath: AmfString) -> IOError {
     IOError::new(
         ErrorKind::UnexpectedEof,
