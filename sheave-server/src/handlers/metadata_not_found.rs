@@ -18,7 +18,7 @@ pub struct MetadataNotFound(AmfString);
 
 impl Display for MetadataNotFound {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        writeln!(f, "Metadata didn't find in specified FLV file: {}", &self.0)
+        writeln!(f, "Metadata didn't find in specified playpath: {}", &self.0)
     }
 }
 
