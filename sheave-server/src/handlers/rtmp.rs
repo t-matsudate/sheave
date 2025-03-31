@@ -25,13 +25,10 @@ use log::{
     info
 };
 use futures::ready;
-use tokio::{
-    io::{
-        AsyncRead,
-        AsyncWrite
-    }
+use tokio::io::{
+    AsyncRead,
+    AsyncWrite
 };
-use uuid::Uuid;
 use sheave_core::{
     ByteBuffer,
     Decoder,
@@ -44,51 +41,88 @@ use sheave_core::{
     handlers::{
         AsyncHandler,
         AsyncHandlerExt,
+        ClientType,
         ErrorHandler,
         HandlerConstructor,
         LastChunk,
         PublisherStatus,
         RtmpContext,
         StreamWrapper,
-        inconsistent_sha
+        SubscriberStatus,
+        inconsistent_sha,
+        stream_got_exhausted
     },
     handshake::{
         Handshake,
         Version
     },
     messages::{
-        Acknowledgement,
+        /* Used in common */
+        Channel,
         ChunkData,
+        CommandError,
         Connect,
         ConnectResult,
         CreateStream,
         CreateStreamResult,
-        DeleteStream,
-        FcPublish,
-        FcUnpublish,
-        OnFcPublish,
-        OnStatus,
-        Publish,
-        ReleaseStream,
-        ReleaseStreamResult,
-        StreamBegin,
+        EventType,
         UserControl,
+        OnStatus,
+        Audio,
+        Video,
+        SetDataFrame,
+        Acknowledgement,
         amf::v0::{
             AmfString,
-            Number
+            Number,
+            Object
         },
-        headers::MessageType
+        headers::MessageType,
+
+        /* Publisher-side */
+        ReleaseStream,
+        ReleaseStreamResult,
+        FcPublish,
+        OnFcPublish,
+        StreamBegin,
+        Publish,
+        FcUnpublish,
+        DeleteStream,
+
+        /* Subscriber-side */
+        WindowAcknowledgementSize,
+        FcSubscribe,
+        GetStreamLength,
+        GetStreamLengthResult,
+        SetPlaylist,
+        PlaylistReady,
+        Play,
+        SetBufferLength,
     },
     net::RtmpReadExt,
     object,
     readers::*,
     writers::*
 };
-use crate::server::{
+use super::{
+    /* Used in common */
+    undistinguishable_client,
+    empty_playpath,
+    inconsistent_playpath,
+    middlewares::write_acknowledgement,
+
+    /* Publisher-side */
+    publish_topic,
     provide_message_id,
-    return_message_id
+    unpublish_topic,
+    return_message_id,
+
+    /* Subscriver-side */
+    subscribe_topic,
+    did_get_published,
+    metadata_not_found,
+    stream_is_unpublished
 };
-use super::middlewares::write_acknowledgement;
 
 #[doc(hidden)]
 #[derive(Debug)]
@@ -112,12 +146,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
         } else {
             if !client_request.did_digest_match(encryption_algorithm, Handshake::CLIENT_KEY) {
                 error!("Client side digest is inconsistent!\nencryption_algorithm: {:?}\ndigest: {:x?}", encryption_algorithm, client_request.get_digest(encryption_algorithm));
-                return Err(
-                    IOError::new(
-                        ErrorKind::InvalidData,
-                        inconsistent_sha(client_request.get_digest(encryption_algorithm).to_vec())
-                    )
-                )
+                return Err(inconsistent_sha(client_request.get_digest(encryption_algorithm).to_vec()))
             } else {
                 let mut server_request = Handshake::new(Instant::now().elapsed(), Version::LATEST_SERVER);
                 server_request.imprint_digest(encryption_algorithm, Handshake::SERVER_KEY);
@@ -200,24 +229,31 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_release_stream_request(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<ReleaseStream>::decode(&mut buffer)?;
+    async fn handle_window_acknowledgement_size(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let window_acknowledgement_size: WindowAcknowledgementSize = buffer.decode()?;
+        rtmp_context.set_window_acknowledgement_size(window_acknowledgement_size);
+
+        /*
+         *  NOTE:
+         *      Makes status to update during request handling.
+         *      Because of response not required.
+         */
+        rtmp_context.set_subscriber_status(SubscriberStatus::WindowAcknowledgementSizeGotSent);
+
+        info!("Window Acknowledgement Size got handled.");
+        Ok(())
+    }
+
+    async fn handle_release_stream_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let release_stream_request: ReleaseStream = buffer.decode()?;
+        rtmp_context.set_playpath(release_stream_request.into());
 
         info!("releaseStream got handled.");
         Ok(())
     }
 
-    async fn handle_fc_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        let fc_publish_request: FcPublish = buffer.decode()?;
-        let mut playpath: AmfString = fc_publish_request.into();
-
-        if playpath.is_empty() {
-            playpath = AmfString::new(format!("/tmp/{}.flv", Uuid::new_v4()));
-        }
-
-        let input = Flv::create(&playpath)?;
-        rtmp_context.set_input(input);
-        rtmp_context.set_playpath(playpath);
+    async fn handle_fc_publish_request(&mut self, _: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        Decoder::<FcPublish>::decode(&mut buffer)?;
 
         info!("FCPublish got handled.");
         Ok(())
@@ -230,6 +266,55 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
+    async fn handle_fc_subscribe_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap();
+
+        let fc_subscribe_request: FcSubscribe = buffer.decode()?;
+        /*
+         *  NOTE:
+         *      Makes topic to subscribe during request handling.
+         *      Because onFCSubscribe command is undefined about its specification.
+         */
+        let topic = subscribe_topic(topic_storage_url, fc_subscribe_request.get_subscribepath()).await?;
+        rtmp_context.set_topic(topic);
+        rtmp_context.set_subscribepath(fc_subscribe_request.into());
+
+        rtmp_context.set_subscriber_status(SubscriberStatus::FcSubscribed);
+
+        info!("FCSubscribe got handled.");
+        Ok(())
+    }
+
+    async fn handle_get_stream_length_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let get_stream_length_request: GetStreamLength = buffer.decode()?;
+        rtmp_context.set_playpath(get_stream_length_request.into());
+
+        info!("getStreamLength got handled.");
+        Ok(())
+    }
+
+    async fn handle_set_playlist_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let set_playlist_request: SetPlaylist = buffer.decode()?;
+        rtmp_context.set_playlist(set_playlist_request.into());
+
+        info!("set playlist got handled.");
+        Ok(())
+    }
+
+    async fn handle_additional_command_request(&mut self, rtmp_context: &mut RtmpContext, buffer: ByteBuffer) -> IOResult<()> {
+        let additional_command = rtmp_context.get_command_name().unwrap();
+        /* NOTE: FFmepg will send this. */
+        if *additional_command == "getStreamLength" {
+            self.handle_get_stream_length_request(rtmp_context, buffer).await
+        }
+        /* NOTE: OBS will send this. */
+        else if *additional_command == "set_playlist" {
+            self.handle_set_playlist_request(rtmp_context, buffer).await
+        } else {
+            Ok(())
+        }
+    }
+
     async fn handle_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let publish_request: Publish = buffer.decode()?;
         let (publishing_name, publishing_type): (AmfString, AmfString) = publish_request.into();
@@ -240,8 +325,48 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
+    async fn handle_play_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let play_request: Play = buffer.decode()?;
+        let (stream_name, start_time, play_mode) = play_request.into();
+        rtmp_context.set_stream_name(stream_name);
+        rtmp_context.set_start_time(start_time);
+        rtmp_context.set_play_mode(play_mode);
+
+        info!("play got handled.");
+        Ok(())
+    }
+
+    async fn handle_set_buffer_length(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        Decoder::<SetBufferLength>::decode(&mut buffer)?;
+
+        /*
+         * NOTE:
+         *  OBS sends SetBufferLength event also before the play command.
+         *  However its step isn't necessarily also other tools have implemented.
+         *  Therefore The sheave doesn't count up status except received after the play command implemented as the common step.
+         */
+        if let Some(SubscriberStatus::Played) = rtmp_context.get_subscriber_status() {
+            rtmp_context.set_subscriber_status(SubscriberStatus::BufferLengthGotSent);
+        }
+
+        Ok(())
+    }
+
+    async fn handle_user_control(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        use EventType::*;
+
+        let event_type: EventType = buffer.get_u16_be()?.into();
+        match event_type {
+            SetBufferLength => self.handle_set_buffer_length(rtmp_context, buffer).await,
+            _ => unimplemented!("Undefined event type: {event_type:?}")
+        }
+    }
+
     async fn handle_fc_unpublish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<FcUnpublish>::decode(&mut buffer)?;
+        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap().clone();
+        let client_addr = rtmp_context.get_client_addr().unwrap();
+        let fc_unpublish_request: FcUnpublish = buffer.decode()?;
+        unpublish_topic(&topic_storage_url, fc_unpublish_request.get_playpath(), client_addr).await?;
 
         rtmp_context.reset_playpath();
 
@@ -258,28 +383,57 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_command_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+    async fn handle_publisher_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         use PublisherStatus::*;
 
         let command: AmfString = buffer.decode()?;
         let transaction_id: Number = buffer.decode()?;
-        rtmp_context.set_transaction_id(transaction_id);
 
         if command == "FCUnpublish" {
             return self.handle_fc_unpublish_request(rtmp_context, buffer).await
-        } else if command == "deleteStream" {
+        }
+        if command == "deleteStream" {
             return self.handle_delete_stream_request(rtmp_context, buffer).await
-        } else {
-            /* In this step, does nothing unless command is either "FCUnpublish" or "deleteStream". */
         }
 
-        if let Some(publisher_status) = rtmp_context.get_publisher_status() {
-            match publisher_status {
-                Connected => self.handle_release_stream_request(rtmp_context, buffer).await,
-                Released => self.handle_fc_publish_request(rtmp_context, buffer).await,
-                FcPublished => self.handle_create_stream_request(rtmp_context, buffer).await,
-                Created => self.handle_publish_request(rtmp_context, buffer).await,
-                _ => Ok(())
+        rtmp_context.set_command_name(command);
+        rtmp_context.set_transaction_id(transaction_id);
+
+        match rtmp_context.get_publisher_status().unwrap() {
+            Connected => self.handle_release_stream_request(rtmp_context, buffer).await,
+            Released => self.handle_fc_publish_request(rtmp_context, buffer).await,
+            FcPublished => self.handle_create_stream_request(rtmp_context, buffer).await,
+            Created => self.handle_publish_request(rtmp_context, buffer).await,
+            _ => Ok(())
+        }
+    }
+
+    async fn handle_subscriber_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        use SubscriberStatus::*;
+
+        let command: AmfString = buffer.decode()?;
+        let transaction_id: Number = buffer.decode()?;
+        rtmp_context.set_command_name(command);
+        rtmp_context.set_transaction_id(transaction_id);
+
+        match rtmp_context.get_subscriber_status().unwrap() {
+            Connected => Ok(()),
+            /* Subscriber sends a Window Acknowledgement Size chunk just after the connect command. */
+            WindowAcknowledgementSizeGotSent => self.handle_create_stream_request(rtmp_context, buffer).await,
+            Created => self.handle_fc_subscribe_request(rtmp_context, buffer).await,
+            FcSubscribed => self.handle_additional_command_request(rtmp_context, buffer).await,
+            AdditionalCommandGotSent => self.handle_play_request(rtmp_context, buffer).await,
+            _ => Ok(())
+        }
+    }
+
+    async fn handle_command_request(&mut self, rtmp_context: &mut RtmpContext, buffer: ByteBuffer) -> IOResult<()> {
+        use ClientType::*;
+
+        if let Some(client_type) = rtmp_context.get_client_type() {
+            match client_type {
+                Publisher => self.handle_publisher_request(rtmp_context, buffer).await,
+                Subscriber => self.handle_subscriber_request(rtmp_context, buffer).await
             }
         } else {
             self.handle_connect_request(rtmp_context, buffer).await
@@ -287,7 +441,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn handle_flv(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, message_type: MessageType, timestamp: Duration) -> IOResult<()> {
-        let input = rtmp_context.get_input().unwrap();
+        let input = rtmp_context.get_topic().unwrap();
 
         let tag_type = match message_type {
             MessageType::Audio => TagType::Audio,
@@ -309,7 +463,36 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
+    async fn write_error_response(&mut self, rtmp_context: &mut RtmpContext, information: Object, error: IOError) -> IOResult<()> {
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&AmfString::from("_error"));
+        buffer.encode(&rtmp_context.get_transaction_id());
+        buffer.encode(&CommandError::new(information.clone()));
+        write_chunk(self.0.as_mut(), rtmp_context, CommandError::CHANNEL.into(), Duration::default(), CommandError::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
+        rtmp_context.set_information(information);
+
+        error!("{error}");
+        return Err(error)
+    }
+
     async fn write_connect_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        use ClientType::*;
+
+        let command_object = rtmp_context.get_command_object().unwrap().get_properties();
+        let client_type = if command_object.get("type").is_some() {
+            Publisher
+        } else if command_object.get("fpad").is_some() {
+            Subscriber
+        } else {
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetConnection.Connect.UndistinguishableClient"),
+                "description" => AmfString::from("Server couldn't distinguish you are either publisher or subscriber.")
+            );
+            return self.write_error_response(rtmp_context, information, undistinguishable_client()).await
+        };
+
         let properties = object!(
             "fmsVer" => AmfString::from("FMS/5,0,17"),
             "capabilities" => Number::from(31)
@@ -325,16 +508,30 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         buffer.encode(&rtmp_context.get_transaction_id());
         buffer.encode(&ConnectResult::new(properties.clone(), information.clone()));
         write_chunk(self.0.as_mut(), rtmp_context, ConnectResult::CHANNEL.into(), Duration::default(), ConnectResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
         rtmp_context.set_properties(properties);
         rtmp_context.set_information(information);
 
-        rtmp_context.set_publisher_status(PublisherStatus::Connected);
+        match client_type {
+            Publisher => rtmp_context.set_publisher_status(PublisherStatus::Connected),
+            Subscriber => rtmp_context.set_subscriber_status(SubscriberStatus::Connected)
+        }
 
         info!("connect result got sent.");
         Ok(())
     }
 
     async fn write_release_stream_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let playpath = rtmp_context.get_playpath().unwrap();
+        if playpath.is_empty() {
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetConnection.ReleaseStream.EmptyPlaypath"),
+                "description" => AmfString::from("Playpath must not be empty.")
+            );
+            return self.write_error_response(rtmp_context, information, empty_playpath()).await
+        }
+
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("_result"));
         buffer.encode(&rtmp_context.get_transaction_id());
@@ -348,6 +545,13 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_fc_publish_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let client_addr = rtmp_context.get_client_addr().unwrap();
+        let playpath = rtmp_context.get_playpath().unwrap().clone();
+        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap().clone();
+        publish_topic(&topic_storage_url, &playpath, client_addr).await?;
+        let topic = Flv::create(&playpath)?;
+        rtmp_context.set_topic(topic);
+
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("onFCPublish"));
         buffer.encode(&OnFcPublish);
@@ -366,6 +570,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         buffer.encode(&rtmp_context.get_transaction_id());
         buffer.encode(&CreateStreamResult::new(message_id.into()));
         write_chunk(self.0.as_mut(), rtmp_context, CreateStreamResult::CHANNEL.into(), Duration::default(), CreateStreamResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
         rtmp_context.set_message_id(message_id);
 
         rtmp_context.set_publisher_status(PublisherStatus::Created);
@@ -374,46 +579,233 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
+    async fn write_get_stream_length_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap().clone();
+        let client_addr = rtmp_context.get_client_addr().unwrap();
+        let playpath = rtmp_context.get_playpath().unwrap().clone();
+        let transaction_id = rtmp_context.get_transaction_id();
+
+        if did_get_published(&topic_storage_url, &playpath, client_addr).await {
+            let topic = subscribe_topic(&topic_storage_url, &playpath).await?;
+            for result in topic {
+                let flv_tag = result?;
+
+                if flv_tag.get_tag_type() == TagType::ScriptData {
+                    let mut buffer = ByteBuffer::default();
+                    buffer.put_bytes(flv_tag.get_data());
+                    let script_data: ScriptDataTag = buffer.decode()?;
+
+                    if *script_data.get_name() == "onMetaData" {
+                        let duration: &Number = (&script_data.get_value().get_properties()["duration"]).into();
+                        let mut buffer = ByteBuffer::default();
+                        buffer.encode(&AmfString::from("_result"));
+                        buffer.encode(&transaction_id);
+                        buffer.encode(&GetStreamLengthResult::new(*duration));
+                        write_chunk(self.0.as_mut(), rtmp_context, GetStreamLengthResult::CHANNEL.into(), Duration::default(), GetStreamLengthResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
+                        rtmp_context.set_subscriber_status(SubscriberStatus::AdditionalCommandGotSent);
+
+                        info!("getStreamLength result got sent.");
+                        return Ok(())
+                    }
+                }
+            }
+
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetConnection.GetStreamLength.MetadataNotFound"),
+                "description" => AmfString::from("Metadata didn't find in specified playpath: {playpath}")
+            );
+            self.write_error_response(rtmp_context, information, metadata_not_found(playpath)).await
+        } else {
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetConnection.GetStreamLength.Unpublished"),
+                "description" => AmfString::from("Specified playpath is unpublished.")
+            );
+            self.write_error_response(rtmp_context, information, stream_is_unpublished(playpath)).await
+        }
+    }
+
+    async fn write_set_playlist_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&AmfString::from("playlist_ready"));
+        buffer.encode(&PlaylistReady);
+        write_chunk(self.0.as_mut(), rtmp_context, PlaylistReady::CHANNEL.into(), Duration::default(), PlaylistReady::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
+        rtmp_context.set_subscriber_status(SubscriberStatus::AdditionalCommandGotSent);
+
+        info!("playlist_ready got sent.");
+        Ok(())
+    }
+
+    async fn write_additional_command_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let additional_command = rtmp_context.get_command_name().unwrap();
+        /* NOTE: FFmpeg will require of this. */
+        if *additional_command == "getStreamLength" {
+            self.write_get_stream_length_response(rtmp_context).await
+        }
+        /* NOTE: OBS will require of this. */
+        else if *additional_command == "set_playlist" {
+            self.write_set_playlist_response(rtmp_context).await
+        } else {
+            /*
+             * NOTE:
+             *  This step won't respond any error even if its command is neither getStreamLength nor set_playlist.
+             *  Because this mayn't be requested.
+             */
+            rtmp_context.set_subscriber_status(SubscriberStatus::AdditionalCommandGotSent);
+            Ok(())
+        }
+    }
+
     async fn write_stream_begin(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        use ClientType::*;
+
         let message_id = rtmp_context.get_message_id().unwrap();
         let mut buffer = ByteBuffer::default();
         buffer.put_u16_be(StreamBegin::EVENT_TYPE.into());
         buffer.encode(&StreamBegin::new(message_id));
         write_chunk(self.0.as_mut(), rtmp_context, StreamBegin::CHANNEL.into(), Duration::default(), StreamBegin::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
-        rtmp_context.set_publisher_status(PublisherStatus::Began);
+        match rtmp_context.get_client_type().unwrap() {
+            Publisher => rtmp_context.set_publisher_status(PublisherStatus::Began),
+            Subscriber => rtmp_context.set_subscriber_status(SubscriberStatus::Began)
+        }
 
         info!("Stream Begin got sent.");
         Ok(())
     }
 
-    async fn write_publish_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let publishing_name = rtmp_context.get_publishing_name().unwrap().clone();
+    async fn write_error_status(&mut self, rtmp_context: &mut RtmpContext, information: Object, error: IOError) -> IOResult<()> {
         let message_id = rtmp_context.get_message_id().unwrap();
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&AmfString::from("onStatus"));
+        buffer.encode(&Number::from(0));
+        buffer.encode(&OnStatus::new(information.clone()));
+        write_chunk(self.0.as_mut(), rtmp_context, OnStatus::CHANNEL.into(), Duration::default(), OnStatus::MESSAGE_TYPE, message_id, &Vec::<u8>::from(buffer)).await?;
+
+        rtmp_context.set_information(information);
+
+        error!("{error}");
+        return Err(error)
+    }
+
+    async fn write_publish_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let message_id = rtmp_context.get_message_id().unwrap();
+        let playpath = rtmp_context.get_playpath().unwrap().clone();
+        let publishing_name = rtmp_context.get_publishing_name().unwrap().clone();
+
+        if playpath != publishing_name {
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetStream.Publish.InconsistentPlaypath"),
+                "description" => AmfString::new(format!("Requested name is inconsistent. expected: {playpath}, actual: {publishing_name}"))
+            );
+            return self.write_error_status(rtmp_context, information, inconsistent_playpath(playpath, publishing_name)).await
+        }
+
         let information = object!(
             "level" => AmfString::from("status"),
             "code" => AmfString::from("NetStream.Publish.Start"),
             "description" => AmfString::new(format!("{publishing_name} is now published")),
-            "details" => publishing_name
+            "details" => publishing_name.clone()
         );
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("onStatus"));
         buffer.encode(&Number::from(0));
         buffer.encode(&OnStatus::new(information.clone()));
         write_chunk(self.0.as_mut(), rtmp_context, OnStatus::CHANNEL.into(), Duration::default(), OnStatus::MESSAGE_TYPE, message_id, &Vec::<u8>::from(buffer)).await?;
-        rtmp_context.set_information(information);
 
+        rtmp_context.set_information(information);
         rtmp_context.set_publisher_status(PublisherStatus::Published);
 
-        info!("onStatus got sent.");
+        info!("onStatus(publish) got sent.");
         Ok(())
+    }
+
+    async fn write_play_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let message_id = rtmp_context.get_message_id().unwrap();
+        let subscribepath = rtmp_context.get_subscribepath().unwrap().clone();
+        let stream_name = rtmp_context.get_stream_name().unwrap().clone();
+
+        if subscribepath != stream_name {
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetStream.Play.InconsistentPlaypath"),
+                "description" => AmfString::from("Requested name is inconsistent.")
+            );
+            return self.write_error_status(rtmp_context, information, inconsistent_playpath(subscribepath, stream_name)).await
+        }
+
+        let information = object!(
+            "level" => AmfString::from("status"),
+            "code" => AmfString::from("NetStream.Play.Start"),
+            "description" => AmfString::from("Playing stream.")
+        );
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&AmfString::from("onStatus"));
+        buffer.encode(&Number::from(0));
+        buffer.encode(&OnStatus::new(information.clone()));
+        write_chunk(self.0.as_mut(), rtmp_context, OnStatus::CHANNEL.into(), Duration::default(), OnStatus::MESSAGE_TYPE, message_id, &Vec::<u8>::from(buffer)).await?;
+
+        rtmp_context.set_information(information);
+        rtmp_context.set_subscriber_status(SubscriberStatus::Played);
+
+        info!("onStatus(play) got sent.");
+        Ok(())
+    }
+
+    async fn write_flv(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        for next in rtmp_context.get_topic_mut().unwrap() {
+            let flv_tag = next?;
+            let message_id = rtmp_context.get_message_id().unwrap();
+
+            let channel;
+            let message_type;
+            match flv_tag.get_tag_type() {
+                TagType::Audio => {
+                    channel = Audio::CHANNEL;
+                    message_type = Audio::MESSAGE_TYPE;
+                },
+                TagType::Video => {
+                    channel = Video::CHANNEL;
+                    message_type = Video::MESSAGE_TYPE;
+                },
+                TagType::ScriptData => {
+                    channel = SetDataFrame::CHANNEL;
+                    message_type = SetDataFrame::MESSAGE_TYPE;
+                },
+                TagType::Other => {
+                    channel = Channel::Other;
+                    message_type = MessageType::Other;
+                }
+            }
+            let timestamp = flv_tag.get_timestamp();
+            let data: Vec<u8> = if let MessageType::Data = message_type {
+                let mut buffer = ByteBuffer::default();
+                buffer.encode(&AmfString::from("@setDataFrame"));
+                buffer.put_bytes(flv_tag.get_data());
+                buffer.into()
+            } else {
+                flv_tag.get_data().to_vec()
+            };
+            write_chunk(self.0.as_mut(), rtmp_context, channel.into(), timestamp, message_type, message_id, &data).await?;
+
+            info!("FLV chunk got sent.");
+            return Ok(())
+        }
+
+        info!("FLV data became empty.");
+        Err(stream_got_exhausted())
     }
 }
 
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW> {
     fn poll_handle(mut self: Pin<&mut Self>, cx: &mut FutureContext<'_>, rtmp_context: &mut RtmpContext) -> Poll<IOResult<()>> {
-        use PublisherStatus::*;
+        use MessageType::*;
 
         let basic_header = ready!(pin!(read_basic_header(pin!(self.0.await_until_receiving()))).poll(cx))?;
         let message_header = ready!(pin!(read_message_header(pin!(self.0.await_until_receiving()), basic_header.get_message_format())).poll(cx))?;
@@ -470,26 +862,42 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW>
 
         let message_type = rtmp_context.get_last_received_chunk(&chunk_id).unwrap().get_message_type();
         match message_type {
-            MessageType::Acknowledgement => ready!(pin!(self.handle_acknowledgement(rtmp_context, buffer)).poll(cx))?,
-            MessageType::Audio | MessageType::Video | MessageType::Data => {
+            Acknowledgement => ready!(pin!(self.handle_acknowledgement(rtmp_context, buffer)).poll(cx))?,
+            UserControl => ready!(pin!(self.handle_user_control(rtmp_context, buffer)).poll(cx))?,
+            WindowAcknowledgementSize => ready!(pin!(self.handle_window_acknowledgement_size(rtmp_context, buffer)).poll(cx))?,
+            Audio | Video | Data => {
                 let timestamp = rtmp_context.get_last_received_chunk(&chunk_id).unwrap().get_timestamp();
                 ready!(pin!(self.handle_flv(rtmp_context, buffer, message_type, timestamp)).poll(cx))?
             },
-            MessageType::Command => ready!(pin!(self.handle_command_request(rtmp_context, buffer)).poll(cx))?,
+            Command => ready!(pin!(self.handle_command_request(rtmp_context, buffer)).poll(cx))?,
             other => unimplemented!("Undefined Message: {other:?}")
         }
 
         if let Some(publisher_status) = rtmp_context.get_publisher_status() {
             match publisher_status {
-                Connected => pin!(self.write_release_stream_response(rtmp_context)).poll(cx),
-                Released => pin!(self.write_fc_publish_response(rtmp_context)).poll(cx),
-                FcPublished => pin!(self.write_create_stream_response(rtmp_context)).poll(cx),
-                Created => {
+                PublisherStatus::Connected => pin!(self.write_release_stream_response(rtmp_context)).poll(cx),
+                PublisherStatus::Released => pin!(self.write_fc_publish_response(rtmp_context)).poll(cx),
+                PublisherStatus::FcPublished => pin!(self.write_create_stream_response(rtmp_context)).poll(cx),
+                PublisherStatus::Created => {
                     ready!(pin!(self.write_stream_begin(rtmp_context)).poll(cx))?;
                     pin!(self.write_publish_response(rtmp_context)).poll(cx)
                 },
                 _ => {
                     /* Just receiving flv after publishing. */
+                    Poll::Ready(Ok(()))
+                }
+            }
+        } else if let Some(subscriber_status) = rtmp_context.get_subscriber_status() {
+            match subscriber_status {
+                SubscriberStatus::WindowAcknowledgementSizeGotSent => pin!(self.write_create_stream_response(rtmp_context)).poll(cx),
+                SubscriberStatus::FcSubscribed => pin!(self.write_additional_command_response(rtmp_context)).poll(cx),
+                SubscriberStatus::AdditionalCommandGotSent => {
+                    ready!(pin!(self.write_stream_begin(rtmp_context)).poll(cx))?;
+                    pin!(self.write_play_response(rtmp_context)).poll(cx)
+                },
+                SubscriberStatus::Played => pin!(self.write_flv(rtmp_context)).poll(cx),
+                _ => {
+                    /* NOTE: There are plural chunks just to receive. */
                     Poll::Ready(Ok(()))
                 }
             }
@@ -567,16 +975,29 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> ErrorHandler for CloseHandler<'_, RW> {
 ///
 /// This handles the raw RTMP by well-known communication steps. That is, this performs just following steps.
 ///
+/// # With publishers
+///
 /// 1. Checks the application name from the [`Connect`] command.
 /// 2. Checks the playpath from the [`ReleaseStream`]/[`FcPublish`] command.
 /// 3. Provides a message ID when receives the [`CreateStream`] command.
 /// 4. Checks publication informations from the [`Publish`] command.
 /// 5. Then receives FLV media data.
 ///
-/// If receiving data size exceeds server's bandwidth, this reports its thing via the [`Acknowledgement`] message to its client.
-/// And if some error occurs in any step, sends commands which are [`FcUnpublish`] and [`DeleteStream`] to its client, then terminates its connection.
+/// If some error occurs in any step, sends commands which are [`FcUnpublish`] and [`DeleteStream`] to its client, then terminates its connection.
 /// These perform to delete the playpath and a message ID from its context.
 /// However also these can be sent from clients.
+///
+/// # With subscribers
+///
+/// 1. Checks the application name from the [`Connect`] command.
+/// 2. Checks partner's bandwidsth from the [`WindowAcknowledgementSize`] message.
+/// 3. Provides a message ID when receives the [`CreateStream`] command.
+/// 4. Checks the subscribepath from the [`FcSubscribe`] command.
+/// 5. Handles one of additional commands either [`GetStreamLength`] or [`SetPlaylist`].
+/// 6. Checkes subscription informaitons from [`Play`] command/
+/// 7. The sends FLV media data.
+///
+/// In Both sides, if receiving data size exceeds server's bandwidth, this reports its thing via the [`Acknowledgement`] message to its client.
 ///
 /// # Examples
 ///
@@ -604,6 +1025,11 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> ErrorHandler for CloseHandler<'_, RW> {
 /// [`Acknowledgement`]: sheave_core::messages::Acknowledgement
 /// [`FcUnpublish`]: sheave_core::messages::FcUnpublish
 /// [`DeleteStream`]: sheave_core::messages::DeleteStream
+/// [`WindowAcknowledgementSize`]: sheave_core::messages::WindowAcknowledgementSize
+/// [`FcSubscribe`]: sheave_core::messages::FcSubscribe
+/// [`GetStreamLength`]: sheave_core::messages::GetStreamLength
+/// [`SetPlaylist`]: sheave_core::messages::SetPlaylist
+/// [`Play`]: sheave_core::messages::Play
 #[derive(Debug)]
 pub struct RtmpHandler<RW: AsyncRead + AsyncWrite + Unpin>(Arc<StreamWrapper<RW>>);
 
