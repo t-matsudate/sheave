@@ -1,16 +1,25 @@
 [package]
 name = "sheave-server"
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap.workspace = true
+dotenvy = "0.15.7"
 env_logger.workspace = true
 futures.workspace = true
 log.workspace = true
 pin-project-lite.workspace = true
 sheave-core = { path = "../sheave-core" }
+sqlx = "0.8.3"
+sqlx-macros = "0.8.3"
 tokio.workspace = true
-uuid = { version = "1.12.1", features = ["v4", "fast-rng", "macro-diagnostics"] }
+uuid = { version = "1.16.0", features = ["std", "v7", "fast-rng", "macro-diagnostics"] }
+
+[features]
+default = ["sqlx/default", "sqlite"]
+sqlite = ["sqlx/sqlite", "sqlx-macros/sqlite"]
+mysql = ["sqlx/mysql", "sqlx-macros/mysql"]
+postgres = ["sqlx/postgres", "sqlx-macros/postgres"]
