@@ -53,12 +53,12 @@ pub struct RtmpContext {
     sending_chunk_size: ChunkSize,
     window_acknowledgement_size: WindowAcknowledgementSize,
     peer_bandwidth: PeerBandwidth,
+    buffer_length: u32,
     last_transaction_id: Number,
-    client_addr: Option<SocketAddr>,
     topic_storage_url: Option<String>,
+    client_addr: Option<SocketAddr>,
     app: Option<AmfString>,
-    playpath: Option<AmfString>,
-    subscribepath: Option<AmfString>,
+    topic_path: Option<AmfString>,
     tc_url: Option<AmfString>,
     last_command_name: Option<AmfString>,
     client_type: Option<ClientType>,
@@ -91,12 +91,12 @@ impl Default for RtmpContext {
             sending_chunk_size: ChunkSize::default(),
             window_acknowledgement_size: WindowAcknowledgementSize::default(),
             peer_bandwidth: PeerBandwidth::default(),
+            buffer_length: 30000,
             last_transaction_id: Number::default(),
-            client_addr: Option::default(),
             topic_storage_url: Option::default(),
+            client_addr: Option::default(),
             app: Option::default(),
-            playpath: Option::default(),
-            subscribepath: Option::default(),
+            topic_path: Option::default(),
             tc_url: Option::default(),
             last_command_name: Option::default(),
             client_type: Option::default(),
@@ -124,6 +124,13 @@ impl Default for RtmpContext {
 }
 
 impl RtmpContext {
+    #[cfg(windows)]
+    /// The token of directory separator in Windows environment.
+    pub const DIRECTORY_SEPARATOR: &str = "\\";
+    #[cfg(unix)]
+    /// The token of directory separator in Linux/Unix environment.
+    pub const DIRECTORY_SEPARATOR: &str = "/";
+
     /// Gets a mutable reference via this wrapped by `Arc`.
     /// Sheave uses this after wrapping into `Arc`.
     /// Because of making this shareable between every handling steps.
@@ -181,6 +188,16 @@ impl RtmpContext {
         self.peer_bandwidth
     }
 
+    /// Sets the buffer length.
+    pub fn set_buffer_length(&mut self, buffer_length: u32) {
+        self.buffer_length = buffer_length;
+    }
+
+    /// Gets the buffer length.
+    pub fn get_buffer_length(&mut self) -> u32 {
+        self.buffer_length
+    }
+
     /// Sets a transaction ID.
     /// Mainly, this is used by server side contexts.
     /// Because of servers should echo same transaction ID in its response.
@@ -198,26 +215,6 @@ impl RtmpContext {
     /// Because of clients should count which transaction is it now on.
     pub fn increase_transaction_id(&mut self) {
         self.last_transaction_id += 1f64;
-    }
-
-    /// Sets a client socket address.
-    pub fn set_client_addr(&mut self, client_addr: SocketAddr) {
-        self.client_addr = Some(client_addr);
-    }
-
-    /// Gets a client socket address.
-    /// Note this can return `None`. e.g. When this field is default as it is.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::handlers::RtmpContext;
-    ///
-    /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_client_addr().is_none())
-    /// ```
-    pub fn get_client_addr(&mut self) -> Option<SocketAddr> {
-        self.client_addr
     }
 
     /// Sets the topic storage url.
@@ -238,6 +235,26 @@ impl RtmpContext {
     /// ```
     pub fn get_topic_storage_url(&mut self) -> Option<&String> {
         self.topic_storage_url.as_ref()
+    }
+
+    /// Sets a client IP address.
+    pub fn set_client_addr(&mut self, client_addr: SocketAddr) {
+        self.client_addr = Some(client_addr);
+    }
+
+    /// Gets a client IP address.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_client_addr().is_none())
+    /// ```
+    pub fn get_client_addr(&mut self) -> Option<SocketAddr> {
+        self.client_addr
     }
 
     /// Sets the `app` name.
@@ -263,11 +280,11 @@ impl RtmpContext {
 
     /// Sets the `tcUrl`. This is a full URL in the RTMP request like following form.
     ///
-    /// `rtmp://hostname/[app]/[playpath]`
+    /// `rtmp://hostname/[app]/[topic_path]`
     ///
-    /// Where `app` and `playpath` can be unspecified.
+    /// Where `app` and `topic_path` can be unspecified.
     /// Clients specify above URL at the start of RTMP requests.
-    /// Then the server checks `app` and `playpath` in client-side `Connect` commands (if they are specified).
+    /// Then the server checks `app` and `topic_path` in client-side `Connect` commands (if they are specified).
     pub fn set_tc_url(&mut self, tc_url: AmfString) {
         self.tc_url = Some(tc_url);
     }
@@ -507,18 +524,18 @@ impl RtmpContext {
         self.information.as_ref()
     }
 
-    /// Sets a `playpath` (e.g. filename) sent from a client.
-    pub fn set_playpath(&mut self, playpath: AmfString) {
-        self.playpath = Some(playpath);
+    /// Sets a `topic_path` (e.g. filename) sent from a client.
+    pub fn set_topic_path(&mut self, topic_path: AmfString) {
+        self.topic_path = Some(topic_path);
     }
 
-    /// Resets a `playpath` from this context.
-    /// This is prepared for deleting a `playpath` when receives the `FCUnpublish` command.
-    pub fn reset_playpath(&mut self) {
-        self.playpath = None;
+    /// Resets a `topic_path` from this context.
+    /// This is prepared for deleting a `topic_path` when receives the `FCUnpublish` command.
+    pub fn reset_topic_path(&mut self) {
+        self.topic_path = None;
     }
 
-    /// Gets a `playpath` (e.g. filename) sent from a client.
+    /// Gets a `topic_path` (e.g. filename) sent from a client.
     /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
@@ -527,30 +544,10 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_playpath().is_none())
+    /// assert!(rtmp_context.get_topic_path().is_none())
     /// ```
-    pub fn get_playpath(&mut self) -> Option<&AmfString> {
-        self.playpath.as_ref()
-    }
-
-    /// Sets a `subscribepath` (e.g. filename) sent from a client.
-    pub fn set_subscribepath(&mut self, subscribepath: AmfString) {
-        self.subscribepath = Some(subscribepath);
-    }
-
-    /// Gets a `subscribepath` (e.g. filename) sent from a client.
-    /// Note this can return `None`. e.g. When this field is default as is.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::handlers::RtmpContext;
-    ///
-    /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_subscribepath().is_none())
-    /// ```
-    pub fn get_subscribepath(&mut self) -> Option<&AmfString> {
-        self.subscribepath.as_ref()
+    pub fn get_topic_path(&mut self) -> Option<&AmfString> {
+        self.topic_path.as_ref()
     }
 
     /// Sets a message ID of this stream.
