@@ -29,7 +29,7 @@ impl Display for ErrorResponse {
     }
 }
 
-impl Error for ErrorResposne {}
+impl Error for ErrorResponse {}
 
 /// A utility function of constructing an `ErrorResponse` error.
 pub fn error_response(information: Object) -> IOError {
