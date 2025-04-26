@@ -25,9 +25,9 @@ impl Display for StreamIsUnpublished {
 impl Error for StreamIsUnpublished {}
 
 /// A utility function of constructing a `StreamIsUnpublished` error.
-pub fn stream_is_unpublished(playpath: AmfString) -> IOError {
+pub fn stream_is_unpublished(topic_path: AmfString) -> IOError {
     IOError::new(
         ErrorKind::InvalidData,
-        StreamIsUnpublished(playpath)
+        StreamIsUnpublished(topic_path)
     )
 }

@@ -11,23 +11,23 @@ use std::{
     }
 };
 
-/// An error that the Play Path sent to a server is empty.
+/// An error that the topic path sent to a server is empty.
 #[derive(Debug)]
-pub struct EmptyPlaypath;
+pub struct EmptyTopicPath;
 
-impl Display for EmptyPlaypath {
+impl Display for EmptyTopicPath {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        writeln!(f, "Playpath must not be empty.")
+        writeln!(f, "The topic path must not be empty.")
     }
 }
 
-impl Error for EmptyPlaypath {}
+impl Error for EmptyTopicPath {}
 
 
-/// A utility function of constructing an `EmptyPlaypath` error.
-pub fn empty_playpath() -> IOError {
+/// A utility function of constructing an `EmptyTopicPath` error.
+pub fn empty_topic_path() -> IOError {
     IOError::new(
         ErrorKind::InvalidData,
-        EmptyPlaypath
+        EmptyTopicPath
     )
 }

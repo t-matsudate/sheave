@@ -12,25 +12,25 @@ use std::{
 };
 use sheave_core::messages::amf::v0::AmfString;
 
-/// An error that some playpath differs the server expects.
+/// An error that some topic path differs the server expects.
 #[derive(Debug)]
-pub struct InconsistentPlaypath {
+pub struct InconsistentTopicPath {
     expected: AmfString,
     actual: AmfString
 }
 
-impl Display for InconsistentPlaypath {
+impl Display for InconsistentTopicPath {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        writeln!(f, "Requested name is inconsistent. expected: {}, actual: {}", self.expected, self.actual)
+        writeln!(f, "Requested topic path is inconsistent. expected: {}, actual: {}", self.expected, self.actual)
     }
 }
 
-impl Error for InconsistentPlaypath {}
+impl Error for InconsistentTopicPath {}
 
-/// A utility function of constructing an `InconsistentPlaypath` error.
-pub fn inconsistent_playpath(expected: AmfString, actual: AmfString) -> IOError {
+/// A utility function of constructing an `InconsistentTopicPath` error.
+pub fn inconsistent_topic_path(expected: AmfString, actual: AmfString) -> IOError {
     IOError::new(
         ErrorKind::InvalidData,
-        InconsistentPlaypath { expected, actual }
+        InconsistentTopicPath { expected, actual }
     )
 }
