@@ -97,7 +97,7 @@ impl Display for FilterName {
 #[derive(Debug, Clone)]
 pub struct Flv {
     offset: u64,
-    playpath: String
+    path: String
 }
 
 impl Flv {
@@ -168,10 +168,10 @@ impl Flv {
     /// let result = Flv::open("/tmp/ok.flv");
     /// assert!(result.is_ok())
     /// ```
-    pub fn open(playpath: &str) -> IOResult<Self> {
+    pub fn open(path: &str) -> IOResult<Self> {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(playpath)?;
+            .open(path)?;
         let mut flv_header: [u8; Self::HEADER_LEN] = [0; Self::HEADER_LEN];
         file.read(&mut flv_header)?;
 
@@ -184,19 +184,19 @@ impl Flv {
                 Self {
                     // NOTE: Seeks to the position of first FLV tag.
                     offset: 13,
-                    playpath: playpath.into()
+                    path: path.into()
                 }
             )
         }
     }
 
     /// Constructs an empty FLV container from a name.
-    pub fn create(playpath: &str) -> IOResult<Self> {
+    pub fn create(path: &str) -> IOResult<Self> {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
             .create_new(true)
-            .open(playpath)?;
+            .open(path)?;
         let mut flv_header: [u8; Self::HEADER_LEN] = [0; Self::HEADER_LEN];
         flv_header[..3].copy_from_slice(Self::SIGNATURE.as_bytes());
         flv_header[3] = Self::LATEST_VERSION;
@@ -208,7 +208,7 @@ impl Flv {
             Self {
                 // NOTE: Seeks to the position of first FLV tag.
                 offset: 13,
-                playpath: playpath.into()
+                path: path.into()
             }
         )
     }
@@ -217,7 +217,7 @@ impl Flv {
     pub fn get_version(&self) -> IOResult<u8> {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(&self.playpath)?;
+            .open(&self.path)?;
         file.seek(SeekFrom::Start(3))?;
         let mut version_byte: [u8; 1] = [0; 1];
         file.read(&mut version_byte)?;
@@ -227,7 +227,7 @@ impl Flv {
     fn set_flags(&self, flags: u8) -> IOResult<()> {
         let mut file = OpenOptions::new()
             .write(true)
-            .open(&self.playpath)?;
+            .open(&self.path)?;
         file.seek(SeekFrom::Start(4))?;
         file.write(&flags.to_be_bytes())?;
         file.flush()
@@ -237,7 +237,7 @@ impl Flv {
     pub fn has_audio(&self) -> IOResult<bool> {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(&self.playpath)?;
+            .open(&self.path)?;
         file.seek(SeekFrom::Start(4))?;
         let mut flags_byte: [u8; 1] = [0; 1];
         file.read(&mut flags_byte)?;
@@ -248,7 +248,7 @@ impl Flv {
     pub fn has_video(&self) -> IOResult<bool> {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(&self.playpath)?;
+            .open(&self.path)?;
         file.seek(SeekFrom::Start(4))?;
         let mut flags_byte: [u8; 1] = [0; 1];
         file.read(&mut flags_byte)?;
@@ -265,7 +265,7 @@ impl Flv {
     pub fn append_flv_tag(&self, flv_tag: FlvTag) -> IOResult<()> {
         let mut file = OpenOptions::new()
             .append(true)
-            .open(&self.playpath)?;
+            .open(&self.path)?;
 
         if let TagType::ScriptData = flv_tag.get_tag_type() {
             let mut buffer: ByteBuffer = flv_tag.get_data().to_vec().into();
@@ -308,7 +308,7 @@ impl Iterator for Flv {
     ///
     /// When reading/seeking got failed by some cause.
     fn next(&mut self) -> Option<Self::Item> {
-        let mut file = match OpenOptions::new().read(true).open(&self.playpath) {
+        let mut file = match OpenOptions::new().read(true).open(&self.path) {
             Ok(file) => file,
             Err(e) => return Some(Err(e))
         };
