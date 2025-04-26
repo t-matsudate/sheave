@@ -1,8 +1,6 @@
 use std::{
-    io::{
-        Error as IOError,
-        Result as IOResult
-    },
+    fs::remove_file,
+    io::Result as IOResult,
     net::SocketAddr
 };
 
@@ -15,93 +13,81 @@ use sqlx::PgConnection as TopicStorage;
 
 use sqlx::{
     Connection,
-    query,
-    query_as
+    query
 };
 
 use sheave_core::flv::Flv;
+use super::stream_is_unpublished;
+
+#[cfg(any(feature = "sqlite", feature = "postgres"))]
+const STATEMENT: &str = "SELECT path FROM topics WHERE path = $1 AND client_addr = $2 AND unpublished_at ISNULL";
+#[cfg(feature = "mysql")]
+const STATEMENT: &str = "SELECT path FROM topics WHERE path = ? AND client_addr = ? AND unpublished_at IS NULL";
+
 
 /// Checks whether specified topic got published.
 ///
 /// # Panics
 ///
 /// This becomes a panic unless the topic storage doesn't find.
-pub async fn did_get_published(topic_storage_url: &str, playpath: &str, client_addr: SocketAddr) -> bool {
+pub async fn did_get_published(topic_storage_url: &str, topic_path: &str, client_addr: SocketAddr) -> bool {
     let mut connection = TopicStorage::connect(topic_storage_url).await.unwrap();
 
-    #[cfg(any(feature = "sqlite", feature = "postgres"))]
-    let statement = "FROM topics SELECT playpath WHERE playpath = $1 AND client_addr = $2";
-    #[cfg(feature = "mysql")]
-    let statement = "FROM topics SELECT playpath WHERE playpath = ? AND client_addr = ?";
-
-    query(statement)
-        .bind(playpath)
+    query(STATEMENT)
+        .bind(topic_path)
         .bind(client_addr.to_string())
         .fetch_one(&mut connection)
-        .await.is_ok()
+        .await
+        .is_ok()
 }
 
-/// Registers specified topic requested from a server.
+/// Creates specified file as a topic.
 ///
-/// # Panics
+/// # Errors
 ///
-/// This becomes a panic unless the topic storage doesn't find.
-pub async fn publish_topic(topic_storage_url: &str, playpath: &str, client_addr: SocketAddr) -> IOResult<()> {
-    let mut connection = TopicStorage::connect(topic_storage_url).await.unwrap();
-
-    #[cfg(any(feature = "sqlite", feature = "postgres"))]
-    let statement = "INSERT INTO topics VALUES ($1, $2)";
-    #[cfg(feature = "mysql")]
-    let statement = "INSERT INTO topics VALUES (?, ?)";
-
-    query(statement)
-        .bind(playpath)
-        .bind(client_addr.to_string())
-        .execute(&mut connection)
-        .await
-        .map(|_| ())
-        .map_err(IOError::other)
+/// * [`StreamIsUnpublished`]
+///
+/// When specified topic isn't in the database yet.
+///
+/// [`StreamIsUnpublished`]: super::StreamIsUnpublished
+pub async fn publish_topic(topic_storage_url: &str, base_dir: &str, directory_separator: &str, topic_path: &str, client_addr: SocketAddr) -> IOResult<Flv> {
+    if did_get_published(topic_storage_url, topic_path, client_addr).await {
+        Flv::create(&format!("{base_dir}{directory_separator}{topic_path}.flv"))
+    } else {
+        Err(stream_is_unpublished(topic_path.into()))
+    }
 }
 
-/// Unregisters specified topic requested from a server.
+/// Removes specified file as a topic.
 ///
-/// # Panics
+/// # Errors
 ///
-/// This becomes a panic unless the topic storage doesn't find.
-pub async fn unpublish_topic(topic_storage_url: &str, playpath: &str, client_addr: SocketAddr) -> IOResult<()> {
-    let mut connection = TopicStorage::connect(topic_storage_url).await.unwrap();
-
-    #[cfg(any(feature = "sqlite", feature = "postgres"))]
-    let statement = "UPDATE topics SET unpublished_at=CURRENT_TIMESTAMP WHERE playpath=$1 AND client_addr=$2";
-    #[cfg(feature = "mysql")]
-    let statement = "UPDATE topics SET unpublished_at=CURRENT_TIMESTAMP WHERE playpath=? AND client_addr=?";
-
-    query(statement)
-        .bind(playpath)
-        .bind(client_addr.to_string())
-        .execute(&mut connection)
-        .await
-        .map(|_| ())
-        .map_err(IOError::other)
+/// * [`StreamIsUnpublished`]
+///
+/// When specified topic isn't in the database yet.
+///
+/// [`StreamIsUnpublished`]: super::StreamIsUnpublished
+pub async fn unpublish_topic(topic_storage_url: &str, base_dir: &str, directory_separator: &str, topic_path: &str, client_addr: SocketAddr) -> IOResult<()> {
+    if did_get_published(topic_storage_url, topic_path, client_addr).await {
+        remove_file(format!("{base_dir}{directory_separator}{topic_path}.flv"))
+    } else {
+        Err(stream_is_unpublished(topic_path.into()))
+    }
 }
 
-/// Distributes a topic requested from a server.
+/// Opens specified file as a topic.
 ///
-/// # Panics
+/// # Erorrs
 ///
-/// This becomes a topic unless the topic storage doesn't find.
-pub async fn subscribe_topic<'r>(topic_storage_url: &str, playpath: &str) -> IOResult<Flv> {
-    let mut connection = TopicStorage::connect(topic_storage_url).await.unwrap();
-
-    #[cfg(any(feature = "sqlite", feature = "postgres"))]
-    let statement = "FROM topics SELECT playpath WHERE playpath=$1";
-    #[cfg(feature = "mysql")]
-    let statement = "FROM topics SELECT playpath WHERE playpath=?";
-
-    let (playpath,): (String,) = query_as(statement)
-        .bind(playpath)
-        .fetch_one(&mut connection)
-        .await
-        .map_err(IOError::other)?;
-    Flv::open(&playpath)
+/// * [`StreamIsUnpublished`]
+///
+/// When specified topic isn't in the database yet.
+///
+/// [`StreamIsUnpublished`]: super::StreamIsUnpublished
+pub async fn subscribe_topic(topic_storage_url: &str, base_dir: &str, directory_separator: &str, topic_path: &str, client_addr: SocketAddr) -> IOResult<Flv> {
+    if did_get_published(topic_storage_url, topic_path, client_addr).await {
+        Flv::open(&format!("{base_dir}{directory_separator}{topic_path}.flv"))
+    } else {
+        Err(stream_is_unpublished(topic_path.into()))
+    }
 }
