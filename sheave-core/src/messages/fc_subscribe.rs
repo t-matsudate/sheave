@@ -15,18 +15,18 @@ use crate::{
     }
 };
 
-/// The command to tell the subscribe path.
+/// The command to tell the topic path.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FcSubscribe(AmfString);
 
 impl FcSubscribe {
     /// Constructs a FcSubscribe command.
-    pub fn new(subscribepath: AmfString) -> Self {
-        Self(subscribepath)
+    pub fn new(topic_path: AmfString) -> Self {
+        Self(topic_path)
     }
 
-    /// Gets the Subscribe Path.
-    pub fn get_subscribepath(&self) -> &AmfString {
+    /// Gets the topic path.
+    pub fn get_topic_path(&self) -> &AmfString {
         &self.0
     }
 }
@@ -91,8 +91,8 @@ impl Decoder<FcSubscribe> for ByteBuffer {
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<FcSubscribe> {
         Decoder::<Null>::decode(self)?;
-        let subscribepath: AmfString = self.decode()?;
-        Ok(FcSubscribe(subscribepath))
+        let topic_path: AmfString = self.decode()?;
+        Ok(FcSubscribe(topic_path))
     }
 }
 
@@ -100,7 +100,7 @@ impl Encoder<FcSubscribe> for ByteBuffer {
     /// Encodes a FcSubscribe command into bytes.
     fn encode(&mut self, fc_subscribe: &FcSubscribe) {
         self.encode(&Null);
-        self.encode(fc_subscribe.get_subscribepath());
+        self.encode(fc_subscribe.get_topic_path());
     }
 }
 
@@ -123,11 +123,11 @@ mod tests {
     #[test]
     fn encode_fc_subscribe() {
         let mut buffer = ByteBuffer::default();
-        let expected_subscribepath = "";
-        let expected = FcSubscribe::new(AmfString::from(expected_subscribepath));
+        let expected_topic_path = "";
+        let expected = FcSubscribe::new(AmfString::from(expected_topic_path));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_subscribepath: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_subscribepath, actual_subscribepath)
+        let actual_topic_path: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_topic_path, actual_topic_path)
     }
 }

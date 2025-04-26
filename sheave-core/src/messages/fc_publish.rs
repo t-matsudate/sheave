@@ -15,19 +15,19 @@ use crate::{
     }
 };
 
-/// The command to tell the playpath.
+/// The command to tell the topic path.
 /// Typically, this becomes same as the releaseStream's one.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FcPublish(AmfString);
 
 impl FcPublish {
     /// Constructs a FcPublish command.
-    pub fn new(playpath: AmfString) -> Self {
-        Self(playpath)
+    pub fn new(topic_path: AmfString) -> Self {
+        Self(topic_path)
     }
 
-    /// Gets the playpath.
-    pub fn get_playpath(&self) -> &AmfString {
+    /// Gets the topic path.
+    pub fn get_topic_path(&self) -> &AmfString {
         &self.0
     }
 }
@@ -92,8 +92,8 @@ impl Decoder<FcPublish> for ByteBuffer {
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<FcPublish> {
         Decoder::<Null>::decode(self)?;
-        let playpath: AmfString = self.decode()?;
-        Ok(FcPublish(playpath))
+        let topic_path: AmfString = self.decode()?;
+        Ok(FcPublish(topic_path))
     }
 }
 
@@ -101,7 +101,7 @@ impl Encoder<FcPublish> for ByteBuffer {
     /// Encodes a FcPublish command into bytes.
     fn encode(&mut self, fc_publish: &FcPublish) {
         self.encode(&Null);
-        self.encode(fc_publish.get_playpath());
+        self.encode(fc_publish.get_topic_path());
     }
 }
 
@@ -124,11 +124,11 @@ mod tests {
     #[test]
     fn encode_fc_publish() {
         let mut buffer = ByteBuffer::default();
-        let expected_playpath = "";
-        let expected = FcPublish::new(AmfString::from(expected_playpath));
+        let expected_topic_path = "";
+        let expected = FcPublish::new(AmfString::from(expected_topic_path));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_playpath: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_playpath, actual_playpath)
+        let actual_topic_path: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_topic_path, actual_topic_path)
     }
 }

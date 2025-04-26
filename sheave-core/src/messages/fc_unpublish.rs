@@ -15,7 +15,7 @@ use crate::{
     }
 };
 
-/// This command is same as [`FcPublish`] except this requests to delete the playpath.
+/// This command is same as [`FcPublish`] except this requests to delete the topic path.
 ///
 /// [`FcPublish`]: super::FcPublish
 #[derive(Debug, Clone, PartialEq)]
@@ -23,12 +23,12 @@ pub struct FcUnpublish(AmfString);
 
 impl FcUnpublish {
     /// Constructs a FcUnpublish command.
-    pub fn new(playpath: AmfString) -> Self {
-        Self(playpath)
+    pub fn new(topic_path: AmfString) -> Self {
+        Self(topic_path)
     }
 
     /// Gets the playpath.
-    pub fn get_playpath(&self) -> &AmfString {
+    pub fn get_topic_path(&self) -> &AmfString {
         &self.0
     }
 }
@@ -93,9 +93,9 @@ impl Decoder<FcUnpublish> for ByteBuffer {
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<FcUnpublish> {
         Decoder::<Null>::decode(self)?;
-        let playpath: AmfString = self.decode()?;
+        let topic_path: AmfString = self.decode()?;
 
-        Ok(FcUnpublish(playpath))
+        Ok(FcUnpublish(topic_path))
     }
 }
 
@@ -103,7 +103,7 @@ impl Encoder<FcUnpublish> for ByteBuffer {
     /// Encodes a FcUnpublish command into bytes.
     fn encode(&mut self, fc_unpublish: &FcUnpublish) {
         self.encode(&Null);
-        self.encode(fc_unpublish.get_playpath());
+        self.encode(fc_unpublish.get_topic_path());
     }
 }
 
@@ -127,11 +127,11 @@ mod tests {
     #[test]
     fn encode_fc_unpublish() {
         let mut buffer = ByteBuffer::default();
-        let expected_playpath = "";
-        let expected = FcUnpublish::new(AmfString::from(expected_playpath));
+        let expected_topic_path = "";
+        let expected = FcUnpublish::new(AmfString::from(expected_topic_path));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_playpath: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_playpath, actual_playpath)
+        let actual_topic_path: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_topic_path, actual_topic_path)
     }
 }

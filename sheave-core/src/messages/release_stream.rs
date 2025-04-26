@@ -21,12 +21,12 @@ pub struct ReleaseStream(AmfString);
 
 impl ReleaseStream {
     /// Constructs a ReleaseStream command.
-    pub fn new(playpath: AmfString) -> Self {
-        Self(playpath)
+    pub fn new(topic_path: AmfString) -> Self {
+        Self(topic_path)
     }
 
-    /// Gets the Play Path.
-    pub fn get_playpath(&self) -> &AmfString {
+    /// Gets the topic path.
+    pub fn get_topic_path(&self) -> &AmfString {
         &self.0
     }
 }
@@ -91,8 +91,8 @@ impl Decoder<ReleaseStream> for ByteBuffer {
     /// [`InvalidString`]: crate::messages::amf::InvalidString
     fn decode(&mut self) -> IOResult<ReleaseStream> {
         Decoder::<Null>::decode(self)?;
-        let playpath: AmfString = self.decode()?;
-        Ok(ReleaseStream(playpath))
+        let topic_path: AmfString = self.decode()?;
+        Ok(ReleaseStream(topic_path))
     }
 }
 
@@ -100,7 +100,7 @@ impl Encoder<ReleaseStream> for ByteBuffer {
     /// Encodes a ReleaseStream command into bytes.
     fn encode(&mut self, release_stream: &ReleaseStream) {
         self.encode(&Null);
-        self.encode(release_stream.get_playpath());
+        self.encode(release_stream.get_topic_path());
     }
 }
 
@@ -123,11 +123,11 @@ mod tests {
     #[test]
     fn encode_release_stream() {
         let mut buffer = ByteBuffer::default();
-        let expected_playpath = "";
-        let expected = ReleaseStream::new(AmfString::from(expected_playpath));
+        let expected_topic_path = "";
+        let expected = ReleaseStream::new(AmfString::from(expected_topic_path));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
-        let actual_playpath: AmfString = buffer.decode().unwrap();
-        assert_eq!(expected_playpath, actual_playpath)
+        let actual_topic_path: AmfString = buffer.decode().unwrap();
+        assert_eq!(expected_topic_path, actual_topic_path)
     }
 }
