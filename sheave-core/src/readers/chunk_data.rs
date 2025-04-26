@@ -67,11 +67,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     io::Result as IOResult,
 ///     pin::pin
 /// };
-/// use rand::{
-///     Fill,
-///     random,
-///     thread_rng
-/// };
+/// use rand::fill;
 /// use sheave_core::{
 ///     messages::{
 ///         ChunkSize,
@@ -86,14 +82,14 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///
 ///     // When it's just one chunk.
 ///     let mut reader: [u8; 128] = [0; 128];
-///     reader.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut reader);
 ///     let result = read_chunk_data(pin!(reader.as_slice()), chunk_size, 128).await?;
 ///     assert_eq!(128, result.len());
 ///
 ///     // When it has the one byte header.
 ///     let mut reader: [u8; 257] = [0; 257];
 ///     let mut part: [u8; 128] = [0; 128];
-///     part.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut part);
 ///     reader[..128].copy_from_slice(&part);
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6 | 2;
 ///     reader[129..].copy_from_slice(&part);
@@ -103,7 +99,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     // When it has the two bytes header.
 ///     let mut reader: [u8; 258] = [0; 258];
 ///     let mut part: [u8; 128] = [0; 128];
-///     part.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut part);
 ///     reader[..128].copy_from_slice(&part);
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6;
 ///     reader[129] = 2;
@@ -114,7 +110,7 @@ impl<R: AsyncRead> Future for ChunkDataReader<'_, R> {
 ///     // When it has the three bytes header.
 ///     let mut reader: [u8; 259] = [0; 259];
 ///     let mut part: [u8; 128] = [0; 128];
-///     part.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut part);
 ///     reader[..128].copy_from_slice(&part);
 ///     reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
 ///     reader[129..131].copy_from_slice(&2u16.to_le_bytes());
@@ -132,17 +128,14 @@ pub fn read_chunk_data<'a, R: AsyncRead>(reader: Pin<&'a mut R>, chunk_size: Chu
 #[cfg(test)]
 mod tests {
     use std::pin::pin;
-    use rand::{
-        Fill,
-        thread_rng
-    };
+    use rand::fill;
     use crate::messages::headers::MessageFormat;
     use super::*;
 
     #[tokio::test]
     async fn read_one_chunk() {
         let mut reader: [u8; 128] = [0; 128];
-        reader.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut reader);
         let result = read_chunk_data(pin!(reader.as_slice()), ChunkSize::default(), 128).await;
         assert!(result.is_ok());
         let bytes = result.unwrap();
@@ -153,7 +146,7 @@ mod tests {
     async fn read_with_one_byte_header() {
         let mut reader: [u8; 257] = [0; 257];
         let mut part: [u8; 128] = [0; 128];
-        part.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut part);
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6 | 2;
         reader[129..].copy_from_slice(&part);
@@ -167,7 +160,7 @@ mod tests {
     async fn read_with_two_bytes_header() {
         let mut reader: [u8; 258] = [0; 258];
         let mut part: [u8; 128] = [0; 128];
-        part.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut part);
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6;
         reader[129] = 2;
@@ -182,7 +175,7 @@ mod tests {
     async fn read_with_three_bytes_header() {
         let mut reader: [u8; 259] = [0; 259];
         let mut part: [u8; 128] = [0; 128];
-        part.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut part).unwrap();
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
         reader[129..131].copy_from_slice(&2u16.to_le_bytes());
