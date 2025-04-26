@@ -381,6 +381,13 @@ impl From<AmfString> for Value {
 }
 
 #[doc(hidden)]
+impl<'a> From<&'a Value> for &'a AmfString {
+    fn from(value: &'a Value) -> Self {
+        value.as_string()
+    }
+}
+
+#[doc(hidden)]
 impl From<Null> for Value {
     fn from(value: Null) -> Self {
         unsafe {
