@@ -34,10 +34,7 @@ use sheave_core::{
     Decoder,
     Encoder,
     U24_MAX,
-    flv::{
-        Flv,
-        tags::*
-    },
+    flv::tags::*,
     handlers::{
         AsyncHandler,
         AsyncHandlerExt,
@@ -106,9 +103,10 @@ use sheave_core::{
 };
 use super::{
     /* Used in common */
+    inconsistent_app_path,
     undistinguishable_client,
-    empty_playpath,
-    inconsistent_playpath,
+    empty_topic_path,
+    inconsistent_topic_path,
     middlewares::write_acknowledgement,
 
     /* Publisher-side */
@@ -119,9 +117,7 @@ use super::{
 
     /* Subscriver-side */
     subscribe_topic,
-    did_get_published,
     metadata_not_found,
-    stream_is_unpublished
 };
 
 #[doc(hidden)]
@@ -246,7 +242,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
     async fn handle_release_stream_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let release_stream_request: ReleaseStream = buffer.decode()?;
-        rtmp_context.set_playpath(release_stream_request.into());
+        rtmp_context.set_topic_path(release_stream_request.get_topic_path());
 
         info!("releaseStream got handled.");
         Ok(())
@@ -267,7 +263,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn handle_fc_subscribe_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap();
+        let topic_database_url = rtmp_context.get_topic_database_url().unwrap().clone();
+        let topic_storage_path = rtmp_context.get_topic_storage_path().unwrap().clone();
+        let client_addr = rtmp_context.get_client_addr().unwrap();
+        let app = rtmp_context.get_app().unwrap().clone();
 
         let fc_subscribe_request: FcSubscribe = buffer.decode()?;
         /*
@@ -275,9 +274,9 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
          *      Makes topic to subscribe during request handling.
          *      Because onFCSubscribe command is undefined about its specification.
          */
-        let topic = subscribe_topic(topic_storage_url, fc_subscribe_request.get_subscribepath()).await?;
+        let topic = subscribe_topic(&topic_database_url, &topic_storage_path, &app, fc_subscribe_request.get_topic_path(), RtmpContext::DIRECTORY_SEPARATOR, client_addr).await?;
         rtmp_context.set_topic(topic);
-        rtmp_context.set_subscribepath(fc_subscribe_request.into());
+        rtmp_context.set_topic_path(fc_subscribe_request.get_topic_path());
 
         rtmp_context.set_subscriber_status(SubscriberStatus::FcSubscribed);
 
@@ -285,34 +284,20 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_get_stream_length_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+    async fn handle_stream_length_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let get_stream_length_request: GetStreamLength = buffer.decode()?;
-        rtmp_context.set_playpath(get_stream_length_request.into());
+        rtmp_context.set_topic_path(get_stream_length_request.get_topic_path());
 
         info!("getStreamLength got handled.");
         Ok(())
     }
 
-    async fn handle_set_playlist_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+    async fn handle_playlist_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let set_playlist_request: SetPlaylist = buffer.decode()?;
         rtmp_context.set_playlist(set_playlist_request.into());
 
         info!("set playlist got handled.");
         Ok(())
-    }
-
-    async fn handle_additional_command_request(&mut self, rtmp_context: &mut RtmpContext, buffer: ByteBuffer) -> IOResult<()> {
-        let additional_command = rtmp_context.get_command_name().unwrap();
-        /* NOTE: FFmepg will send this. */
-        if *additional_command == "getStreamLength" {
-            self.handle_get_stream_length_request(rtmp_context, buffer).await
-        }
-        /* NOTE: OBS will send this. */
-        else if *additional_command == "set_playlist" {
-            self.handle_set_playlist_request(rtmp_context, buffer).await
-        } else {
-            Ok(())
-        }
     }
 
     async fn handle_publish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
@@ -336,8 +321,9 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         Ok(())
     }
 
-    async fn handle_set_buffer_length(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        Decoder::<SetBufferLength>::decode(&mut buffer)?;
+    async fn handle_buffer_length(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
+        let buffer_length: SetBufferLength = buffer.decode()?;
+        rtmp_context.set_buffer_length(buffer_length.get_buffering_time());
 
         /*
          * NOTE:
@@ -357,18 +343,20 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         let event_type: EventType = buffer.get_u16_be()?.into();
         match event_type {
-            SetBufferLength => self.handle_set_buffer_length(rtmp_context, buffer).await,
+            SetBufferLength => self.handle_buffer_length(rtmp_context, buffer).await,
             _ => unimplemented!("Undefined event type: {event_type:?}")
         }
     }
 
     async fn handle_fc_unpublish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
-        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap().clone();
+        let topic_database_url = rtmp_context.get_topic_database_url().unwrap().clone();
+        let topic_storage_path = rtmp_context.get_topic_storage_path().unwrap().clone();
         let client_addr = rtmp_context.get_client_addr().unwrap();
-        let fc_unpublish_request: FcUnpublish = buffer.decode()?;
-        unpublish_topic(&topic_storage_url, fc_unpublish_request.get_playpath(), client_addr).await?;
+        let app = rtmp_context.get_app().unwrap().clone();
 
-        rtmp_context.reset_playpath();
+        let fc_unpublish_request: FcUnpublish = buffer.decode()?;
+        unpublish_topic(&topic_database_url, &topic_storage_path, &app, fc_unpublish_request.get_topic_path(), RtmpContext::DIRECTORY_SEPARATOR, client_addr).await?;
+        rtmp_context.reset_topic_path();
 
         info!("FCUnpublish got handled.");
         Ok(())
@@ -388,6 +376,8 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         let command: AmfString = buffer.decode()?;
         let transaction_id: Number = buffer.decode()?;
+        rtmp_context.set_command_name(command.clone());
+        rtmp_context.set_transaction_id(transaction_id);
 
         if command == "FCUnpublish" {
             return self.handle_fc_unpublish_request(rtmp_context, buffer).await
@@ -395,9 +385,6 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         if command == "deleteStream" {
             return self.handle_delete_stream_request(rtmp_context, buffer).await
         }
-
-        rtmp_context.set_command_name(command);
-        rtmp_context.set_transaction_id(transaction_id);
 
         match rtmp_context.get_publisher_status().unwrap() {
             Connected => self.handle_release_stream_request(rtmp_context, buffer).await,
@@ -411,17 +398,29 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn handle_subscriber_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         use SubscriberStatus::*;
 
+        let subscriber_status = rtmp_context.get_subscriber_status().unwrap();
+
         let command: AmfString = buffer.decode()?;
         let transaction_id: Number = buffer.decode()?;
-        rtmp_context.set_command_name(command);
+        rtmp_context.set_command_name(command.clone());
         rtmp_context.set_transaction_id(transaction_id);
 
-        match rtmp_context.get_subscriber_status().unwrap() {
+        if subscriber_status == FcSubscribed {
+            /* NOTE: FFmpeg will send this. */
+            if command == "getStreamLength" {
+                return self.handle_stream_length_request(rtmp_context, buffer).await
+            }
+            /* NOTE: OBS will send this. */
+            if command == "set_playlist" {
+                return self.handle_playlist_request(rtmp_context, buffer).await
+            }
+        }
+
+        match subscriber_status {
             Connected => Ok(()),
             /* Subscriber sends a Window Acknowledgement Size chunk just after the connect command. */
             WindowAcknowledgementSizeGotSent => self.handle_create_stream_request(rtmp_context, buffer).await,
             Created => self.handle_fc_subscribe_request(rtmp_context, buffer).await,
-            FcSubscribed => self.handle_additional_command_request(rtmp_context, buffer).await,
             AdditionalCommandGotSent => self.handle_play_request(rtmp_context, buffer).await,
             _ => Ok(())
         }
@@ -441,7 +440,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn handle_flv(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer, message_type: MessageType, timestamp: Duration) -> IOResult<()> {
-        let input = rtmp_context.get_topic().unwrap();
+        let topic = rtmp_context.get_topic().unwrap();
 
         let tag_type = match message_type {
             MessageType::Audio => TagType::Audio,
@@ -457,7 +456,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         let data: Vec<u8> = buffer.into();
         let flv_tag = FlvTag::new(tag_type, timestamp, data);
-        input.append_flv_tag(flv_tag)?;
+        topic.append_flv_tag(flv_tag)?;
 
         info!("FLV chunk got handled.");
         Ok(())
@@ -479,10 +478,11 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn write_connect_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         use ClientType::*;
 
-        let command_object = rtmp_context.get_command_object().unwrap().get_properties();
-        let client_type = if command_object.get("type").is_some() {
+        let command_object = rtmp_context.get_command_object().unwrap().clone();
+
+        let client_type = if command_object.get_properties().get("type").is_some() {
             Publisher
-        } else if command_object.get("fpad").is_some() {
+        } else if command_object.get_properties().get("fpad").is_some() {
             Subscriber
         } else {
             let information = object!(
@@ -492,6 +492,17 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
             );
             return self.write_error_response(rtmp_context, information, undistinguishable_client()).await
         };
+
+        let app = rtmp_context.get_app().unwrap().clone();
+        let requested_app: &AmfString = (&command_object.get_properties()["app"]).into();
+        if *requested_app != app {
+            let information = object!(
+                "level" => AmfString::from("error"),
+                "code" => AmfString::from("NetConnection.Connect.InconsistentAppPath"),
+                "description" => AmfString::new(format!("Requested app path is inconsistent. expected: {}, actual: {}", app, requested_app))
+            );
+            return self.write_error_response(rtmp_context, information, inconsistent_app_path(app, requested_app.clone())).await
+        }
 
         let properties = object!(
             "fmsVer" => AmfString::from("FMS/5,0,17"),
@@ -509,6 +520,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         buffer.encode(&ConnectResult::new(properties.clone(), information.clone()));
         write_chunk(self.0.as_mut(), rtmp_context, ConnectResult::CHANNEL.into(), Duration::default(), ConnectResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
+        rtmp_context.set_client_type(client_type);
         rtmp_context.set_properties(properties);
         rtmp_context.set_information(information);
 
@@ -522,21 +534,41 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_release_stream_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let playpath = rtmp_context.get_playpath().unwrap();
-        if playpath.is_empty() {
+        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
+
+        if topic_path.is_empty() {
             let information = object!(
                 "level" => AmfString::from("error"),
-                "code" => AmfString::from("NetConnection.ReleaseStream.EmptyPlaypath"),
-                "description" => AmfString::from("Playpath must not be empty.")
+                "code" => AmfString::from("NetConnection.ReleaseStream.EmptyTopicPath"),
+                "description" => AmfString::from("The topic path must not be empty.")
             );
-            return self.write_error_response(rtmp_context, information, empty_playpath()).await
+            return self.write_error_response(rtmp_context, information, empty_topic_path()).await
         }
+
+        let topic_database_url = rtmp_context.get_topic_database_url().unwrap().clone();
+        let topic_storage_path = rtmp_context.get_topic_storage_path().unwrap().clone();
+        let client_addr = rtmp_context.get_client_addr().unwrap();
+        let app = rtmp_context.get_app().unwrap().clone();
+
+        let topic = match publish_topic(&topic_database_url, &topic_storage_path, &app, &topic_path, RtmpContext::DIRECTORY_SEPARATOR, client_addr).await {
+            Ok(topic) => topic,
+            Err(e) => {
+                let information = object!(
+                    "level" => AmfString::from("error"),
+                    "code" => AmfString::from("NetConnection.ReleaseStream.StreamIsUnpublished"),
+                    "description" => AmfString::new(format!("A stream of {topic_path} is unpublished."))
+                );
+                return self.write_error_response(rtmp_context, information, e).await
+            }
+        };
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("_result"));
         buffer.encode(&rtmp_context.get_transaction_id());
         buffer.encode(&ReleaseStreamResult);
         write_chunk(self.0.as_mut(), rtmp_context, ReleaseStreamResult::CHANNEL.into(), Duration::default(), ReleaseStreamResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+
+        rtmp_context.set_topic(topic);
 
         rtmp_context.set_publisher_status(PublisherStatus::Released);
 
@@ -545,13 +577,6 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_fc_publish_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let client_addr = rtmp_context.get_client_addr().unwrap();
-        let playpath = rtmp_context.get_playpath().unwrap().clone();
-        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap().clone();
-        publish_topic(&topic_storage_url, &playpath, client_addr).await?;
-        let topic = Flv::create(&playpath)?;
-        rtmp_context.set_topic(topic);
-
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("onFCPublish"));
         buffer.encode(&OnFcPublish);
@@ -564,6 +589,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_create_stream_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        use ClientType::*;
+
+        let client_type = rtmp_context.get_client_type().unwrap();
+
         let message_id = provide_message_id();
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("_result"));
@@ -573,61 +602,53 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         rtmp_context.set_message_id(message_id);
 
-        rtmp_context.set_publisher_status(PublisherStatus::Created);
+        match client_type {
+            Publisher => rtmp_context.set_publisher_status(PublisherStatus::Created),
+            Subscriber => rtmp_context.set_subscriber_status(SubscriberStatus::Created)
+        }
 
         info!("createStream result got sent.");
         Ok(())
     }
 
-    async fn write_get_stream_length_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let topic_storage_url = rtmp_context.get_topic_storage_url().unwrap().clone();
-        let client_addr = rtmp_context.get_client_addr().unwrap();
-        let playpath = rtmp_context.get_playpath().unwrap().clone();
+    async fn write_stream_length_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         let transaction_id = rtmp_context.get_transaction_id();
+        let topic = rtmp_context.get_topic_mut().unwrap();
 
-        if did_get_published(&topic_storage_url, &playpath, client_addr).await {
-            let topic = subscribe_topic(&topic_storage_url, &playpath).await?;
-            for result in topic {
-                let flv_tag = result?;
+        for result in topic {
+            let flv_tag = result?;
 
-                if flv_tag.get_tag_type() == TagType::ScriptData {
+            if flv_tag.get_tag_type() == TagType::ScriptData {
+                let mut buffer = ByteBuffer::default();
+                buffer.put_bytes(flv_tag.get_data());
+                let script_data: ScriptDataTag = buffer.decode()?;
+
+                if *script_data.get_name() == "onMetaData" {
+                    let duration: &Number = (&script_data.get_value().get_properties()["duration"]).into();
                     let mut buffer = ByteBuffer::default();
-                    buffer.put_bytes(flv_tag.get_data());
-                    let script_data: ScriptDataTag = buffer.decode()?;
+                    buffer.encode(&AmfString::from("_result"));
+                    buffer.encode(&transaction_id);
+                    buffer.encode(&GetStreamLengthResult::new(*duration));
+                    write_chunk(self.0.as_mut(), rtmp_context, GetStreamLengthResult::CHANNEL.into(), Duration::default(), GetStreamLengthResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
-                    if *script_data.get_name() == "onMetaData" {
-                        let duration: &Number = (&script_data.get_value().get_properties()["duration"]).into();
-                        let mut buffer = ByteBuffer::default();
-                        buffer.encode(&AmfString::from("_result"));
-                        buffer.encode(&transaction_id);
-                        buffer.encode(&GetStreamLengthResult::new(*duration));
-                        write_chunk(self.0.as_mut(), rtmp_context, GetStreamLengthResult::CHANNEL.into(), Duration::default(), GetStreamLengthResult::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
+                    rtmp_context.set_subscriber_status(SubscriberStatus::AdditionalCommandGotSent);
 
-                        rtmp_context.set_subscriber_status(SubscriberStatus::AdditionalCommandGotSent);
-
-                        info!("getStreamLength result got sent.");
-                        return Ok(())
-                    }
+                    info!("getStreamLength result got sent.");
+                    return Ok(())
                 }
             }
-
-            let information = object!(
-                "level" => AmfString::from("error"),
-                "code" => AmfString::from("NetConnection.GetStreamLength.MetadataNotFound"),
-                "description" => AmfString::from("Metadata didn't find in specified playpath: {playpath}")
-            );
-            self.write_error_response(rtmp_context, information, metadata_not_found(playpath)).await
-        } else {
-            let information = object!(
-                "level" => AmfString::from("error"),
-                "code" => AmfString::from("NetConnection.GetStreamLength.Unpublished"),
-                "description" => AmfString::from("Specified playpath is unpublished.")
-            );
-            self.write_error_response(rtmp_context, information, stream_is_unpublished(playpath)).await
         }
+
+        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
+        let information = object!(
+            "level" => AmfString::from("error"),
+            "code" => AmfString::from("NetConnection.GetStreamLength.MetadataNotFound"),
+            "description" => AmfString::new(format!("Metadata didn't find in specified topic path: {topic_path}"))
+        );
+        self.write_error_response(rtmp_context, information, metadata_not_found(topic_path)).await
     }
 
-    async fn write_set_playlist_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+    async fn write_playlist_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("playlist_ready"));
         buffer.encode(&PlaylistReady);
@@ -637,26 +658,6 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
         info!("playlist_ready got sent.");
         Ok(())
-    }
-
-    async fn write_additional_command_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let additional_command = rtmp_context.get_command_name().unwrap();
-        /* NOTE: FFmpeg will require of this. */
-        if *additional_command == "getStreamLength" {
-            self.write_get_stream_length_response(rtmp_context).await
-        }
-        /* NOTE: OBS will require of this. */
-        else if *additional_command == "set_playlist" {
-            self.write_set_playlist_response(rtmp_context).await
-        } else {
-            /*
-             * NOTE:
-             *  This step won't respond any error even if its command is neither getStreamLength nor set_playlist.
-             *  Because this mayn't be requested.
-             */
-            rtmp_context.set_subscriber_status(SubscriberStatus::AdditionalCommandGotSent);
-            Ok(())
-        }
     }
 
     async fn write_stream_begin(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
@@ -694,16 +695,16 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
     async fn write_publish_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         let message_id = rtmp_context.get_message_id().unwrap();
-        let playpath = rtmp_context.get_playpath().unwrap().clone();
+        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
         let publishing_name = rtmp_context.get_publishing_name().unwrap().clone();
 
-        if playpath != publishing_name {
+        if topic_path != publishing_name {
             let information = object!(
                 "level" => AmfString::from("error"),
                 "code" => AmfString::from("NetStream.Publish.InconsistentPlaypath"),
-                "description" => AmfString::new(format!("Requested name is inconsistent. expected: {playpath}, actual: {publishing_name}"))
+                "description" => AmfString::new(format!("Requested name is inconsistent. expected: {topic_path}, actual: {publishing_name}"))
             );
-            return self.write_error_status(rtmp_context, information, inconsistent_playpath(playpath, publishing_name)).await
+            return self.write_error_status(rtmp_context, information, inconsistent_topic_path(topic_path, publishing_name)).await
         }
 
         let information = object!(
@@ -719,6 +720,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         write_chunk(self.0.as_mut(), rtmp_context, OnStatus::CHANNEL.into(), Duration::default(), OnStatus::MESSAGE_TYPE, message_id, &Vec::<u8>::from(buffer)).await?;
 
         rtmp_context.set_information(information);
+
         rtmp_context.set_publisher_status(PublisherStatus::Published);
 
         info!("onStatus(publish) got sent.");
@@ -726,17 +728,17 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     }
 
     async fn write_play_response(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
+        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
         let message_id = rtmp_context.get_message_id().unwrap();
-        let subscribepath = rtmp_context.get_subscribepath().unwrap().clone();
         let stream_name = rtmp_context.get_stream_name().unwrap().clone();
 
-        if subscribepath != stream_name {
+        if topic_path != stream_name {
             let information = object!(
                 "level" => AmfString::from("error"),
-                "code" => AmfString::from("NetStream.Play.InconsistentPlaypath"),
-                "description" => AmfString::from("Requested name is inconsistent.")
+                "code" => AmfString::from("NetStream.Play.InconsistentTopicPath"),
+                "description" => AmfString::new(format!("Requested name is inconsistent. expected: {topic_path}, actual: {stream_name}"))
             );
-            return self.write_error_status(rtmp_context, information, inconsistent_playpath(subscribepath, stream_name)).await
+            return self.write_error_status(rtmp_context, information, inconsistent_topic_path(topic_path, stream_name)).await
         }
 
         let information = object!(
@@ -751,6 +753,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         write_chunk(self.0.as_mut(), rtmp_context, OnStatus::CHANNEL.into(), Duration::default(), OnStatus::MESSAGE_TYPE, message_id, &Vec::<u8>::from(buffer)).await?;
 
         rtmp_context.set_information(information);
+
         rtmp_context.set_subscriber_status(SubscriberStatus::Played);
 
         info!("onStatus(play) got sent.");
@@ -887,10 +890,21 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for MessageHandler<'_, RW>
                     Poll::Ready(Ok(()))
                 }
             }
-        } else if let Some(subscriber_status) = rtmp_context.get_subscriber_status() {
+        } else if let Some(mut subscriber_status) = rtmp_context.get_subscriber_status() {
+            if subscriber_status == SubscriberStatus::FcSubscribed {
+                let command = rtmp_context.get_command_name().unwrap().clone();
+
+                if command == "getStreamLength" {
+                    return pin!(self.write_stream_length_response(rtmp_context)).poll(cx)
+                } else if command == "set_playlist" {
+                    return pin!(self.write_playlist_response(rtmp_context)).poll(cx)
+                } else {
+                    subscriber_status = SubscriberStatus::AdditionalCommandGotSent;
+                }
+            }
+
             match subscriber_status {
                 SubscriberStatus::WindowAcknowledgementSizeGotSent => pin!(self.write_create_stream_response(rtmp_context)).poll(cx),
-                SubscriberStatus::FcSubscribed => pin!(self.write_additional_command_response(rtmp_context)).poll(cx),
                 SubscriberStatus::AdditionalCommandGotSent => {
                     ready!(pin!(self.write_stream_begin(rtmp_context)).poll(cx))?;
                     pin!(self.write_play_response(rtmp_context)).poll(cx)
@@ -919,13 +933,13 @@ struct CloseHandler<'a, RW: AsyncRead + AsyncWrite + Unpin>(Pin<&'a mut RW>);
 #[doc(hidden)]
 impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
     async fn write_fc_unpublish_request(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
-        let playpath = rtmp_context.get_playpath().unwrap().clone();
+        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
         rtmp_context.increase_transaction_id();
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("FCUnpublish"));
         buffer.encode(&rtmp_context.get_transaction_id());
-        buffer.encode(&FcUnpublish::new(playpath));
+        buffer.encode(&FcUnpublish::new(topic_path));
         write_chunk(self.0.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         info!("FCUnpublish got sent.");
@@ -978,13 +992,13 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> ErrorHandler for CloseHandler<'_, RW> {
 /// # With publishers
 ///
 /// 1. Checks the application name from the [`Connect`] command.
-/// 2. Checks the playpath from the [`ReleaseStream`]/[`FcPublish`] command.
+/// 2. Checks the topic path from the [`ReleaseStream`]/[`FcPublish`] command.
 /// 3. Provides a message ID when receives the [`CreateStream`] command.
 /// 4. Checks publication informations from the [`Publish`] command.
 /// 5. Then receives FLV media data.
 ///
 /// If some error occurs in any step, sends commands which are [`FcUnpublish`] and [`DeleteStream`] to its client, then terminates its connection.
-/// These perform to delete the playpath and a message ID from its context.
+/// These perform to delete the topic path and a message ID from its context.
 /// However also these can be sent from clients.
 ///
 /// # With subscribers
@@ -992,7 +1006,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> ErrorHandler for CloseHandler<'_, RW> {
 /// 1. Checks the application name from the [`Connect`] command.
 /// 2. Checks partner's bandwidsth from the [`WindowAcknowledgementSize`] message.
 /// 3. Provides a message ID when receives the [`CreateStream`] command.
-/// 4. Checks the subscribepath from the [`FcSubscribe`] command.
+/// 4. Checks the topic path from the [`FcSubscribe`] command.
 /// 5. Handles one of additional commands either [`GetStreamLength`] or [`SetPlaylist`].
 /// 6. Checkes subscription informaitons from [`Play`] command/
 /// 7. The sends FLV media data.
@@ -1046,5 +1060,655 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> AsyncHandler for RtmpHandler<RW> {
 impl<RW: AsyncRead + AsyncWrite + Unpin> HandlerConstructor<StreamWrapper<RW>> for RtmpHandler<RW> {
     fn new(stream: Arc<StreamWrapper<RW>>) -> Self {
         Self(stream)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs::{
+            copy,
+            create_dir_all
+        },
+        net::{
+            IpAddr,
+            Ipv4Addr,
+            SocketAddr
+        },
+        path::Path
+    };
+    use rand::fill;
+    use uuid::Uuid;
+    use sqlx::{
+        Connection,
+        SqliteConnection,
+        migrate::Migrator,
+        query
+    };
+    use sheave_core::{
+        ecma_array,
+        flv::Flv,
+        handlers::VecStream,
+        handshake::EncryptionAlgorithm,
+        messages::{
+            ChunkSize,
+            PlayMode,
+            SetPlaylist,
+            amf::v0::Boolean
+        }
+    };
+    use super::*;
+
+
+    const CLIENT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 1935);
+    const STATEMENT: &str = "INSERT INTO topics (path, client_addr) VALUES (?1, ?2)";
+
+    #[tokio::test]
+    async fn ok_unsigned_handshake_got_handled() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+
+        let sent_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
+        write_encryption_algorithm(stream.as_mut(), sent_encryption_algorithm).await.unwrap();
+        let mut sent_client_handshake = Handshake::new(Instant::now().elapsed(), Version::UNSIGNED);
+        sent_client_handshake.imprint_digest(sent_encryption_algorithm, Handshake::CLIENT_KEY);
+        write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        assert!(rtmp_context.get_encryption_algorithm().is_some());
+        assert!(rtmp_context.get_server_handshake().is_some());
+        assert!(rtmp_context.get_client_handshake().is_some());
+
+        let received_encryption_algorithm = read_encryption_algorithm(stream.as_mut()).await.unwrap();
+        let received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        let received_client_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        assert_eq!(sent_encryption_algorithm, received_encryption_algorithm);
+        assert_eq!(sent_client_handshake.get_bytes(), received_client_handshake.get_bytes());
+
+        write_handshake(stream.as_mut(), &received_server_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_second_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        let sent_server_handshake = rtmp_context.get_server_handshake().unwrap();
+        assert_eq!(received_server_handshake.get_bytes(), sent_server_handshake.get_bytes())
+    }
+
+    #[tokio::test]
+    async fn err_digest_did_not_match() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+
+        let sent_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
+        write_encryption_algorithm(stream.as_mut(), sent_encryption_algorithm).await.unwrap();
+        let sent_client_handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
+        write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
+        assert!(result.is_err())
+    }
+
+    #[tokio::test]
+    async fn err_signature_did_not_match() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+
+        let sent_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
+        write_encryption_algorithm(stream.as_mut(), sent_encryption_algorithm).await.unwrap();
+        let mut sent_client_handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
+        sent_client_handshake.imprint_digest(sent_encryption_algorithm, Handshake::CLIENT_KEY);
+        write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        assert!(rtmp_context.get_encryption_algorithm().is_some());
+        assert!(rtmp_context.get_server_handshake().is_some());
+        assert!(rtmp_context.get_client_handshake().is_some());
+
+        read_encryption_algorithm(stream.as_mut()).await.unwrap();
+        let mut received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        read_handshake(stream.as_mut()).await.unwrap();
+        let mut invalid_signature_key: [u8; Handshake::CLIENT_KEY.len() + Handshake::COMMON_KEY.len()] = [0; Handshake::CLIENT_KEY.len() + Handshake::COMMON_KEY.len()];
+        fill(&mut invalid_signature_key);
+        received_server_handshake.imprint_signature(sent_encryption_algorithm, &invalid_signature_key);
+        write_handshake(stream.as_mut(), &received_server_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_second_handshake(&mut rtmp_context).await;
+        assert!(result.is_err())
+    }
+
+    #[tokio::test]
+    async fn ok_singed_handshake_got_handled() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+
+        let sent_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
+        write_encryption_algorithm(stream.as_mut(), sent_encryption_algorithm).await.unwrap();
+        let mut sent_client_handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
+        sent_client_handshake.imprint_digest(sent_encryption_algorithm, Handshake::CLIENT_KEY);
+        write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        assert!(rtmp_context.get_encryption_algorithm().is_some());
+        assert!(rtmp_context.get_server_handshake().is_some());
+        assert!(rtmp_context.get_client_handshake().is_some());
+
+        let received_encryption_algorithm = read_encryption_algorithm(stream.as_mut()).await.unwrap();
+        let mut received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        let received_client_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        let mut server_signature_key: Vec<u8> = Vec::new();
+        server_signature_key.extend_from_slice(Handshake::SERVER_KEY);
+        server_signature_key.extend_from_slice(Handshake::COMMON_KEY);
+        sent_client_handshake.imprint_signature(sent_encryption_algorithm, &server_signature_key);
+        assert_eq!(sent_encryption_algorithm, received_encryption_algorithm);
+        assert_eq!(sent_client_handshake.get_bytes(), received_client_handshake.get_bytes());
+
+        let mut client_signature_key: Vec<u8> = Vec::new();
+        client_signature_key.extend_from_slice(Handshake::CLIENT_KEY);
+        client_signature_key.extend_from_slice(Handshake::COMMON_KEY);
+        received_server_handshake.imprint_signature(sent_encryption_algorithm, &client_signature_key);
+        write_handshake(stream.as_mut(), &received_server_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_second_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        let sent_server_handshake = rtmp_context.get_server_handshake().unwrap();
+        assert_eq!(received_server_handshake.get_bytes(), sent_server_handshake.get_bytes())
+    }
+
+    #[tokio::test]
+    async fn ok_signed_handshake_as_ffmpeg_got_handled() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+
+        let sent_encryption_algorithm = EncryptionAlgorithm::NotEncrypted;
+        write_encryption_algorithm(stream.as_mut(), sent_encryption_algorithm).await.unwrap();
+        let mut sent_client_handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
+        sent_client_handshake.imprint_digest(sent_encryption_algorithm, Handshake::CLIENT_KEY);
+        write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        assert!(rtmp_context.get_encryption_algorithm().is_some());
+        assert!(rtmp_context.get_server_handshake().is_some());
+        assert!(rtmp_context.get_client_handshake().is_some());
+
+        let received_encryption_algorithm = read_encryption_algorithm(stream.as_mut()).await.unwrap();
+        let received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        let received_client_handshake = read_handshake(stream.as_mut()).await.unwrap();
+        let mut server_signature_key: Vec<u8> = Vec::new();
+        server_signature_key.extend_from_slice(Handshake::SERVER_KEY);
+        server_signature_key.extend_from_slice(Handshake::COMMON_KEY);
+        sent_client_handshake.imprint_signature(sent_encryption_algorithm, &server_signature_key);
+        assert_eq!(sent_encryption_algorithm, received_encryption_algorithm);
+        assert_eq!(sent_client_handshake.get_bytes(), received_client_handshake.get_bytes());
+
+        write_handshake(stream.as_mut(), &received_server_handshake).await.unwrap();
+        let result = handle_handshake(stream.as_mut()).handle_second_handshake(&mut rtmp_context).await;
+        assert!(result.is_ok());
+        let sent_server_handshake = rtmp_context.get_server_handshake().unwrap();
+        assert_eq!(received_server_handshake.get_bytes(), sent_server_handshake.get_bytes());
+    }
+
+    #[tokio::test]
+    async fn err_undistinguishable_client() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&Connect::default());
+        handle_message(stream.as_mut()).handle_connect_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await;
+        let basic_header = read_basic_header(stream.as_mut()).await.unwrap();
+        let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await.unwrap();
+        let chunk = read_chunk_data(stream.as_mut(), ChunkSize::default(), message_header.get_message_length().unwrap()).await.unwrap();
+        let mut buffer: ByteBuffer = chunk.into();
+        let command: AmfString = buffer.decode().unwrap();
+        assert!(result.is_err());
+        assert_eq!(command, "_error");
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn err_inconsistent_app_path() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_app("ondemand");
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&Connect::new(object!("app" => AmfString::default())));
+        handle_message(stream.as_mut()).handle_connect_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await;
+        let basic_header = read_basic_header(stream.as_mut()).await.unwrap();
+        let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await.unwrap();
+        let chunk = read_chunk_data(stream.as_mut(), ChunkSize::default(), message_header.get_message_length().unwrap()).await.unwrap();
+        let mut buffer: ByteBuffer = chunk.into();
+        let command: AmfString = buffer.decode().unwrap();
+        assert!(result.is_err());
+        assert_eq!(command, "_error");
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn err_empty_topic_path() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&ReleaseStream::new(AmfString::from("")));
+        handle_message(stream.as_mut()).handle_release_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_release_stream_response(&mut rtmp_context).await;
+        let basic_header = read_basic_header(stream.as_mut()).await.unwrap();
+        let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await.unwrap();
+        let chunk = read_chunk_data(stream.as_mut(), ChunkSize::default(), message_header.get_message_length().unwrap()).await.unwrap();
+        let mut buffer: ByteBuffer = chunk.into();
+        let command: AmfString = buffer.decode().unwrap();
+        assert!(result.is_err());
+        assert_eq!(command, "_error");
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn err_unpublished_stream() {
+        let app = "ondemand";
+
+        #[cfg(windows)]
+        let topic_storage_path = format!("{}\\sheave", env!("TEMP"));
+        #[cfg(windows)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}\\sheave.db?mode=rwc");
+        #[cfg(windows)]
+        let migrations = format!("{}\\migrations", env!("CARGO_MANIFEST_DIR"));
+        #[cfg(unix)]
+        let topic_storage_path = format!("{}/sheave", env!("TMPDIR"));
+        #[cfg(unix)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}/sheave.db?mode=rwc");
+        #[cfg(unix)]
+        let migrations = format!("{}/migrations", env!("CARGO_MANIFEST_DIR"));
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_topic_storage_path(&topic_storage_path);
+        rtmp_context.set_topic_database_url(&topic_database_url);
+        rtmp_context.set_app(app);
+        rtmp_context.set_client_addr(CLIENT_ADDR);
+
+        let topic_path = Uuid::now_v7().to_string();
+
+        let mut connection = SqliteConnection::connect(&topic_database_url).await.unwrap();
+        let migrator = Migrator::new(Path::new(&migrations)).await.unwrap();
+        migrator.run(&mut connection).await.unwrap();
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&ReleaseStream::new(AmfString::new(topic_path)));
+        handle_message(stream.as_mut()).handle_release_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_release_stream_response(&mut rtmp_context).await;
+        let basic_header = read_basic_header(stream.as_mut()).await.unwrap();
+        let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await.unwrap();
+        let chunk = read_chunk_data(stream.as_mut(), ChunkSize::default(), message_header.get_message_length().unwrap()).await.unwrap();
+        let mut buffer: ByteBuffer = chunk.into();
+        let command: AmfString = buffer.decode().unwrap();
+        assert!(result.is_err());
+        assert_eq!(command, "_error");
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn err_inconsistent_topic_path_in_publish() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_message_id(0);
+        rtmp_context.set_topic_path(&Uuid::now_v7().to_string());
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&Publish::new(AmfString::default(), "live".into()));
+        handle_message(stream.as_mut()).handle_publish_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_publish_response(&mut rtmp_context).await;
+        assert!(result.is_err());
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn err_metadata_not_found() {
+        let topic_path = Uuid::now_v7().to_string();
+
+        #[cfg(windows)]
+        let topic_storage_path = format!("{}\\sheave", env!("TEMP"));
+        #[cfg(windows)]
+        let topic = {
+            create_dir_all(&topic_storage_path).unwrap();
+            Flv::create(&format!("{}\\{}.flv", &topic_storage_path, &topic_path)).unwrap()
+        };
+        #[cfg(unix)]
+        let topic_storage_path = format!("{}/sheave", env!("TMPDIR"));
+        #[cfg(unix)]
+        let topic = {
+            create_dir_all(&topic_storage_path).unwrap();
+            Flv::create(&format!("{}/{}.flv", &topic_storage_path, &topic_path)).unwrap()
+        };
+
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_topic(topic);
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&GetStreamLength::new(AmfString::new(topic_path)));
+        handle_message(stream.as_mut()).handle_stream_length_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_stream_length_response(&mut rtmp_context).await;
+        let basic_header = read_basic_header(stream.as_mut()).await.unwrap();
+        let message_header = read_message_header(stream.as_mut(), basic_header.get_message_format()).await.unwrap();
+        let chunk = read_chunk_data(stream.as_mut(), ChunkSize::default(), message_header.get_message_length().unwrap()).await.unwrap();
+        let mut buffer: ByteBuffer = chunk.into();
+        let command: AmfString = buffer.decode().unwrap();
+        assert!(result.is_err());
+        assert_eq!(command, "_error");
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn err_inconsistent_topic_path_in_play() {
+        let mut stream = pin!(VecStream::default());
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_topic_path(&Uuid::now_v7().to_string());
+        rtmp_context.set_message_id(0);
+
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&Play::new(AmfString::new(Uuid::now_v7().to_string()), Duration::default(), PlayMode::default()));
+        handle_message(stream.as_mut()).handle_play_request(&mut rtmp_context, buffer).await.unwrap();
+        let result = handle_message(stream.as_mut()).write_play_response(&mut rtmp_context).await;
+        assert!(result.is_err());
+        assert!(rtmp_context.get_information().is_some())
+    }
+
+    #[tokio::test]
+    async fn ok_valid_publisher_sequence() {
+        let app = "ondemand";
+
+        #[cfg(windows)]
+        let topic_storage_path = format!("{}\\sheave", env!("TEMP"));
+        #[cfg(windows)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}\\sheave.db?mode=rwc");
+        #[cfg(windows)]
+        let migrations = format!("{}\\migrations", env!("CARGO_MANIFEST_DIR"));
+        #[cfg(unix)]
+        let topic_storage_path = format!("{}/sheave", env!("TMPDIR"));
+        let topic_database_url = format!("sqlite:{topic_storage_path}/sheave.db?mode=rwc");
+        #[cfg(unix)]
+        let migrations = format!("{}/migrations", env!("CARGO_MANIFEST_DIR"));
+
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_topic_storage_path(&topic_storage_path);
+        rtmp_context.set_topic_database_url(&topic_database_url);
+        rtmp_context.set_client_addr(CLIENT_ADDR);
+        rtmp_context.set_app(app);
+
+        let topic_path = Uuid::now_v7().to_string();
+
+        let mut connection = SqliteConnection::connect(&topic_database_url).await.unwrap();
+        let migrator = Migrator::new(Path::new(&migrations)).await.unwrap();
+        migrator.run(&mut connection).await.unwrap();
+        query(STATEMENT)
+            .bind(&topic_path)
+            .bind(&CLIENT_ADDR.to_string())
+            .execute(&mut connection)
+            .await
+            .unwrap();
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(
+            &Connect::new(
+                object!(
+                    "app" => AmfString::from(app),
+                    "type" => AmfString::from("nonprivate")
+                )
+            )
+        );
+        handle_message(stream.as_mut()).handle_connect_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream).write_connect_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(PublisherStatus::Connected, rtmp_context.get_publisher_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&ReleaseStream::new(AmfString::new(topic_path.clone())));
+        handle_message(stream.as_mut()).handle_release_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream).write_release_stream_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(PublisherStatus::Released, rtmp_context.get_publisher_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&FcPublish::new(AmfString::new(topic_path.clone())));
+        handle_message(stream.as_mut()).handle_fc_publish_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream).write_fc_publish_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(PublisherStatus::FcPublished, rtmp_context.get_publisher_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&CreateStream);
+        handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream).write_create_stream_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(PublisherStatus::Created, rtmp_context.get_publisher_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&Publish::new(AmfString::new(topic_path), "live".into()));
+        handle_message(stream.as_mut()).handle_publish_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_stream_begin(&mut rtmp_context).await.is_ok());
+        assert_eq!(PublisherStatus::Began, rtmp_context.get_publisher_status().unwrap());
+        assert!(handle_message(stream).write_publish_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(PublisherStatus::Published, rtmp_context.get_publisher_status().unwrap())
+    }
+
+    #[tokio::test]
+    async fn ok_valid_subscriber_sequence_in_ffmpeg() {
+        let app = "ondemand";
+        let topic_path = Uuid::now_v7().to_string();
+
+        #[cfg(windows)]
+        let topic_storage_path = format!("{}\\sheave", env!("TEMP"));
+        #[cfg(windows)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}\\sheave.db?mode=rwc");
+        #[cfg(windows)]
+        let migrations = format!("{}\\migrations", env!("CARGO_MANIFEST_DIR"));
+        #[cfg(windows)]
+        {
+            let copy_to = format!("{topic_storage_path}\\{app}");
+            create_dir_all(&copy_to).unwrap();
+            copy(&format!("{}\\..\\resources\\test.flv", env!("CARGO_MANIFEST_DIR")), &format!("{}\\{}.flv", copy_to, topic_path)).unwrap();
+        }
+        #[cfg(unix)]
+        let topic_storage_path = format!("{}/sheave", env!("TMPDIR"));
+        #[cfg(unix)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}/sheave.db?mode=rwc");
+        #[cfg(unix)]
+        let migrations = format!("{}/migrations", env!("CARGO_MANIFEST_DIR"));
+        #[cfg(unix)]
+        {
+            let copy_to = format!("{topic_storage_path}/{app}");
+            create_dir_all(&copy_to).unwrap();
+            copy(&format!("{}/../resources/test.flv", env!("CARGO_MANIFEST_DIR")), &format!("{}/{}.flv", copy_to, topic_path)).unwrap();
+        }
+
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_topic_storage_path(&topic_storage_path);
+        rtmp_context.set_topic_database_url(&topic_database_url);
+        rtmp_context.set_client_addr(CLIENT_ADDR);
+        rtmp_context.set_app(app);
+
+        let mut connection = SqliteConnection::connect(&topic_database_url).await.unwrap();
+        let migrator = Migrator::new(Path::new(&migrations)).await.unwrap();
+        migrator.run(&mut connection).await.unwrap();
+        query(STATEMENT)
+            .bind(&topic_path)
+            .bind(&CLIENT_ADDR.to_string())
+            .execute(&mut connection)
+            .await
+            .unwrap();
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(
+            &Connect::new(
+                object!(
+                    "app" => AmfString::from(app),
+                    "fpad" => Boolean::new(0)
+                )
+            )
+        );
+        handle_message(stream.as_mut()).handle_connect_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Connected, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&WindowAcknowledgementSize::default());
+        handle_message(stream.as_mut()).handle_window_acknowledgement_size(&mut rtmp_context, buffer).await.unwrap();
+        assert_eq!(SubscriberStatus::WindowAcknowledgementSizeGotSent, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&CreateStream);
+        handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_create_stream_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Created, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&FcSubscribe::new(AmfString::new(topic_path.clone())));
+        handle_message(stream.as_mut()).handle_fc_subscribe_request(&mut rtmp_context, buffer).await.unwrap();
+        assert_eq!(SubscriberStatus::FcSubscribed, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&GetStreamLength::new(AmfString::new(topic_path.clone())));
+        handle_message(stream.as_mut()).handle_stream_length_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_stream_length_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::AdditionalCommandGotSent, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(
+            &Play::new(
+                AmfString::new(topic_path),
+                Duration::default(),
+                PlayMode::default()
+            )
+        );
+        handle_message(stream.as_mut()).handle_play_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_stream_begin(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Began, rtmp_context.get_subscriber_status().unwrap());
+        assert!(handle_message(stream.as_mut()).write_play_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Played, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&SetBufferLength::new(rtmp_context.get_message_id().unwrap(), 0));
+        handle_message(stream.as_mut()).handle_buffer_length(&mut rtmp_context, buffer).await.unwrap();
+        assert_eq!(SubscriberStatus::BufferLengthGotSent, rtmp_context.get_subscriber_status().unwrap())
+    }
+
+    #[tokio::test]
+    async fn ok_valid_subscriber_sequence_in_obs() {
+        let app = "ondemand";
+        let topic_path = Uuid::now_v7().to_string();
+
+        #[cfg(windows)]
+        let topic_storage_path = format!("{}\\sheave", env!("TEMP"));
+        #[cfg(windows)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}\\sheave.db?mode=rwc");
+        #[cfg(windows)]
+        let migrations = format!("{}\\migrations", env!("CARGO_MANIFEST_DIR"));
+        #[cfg(windows)]
+        {
+            let copy_to = format!("{topic_storage_path}\\{app}");
+            create_dir_all(&copy_to).unwrap();
+            copy(&format!("{}\\..\\resources\\test.flv", env!("CARGO_MANIFEST_DIR")), &format!("{}\\{}.flv", copy_to, topic_path)).unwrap();
+        }
+
+        #[cfg(unix)]
+        let topic_storage_path = format!("{}/sheave", env!("TMPDIR"));
+        #[cfg(unix)]
+        let topic_database_url = format!("sqlite:{topic_storage_path}/sheave.db?mode=rwc");
+        #[cfg(unix)]
+        let migrations = format!("{}/migrations", env!("CARGO_MANIFEST_DIR"));
+        #[cfg(unix)]
+        {
+            let copy_to = format!("{topic_storage_path}/{app}");
+            create_dir_all(&copy_to).unwrap();
+            copy(&format!("{}/../resources/test.flv", env!("CARGO_MANIFEST_DIR")), &format!("{}/{}.flv", copy_to, topic_path)).unwrap();
+        }
+
+        let mut rtmp_context = RtmpContext::default();
+        rtmp_context.set_topic_storage_path(&topic_storage_path);
+        rtmp_context.set_topic_database_url(&topic_database_url);
+        rtmp_context.set_client_addr(CLIENT_ADDR);
+        rtmp_context.set_app(app);
+
+        let mut connection = SqliteConnection::connect(&topic_database_url).await.unwrap();
+        let migrator = Migrator::new(Path::new(&migrations)).await.unwrap();
+        migrator.run(&mut connection).await.unwrap();
+        query(STATEMENT)
+            .bind(&topic_path)
+            .bind(&CLIENT_ADDR.to_string())
+            .execute(&mut connection)
+            .await
+            .unwrap();
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(
+            &Connect::new(
+                object!(
+                    "app" => AmfString::from(app),
+                    "fpad" => Boolean::new(0)
+                )
+            )
+        );
+        handle_message(stream.as_mut()).handle_connect_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Connected, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&WindowAcknowledgementSize::default());
+        handle_message(stream.as_mut()).handle_window_acknowledgement_size(&mut rtmp_context, buffer).await.unwrap();
+        assert_eq!(SubscriberStatus::WindowAcknowledgementSizeGotSent, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&CreateStream);
+        handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_create_stream_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Created, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&FcSubscribe::new(AmfString::new(topic_path.clone())));
+        handle_message(stream.as_mut()).handle_fc_subscribe_request(&mut rtmp_context, buffer).await.unwrap();
+        assert_eq!(SubscriberStatus::FcSubscribed, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(
+            &SetPlaylist::new(
+                ecma_array!(
+                    "0" => AmfString::new(topic_path.clone())
+                )
+            )
+        );
+        handle_message(stream.as_mut()).handle_playlist_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_playlist_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::AdditionalCommandGotSent, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(
+            &Play::new(
+                AmfString::new(topic_path),
+                Duration::default(),
+                PlayMode::default()
+            )
+        );
+        handle_message(stream.as_mut()).handle_play_request(&mut rtmp_context, buffer).await.unwrap();
+        assert!(handle_message(stream.as_mut()).write_stream_begin(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Began, rtmp_context.get_subscriber_status().unwrap());
+        assert!(handle_message(stream.as_mut()).write_play_response(&mut rtmp_context).await.is_ok());
+        assert_eq!(SubscriberStatus::Played, rtmp_context.get_subscriber_status().unwrap());
+
+        let mut stream = pin!(VecStream::default());
+        let mut buffer = ByteBuffer::default();
+        buffer.encode(&SetBufferLength::new(rtmp_context.get_message_id().unwrap(), 0));
+        handle_message(stream.as_mut()).handle_buffer_length(&mut rtmp_context, buffer).await.unwrap();
+        assert_eq!(SubscriberStatus::BufferLengthGotSent, rtmp_context.get_subscriber_status().unwrap())
     }
 }
