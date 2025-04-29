@@ -13,13 +13,16 @@ futures.workspace = true
 log.workspace = true
 pin-project-lite.workspace = true
 sheave-core = { path = "../sheave-core" }
-sqlx = "0.8.3"
-sqlx-macros = "0.8.3"
+sqlx = "0.8.5"
+sqlx-macros = "0.8.5"
 tokio.workspace = true
 uuid = { version = "1.16.0", features = ["std", "v7", "fast-rng", "macro-diagnostics"] }
 
+[dev-dependencies]
+rand.workspace = true
+
 [features]
-default = ["sqlx/default", "sqlite"]
+default = ["sqlx/default", "sqlite", "sqlx/runtime-tokio"]
 sqlite = ["sqlx/sqlite", "sqlx-macros/sqlite"]
 mysql = ["sqlx/mysql", "sqlx-macros/mysql"]
 postgres = ["sqlx/postgres", "sqlx-macros/postgres"]
