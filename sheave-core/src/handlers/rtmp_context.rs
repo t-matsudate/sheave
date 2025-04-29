@@ -55,7 +55,8 @@ pub struct RtmpContext {
     peer_bandwidth: PeerBandwidth,
     buffer_length: u32,
     last_transaction_id: Number,
-    topic_storage_url: Option<String>,
+    topic_database_url: Option<String>,
+    topic_storage_path: Option<String>,
     client_addr: Option<SocketAddr>,
     app: Option<AmfString>,
     topic_path: Option<AmfString>,
@@ -93,7 +94,8 @@ impl Default for RtmpContext {
             peer_bandwidth: PeerBandwidth::default(),
             buffer_length: 30000,
             last_transaction_id: Number::default(),
-            topic_storage_url: Option::default(),
+            topic_database_url: Option::default(),
+            topic_storage_path: Option::default(),
             client_addr: Option::default(),
             app: Option::default(),
             topic_path: Option::default(),
@@ -217,12 +219,12 @@ impl RtmpContext {
         self.last_transaction_id += 1f64;
     }
 
-    /// Sets the topic storage url.
-    pub fn set_topic_storage_url(&mut self, topic_storage_url: &str) {
-        self.topic_storage_url = Some(topic_storage_url.into());
+    /// Sets the topic database url.
+    pub fn set_topic_database_url(&mut self, topic_database_url: &str) {
+        self.topic_database_url = Some(topic_database_url.into());
     }
 
-    /// Gets the topic storage url.
+    /// Gets the topic database url.
     /// Note this can return `None`. e.g. When this field is default as it is.
     ///
     /// # Examples
@@ -231,10 +233,30 @@ impl RtmpContext {
     /// use sheave_core::handlers::RtmpContext;
     ///
     /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_topic_storage_url().is_none())
+    /// assert!(rtmp_context.get_topic_database_url().is_none())
     /// ```
-    pub fn get_topic_storage_url(&mut self) -> Option<&String> {
-        self.topic_storage_url.as_ref()
+    pub fn get_topic_database_url(&mut self) -> Option<&String> {
+        self.topic_database_url.as_ref()
+    }
+
+    /// Sets the topic storage path.
+    pub fn set_topic_storage_path(&mut self, topic_storage_path: &str) {
+        self.topic_storage_path = Some(topic_storage_path.into());
+    }
+
+    /// Gets the topic storage path.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_topic_storage_path().is_none())
+    /// ```
+    pub fn get_topic_storage_path(&mut self) -> Option<&String> {
+        self.topic_storage_path.as_ref()
     }
 
     /// Sets a client IP address.
@@ -259,8 +281,8 @@ impl RtmpContext {
 
     /// Sets the `app` name.
     /// This can be contained in a request URI of RTMP.
-    pub fn set_app(&mut self, app: AmfString) {
-        self.app = Some(app);
+    pub fn set_app(&mut self, app: &str) {
+        self.app = Some(AmfString::from(app));
     }
 
     /// Gets the `app` name.
@@ -278,6 +300,32 @@ impl RtmpContext {
         self.app.as_ref()
     }
 
+    /// Sets a `topic_path` (e.g. filename) sent from a client.
+    pub fn set_topic_path(&mut self, topic_path: &str) {
+        self.topic_path = Some(AmfString::from(topic_path));
+    }
+
+    /// Resets a `topic_path` from this context.
+    /// This is prepared for deleting a `topic_path` when receives the `FCUnpublish` command.
+    pub fn reset_topic_path(&mut self) {
+        self.topic_path = None;
+    }
+
+    /// Gets a `topic_path` (e.g. filename) sent from a client.
+    /// Note this can return `None`. e.g. When this field is default as it is.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use sheave_core::handlers::RtmpContext;
+    ///
+    /// let mut rtmp_context = RtmpContext::default();
+    /// assert!(rtmp_context.get_topic_path().is_none())
+    /// ```
+    pub fn get_topic_path(&mut self) -> Option<&AmfString> {
+        self.topic_path.as_ref()
+    }
+
     /// Sets the `tcUrl`. This is a full URL in the RTMP request like following form.
     ///
     /// `rtmp://hostname/[app]/[topic_path]`
@@ -285,8 +333,8 @@ impl RtmpContext {
     /// Where `app` and `topic_path` can be unspecified.
     /// Clients specify above URL at the start of RTMP requests.
     /// Then the server checks `app` and `topic_path` in client-side `Connect` commands (if they are specified).
-    pub fn set_tc_url(&mut self, tc_url: AmfString) {
-        self.tc_url = Some(tc_url);
+    pub fn set_tc_url(&mut self, tc_url: &str) {
+        self.tc_url = Some(AmfString::from(tc_url));
     }
 
     /// Gets the `tcUrl`.
@@ -522,32 +570,6 @@ impl RtmpContext {
     /// ```
     pub fn get_information(&mut self) -> Option<&Object> {
         self.information.as_ref()
-    }
-
-    /// Sets a `topic_path` (e.g. filename) sent from a client.
-    pub fn set_topic_path(&mut self, topic_path: AmfString) {
-        self.topic_path = Some(topic_path);
-    }
-
-    /// Resets a `topic_path` from this context.
-    /// This is prepared for deleting a `topic_path` when receives the `FCUnpublish` command.
-    pub fn reset_topic_path(&mut self) {
-        self.topic_path = None;
-    }
-
-    /// Gets a `topic_path` (e.g. filename) sent from a client.
-    /// Note this can return `None`. e.g. When this field is default as it is.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use sheave_core::handlers::RtmpContext;
-    ///
-    /// let mut rtmp_context = RtmpContext::default();
-    /// assert!(rtmp_context.get_topic_path().is_none())
-    /// ```
-    pub fn get_topic_path(&mut self) -> Option<&AmfString> {
-        self.topic_path.as_ref()
     }
 
     /// Sets a message ID of this stream.
