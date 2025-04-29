@@ -76,6 +76,10 @@ impl From<LogLevel> for LevelFilter {
 /// * Listening protocols and addresses/ports
 ///
 /// `sheave-server --rtmp 127.0.0.1:1935`
+///
+/// * The topic storage (database) URL.
+///
+/// `sheave-server --rtmp 127.0.0.1:1935` --topic-storage-url sqlite::memory:
 #[derive(Debug, Parser)]
 #[command(author, version)]
 struct ServerOptions {
@@ -94,23 +98,40 @@ struct ServerOptions {
     /// |`trace`|<ul><li>Detailed process for tracing.</li></ul>|
     #[arg(long, value_enum, value_name = "LogLevel", default_value_t, env = "LOGLEVEL")]
     loglevel: LogLevel,
-    /// The database storage URL to keep playpath/subscribepath to handle FLV data.
-    /// This must start with One of database URL schemas. (e.g. mysql:, postgres:, sqlite:, etc.)
+    /// The database URL to keep the topic path to handle topics.
+    /// This must start with one of database URL schemas. (e.g. mysql:, postgres:, sqlite:, etc.)
     ///
-    /// When you store topics into SQLite storages, you can use in-memory storage URL (`:memory:`).
-    #[arg(long, required = true, value_name = "URL", env = "TOPIC_STORAGE_URL")]
-    topic_storage_url: String,
+    /// When you store topics into SQLite database, you can use in-memory storage URL (`:memory:`).
+    #[arg(long, required = true, value_name = "URL", env = "TOPIC_DATABASE_URL")]
+    topic_database_url: String,
+    /// The path to the base directory for storing topics.
+    /// If this isn't present, the server set this to TEMP(windows)/TMPDIR(linux) environment variable.
+    #[arg(long, value_name = "PATH", env = "TOPIC_STORAGE_PATH")]
+    topic_storage_path: Option<String>,
+    /// The path of application instance.
+    /// Currently, this is used as subdirectories to store topics each instance.
+    /// If this isn't present, the server stores topics just under the `topic_storage_path`.
+    #[arg(long, value_name = "PATH", env = "APP")]
+    app: Option<String>,
     // TODO: Makes other options if they are required.
 }
 
-async fn run_as_rtmp(address: &str, topic_storage_url: &str) -> IOResult<()> {
-    let listener = RtmpListener::bind(address).await?;
+async fn run_as_rtmp(server_addr: &str, topic_database_url: &str, topic_storage_path: Option<String>, app: Option<String>) -> IOResult<()> {
+
+    let listener = RtmpListener::bind(server_addr).await?;
 
     loop {
         let (stream, client_addr) = listener.accept().await?;
         let mut rtmp_context = RtmpContext::default();
-        rtmp_context.set_topic_storage_url(topic_storage_url);
+        rtmp_context.set_topic_database_url(topic_database_url);
         rtmp_context.set_client_addr(client_addr);
+
+        #[cfg(windows)]
+        rtmp_context.set_topic_storage_path(&topic_storage_path.unwrap_or(env!("TEMP").into()));
+        #[cfg(unix)]
+        rtmp_context.set_topic_storage_path(&topic_storage_path.unwrap_or(env!("TMPDIR").into()));
+
+        rtmp_context.set_app(&app.unwrap_or_default());
         let server = Server::new(stream, rtmp_context, PhantomData::<RtmpHandler<RtmpStream>>);
         return spawn(server).await?;
     }
@@ -127,7 +148,7 @@ async fn main() -> IOResult<()> {
 
     builder().filter_level(options.loglevel.into()).try_init().map_err(|e| IOError::other(e))?;
 
-    if let Err(e) = run_as_rtmp(&options.listeners.rtmp[0], &options.topic_storage_url).await {
+    if let Err(e) = run_as_rtmp(&options.listeners.rtmp[0], &options.topic_database_url, options.topic_storage_path, options.app).await {
         error!("Some error got occurred: {e}");
         return Err(e)
     }
@@ -158,10 +179,10 @@ mod tests {
     #[test]
     fn ok_passing_required_parameters() {
         let result = ServerOptions::command()
-            .try_get_matches_from(vec!["sheave-server", "--rtmp", "127.0.0.1:1935", "--topic-storage-url", "sqlite::memory:"]);
+            .try_get_matches_from(vec!["sheave-server", "--rtmp", "127.0.0.1:1935", "--topic-database-url", "sqlite::memory:"]);
         assert!(result.is_ok());
         let result = ServerOptions::command()
-            .try_get_matches_from(vec!["sheave-server", "--rtmp", "127.0.0.1:1935,0.0.0.0:1935", "--topic-storage-url", "sqlite::memory:"]);
+            .try_get_matches_from(vec!["sheave-server", "--rtmp", "127.0.0.1:1935,0.0.0.0:1935", "--topic-database-url", "sqlite::memory:"]);
         assert!(result.is_ok())
     }
 }
