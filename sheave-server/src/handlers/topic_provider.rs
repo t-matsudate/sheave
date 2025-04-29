@@ -29,9 +29,9 @@ const STATEMENT: &str = "SELECT path FROM topics WHERE path = ? AND client_addr 
 ///
 /// # Panics
 ///
-/// This becomes a panic unless the topic storage doesn't find.
-pub async fn did_get_published(topic_storage_url: &str, topic_path: &str, client_addr: SocketAddr) -> bool {
-    let mut connection = TopicStorage::connect(topic_storage_url).await.unwrap();
+/// This becomes a panic unless the topic database doesn't find.
+pub async fn did_get_published(topic_database_url: &str, topic_path: &str, client_addr: SocketAddr) -> bool {
+    let mut connection = TopicStorage::connect(topic_database_url).await.unwrap();
 
     query(STATEMENT)
         .bind(topic_path)
@@ -50,9 +50,9 @@ pub async fn did_get_published(topic_storage_url: &str, topic_path: &str, client
 /// When specified topic isn't in the database yet.
 ///
 /// [`StreamIsUnpublished`]: super::StreamIsUnpublished
-pub async fn publish_topic(topic_storage_url: &str, base_dir: &str, directory_separator: &str, topic_path: &str, client_addr: SocketAddr) -> IOResult<Flv> {
-    if did_get_published(topic_storage_url, topic_path, client_addr).await {
-        Flv::create(&format!("{base_dir}{directory_separator}{topic_path}.flv"))
+pub async fn publish_topic(topic_database_url: &str, topic_storage_path: &str, app: &str, topic_path: &str, directory_separator: &str, client_addr: SocketAddr) -> IOResult<Flv> {
+    if did_get_published(topic_database_url, topic_path, client_addr).await {
+        Flv::create(&format!("{topic_storage_path}{directory_separator}{app}{directory_separator}{topic_path}.flv"))
     } else {
         Err(stream_is_unpublished(topic_path.into()))
     }
@@ -67,9 +67,9 @@ pub async fn publish_topic(topic_storage_url: &str, base_dir: &str, directory_se
 /// When specified topic isn't in the database yet.
 ///
 /// [`StreamIsUnpublished`]: super::StreamIsUnpublished
-pub async fn unpublish_topic(topic_storage_url: &str, base_dir: &str, directory_separator: &str, topic_path: &str, client_addr: SocketAddr) -> IOResult<()> {
-    if did_get_published(topic_storage_url, topic_path, client_addr).await {
-        remove_file(format!("{base_dir}{directory_separator}{topic_path}.flv"))
+pub async fn unpublish_topic(topic_database_url: &str, topic_storage_path: &str, app: &str, topic_path: &str, directory_separator: &str, client_addr: SocketAddr) -> IOResult<()> {
+    if did_get_published(topic_database_url, topic_path, client_addr).await {
+        remove_file(format!("{topic_storage_path}{directory_separator}{app}{directory_separator}{topic_path}.flv"))
     } else {
         Err(stream_is_unpublished(topic_path.into()))
     }
@@ -84,9 +84,9 @@ pub async fn unpublish_topic(topic_storage_url: &str, base_dir: &str, directory_
 /// When specified topic isn't in the database yet.
 ///
 /// [`StreamIsUnpublished`]: super::StreamIsUnpublished
-pub async fn subscribe_topic(topic_storage_url: &str, base_dir: &str, directory_separator: &str, topic_path: &str, client_addr: SocketAddr) -> IOResult<Flv> {
-    if did_get_published(topic_storage_url, topic_path, client_addr).await {
-        Flv::open(&format!("{base_dir}{directory_separator}{topic_path}.flv"))
+pub async fn subscribe_topic(topic_database_url: &str, topic_storage_path: &str, app: &str, topic_path: &str, directory_separator: &str, client_addr: SocketAddr) -> IOResult<Flv> {
+    if did_get_published(topic_database_url, topic_path, client_addr).await {
+        Flv::open(&format!("{topic_storage_path}{directory_separator}{app}{directory_separator}{topic_path}.flv"))
     } else {
         Err(stream_is_unpublished(topic_path.into()))
     }
