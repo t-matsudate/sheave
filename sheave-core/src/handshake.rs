@@ -110,7 +110,7 @@ type HmacSha256 = Hmac<Sha256>;
 pub struct Handshake([u8; 1536]);
 
 impl Handshake {
-    /// The key which is used to imprint ant client-side digest.
+    /// The key which is used to imprint any client-side digest.
     pub const CLIENT_KEY: &'static [u8] = b"Genuine Adobe Flash Player 001";
     /// The key which is used to imprint any server-side digest.
     pub const SERVER_KEY: &'static [u8] = b"Genuine Adobe Flash Media Server 001";
