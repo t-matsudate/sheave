@@ -11,11 +11,7 @@ use std::{
     }
 };
 
-/// Tells that either digests or signatures are inconsistent in the handshake step.
-///
-/// The handshake step can fail.
-/// Also to be inconsistent either digests or signatures is a part of causes.
-/// This reports that above thing occurred to upper APIs.
+/// Tells that either digests or signatures is inconsistent in the handshake step.
 #[derive(Debug)]
 pub struct InconsistentSha(Vec<u8>);
 
@@ -34,38 +30,7 @@ impl Display for InconsistentSha {
 
 impl Error for InconsistentSha {}
 
-/// A utility function for wrapping the error `InconsistentSha` into `::std::io::Error`.
-///
-/// # Examples
-///
-/// ```rust
-/// use std::{
-///     io::{
-///         Error,
-///         Result as IOResult
-///     },
-///     time::Instant
-/// };
-/// use sheave_core::{
-///     handlers::inconsistent_sha,
-///     handshake::{
-///         EncryptionAlgorithm,
-///         Handshake,
-///         Version
-///     }
-/// };
-///
-///
-/// fn main() -> IOResult<()> {
-///     let mut handshake = Handshake::new(Instant::now().elapsed(), Version::LATEST_CLIENT);
-///     handshake.imprint_digest(EncryptionAlgorithm::NotEncrypted, Handshake::CLIENT_KEY);
-///     if !handshake.did_digest_match(EncryptionAlgorithm::NotEncrypted, Handshake::CLIENT_KEY) {
-///         return Err(inconsistent_sha(handshake.get_digest(EncryptionAlgorithm::NotEncrypted).to_vec()))
-///     }
-///
-///     Ok(())
-/// }
-/// ```
+/// A utility function for constructing an `InconsistentSha` error.
 pub fn inconsistent_sha(sha: Vec<u8>) -> IOError {
     IOError::new(
         ErrorKind::InvalidData,

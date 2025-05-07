@@ -24,7 +24,7 @@ impl Display for StreamGotExhausted {
 
 impl Error for StreamGotExhausted {}
 
-/// A utility function of constructing an `StreamGotExhausted`
+/// A utility function of constructing an `StreamGotExhausted` error.
 pub fn stream_got_exhausted() -> IOError {
     IOError::new(
         ErrorKind::Other,
