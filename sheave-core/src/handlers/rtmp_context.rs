@@ -643,8 +643,8 @@ impl RtmpContext {
     }
 
     /// Sets a publishing type of this stream.
-    pub fn set_publishing_type(&mut self, publishing_type: &str) {
-        self.publishing_type = Some(publishing_type.into());
+    pub fn set_publishing_type(&mut self, publishing_type: AmfString) {
+        self.publishing_type = Some(publishing_type);
     }
 
     /// Gets a publishing type of this stream.
