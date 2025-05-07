@@ -17,7 +17,7 @@ pub struct InvalidUri(String);
 
 impl Display for InvalidUri {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        writeln!(f, "URI is invalid: {}", self.0)
+        writeln!(f, "{}", self.0)
     }
 }
 
