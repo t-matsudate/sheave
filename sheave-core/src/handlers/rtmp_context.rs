@@ -301,8 +301,8 @@ impl RtmpContext {
     }
 
     /// Sets a `topic_path` (e.g. filename) sent from a client.
-    pub fn set_topic_path(&mut self, topic_path: &str) {
-        self.topic_path = Some(AmfString::from(topic_path));
+    pub fn set_topic_path(&mut self, topic_path: AmfString) {
+        self.topic_path = Some(topic_path);
     }
 
     /// Resets a `topic_path` from this context.
@@ -643,8 +643,8 @@ impl RtmpContext {
     }
 
     /// Sets a publishing type of this stream.
-    pub fn set_publishing_type(&mut self, publishing_type: AmfString) {
-        self.publishing_type = Some(publishing_type);
+    pub fn set_publishing_type(&mut self, publishing_type: &str) {
+        self.publishing_type = Some(publishing_type.into());
     }
 
     /// Gets a publishing type of this stream.
