@@ -139,7 +139,7 @@ impl Encoder<Play> for ByteBuffer {
         let start_time = match play.get_play_mode() {
             Both => -2000f64,
             Live => -1000f64,
-            Recorded => (play.get_start_time().as_secs() * 1000) as f64,
+            Record => (play.get_start_time().as_secs() * 1000) as f64,
             Other => unimplemented!("Play mode is neither both, live nor recorded.")
         };
 

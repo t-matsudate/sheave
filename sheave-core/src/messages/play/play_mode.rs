@@ -20,7 +20,7 @@ pub enum PlayMode {
     #[default]
     Both = -2,
     Live,
-    Recorded
+    Record
 }
 
 impl From<i64> for PlayMode {
@@ -30,7 +30,7 @@ impl From<i64> for PlayMode {
         match play_mode {
             -2 => Both,
             -1 => Live,
-            play_mode if play_mode >= 0 => Recorded,
+            play_mode if play_mode >= 0 => Record,
             _ => Other
         }
     }
