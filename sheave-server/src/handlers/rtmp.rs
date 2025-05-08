@@ -141,7 +141,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
             rtmp_context.set_client_handshake(client_request);
         } else {
             if !client_request.did_digest_match(encryption_algorithm, Handshake::CLIENT_KEY) {
-                error!("Client side digest is inconsistent!\nencryption_algorithm: {:?}\ndigest: {:x?}", encryption_algorithm, client_request.get_digest(encryption_algorithm));
+                error!("Invalid SHA digest/signature: {:x?}", client_request.get_digest(encryption_algorithm));
                 return Err(inconsistent_sha(client_request.get_digest(encryption_algorithm).to_vec()))
             } else {
                 let mut server_request = Handshake::new(Instant::now().elapsed(), Version::LATEST_SERVER);
@@ -178,10 +178,11 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> HandshakeHandler<'_, RW> {
             let server_request = rtmp_context.get_server_handshake().unwrap();
             // NOTE: FFmpeg acts the handshake but imprints no signature.
             if !client_response.did_signature_match(encryption_algorithm, &client_response_key) && server_request.get_signature() != client_response.get_signature() {
-                error!("Client side signature is inconsistent!\nencryption_algorithm: {:?}, signature: {:x?}", encryption_algorithm, client_response.get_signature());
+                error!("Invalid SHA digest/signature: {:x?}", client_response.get_signature());
                 return Err(inconsistent_sha(client_response.get_signature().to_vec()))
             } else {
-                debug!("Handshake version: {:?}\nSignature: {:x?}", client_response.get_version(), client_response.get_signature());
+                debug!("Handshake version: {:?}", client_response.get_version());
+                debug!("Signature: {:x?}", client_response.get_signature());
                 rtmp_context.set_server_handshake(client_response);
             }
         }
@@ -242,7 +243,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
     async fn handle_release_stream_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let release_stream_request: ReleaseStream = buffer.decode()?;
-        rtmp_context.set_topic_path(release_stream_request.get_topic_path());
+        rtmp_context.set_topic_path(release_stream_request.into());
 
         info!("releaseStream got handled.");
         Ok(())
@@ -276,7 +277,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
          */
         let topic = subscribe_topic(&topic_database_url, &topic_storage_path, &app, fc_subscribe_request.get_topic_path(), RtmpContext::DIRECTORY_SEPARATOR, client_addr).await?;
         rtmp_context.set_topic(topic);
-        rtmp_context.set_topic_path(fc_subscribe_request.get_topic_path());
+        rtmp_context.set_topic_path(fc_subscribe_request.into());
 
         rtmp_context.set_subscriber_status(SubscriberStatus::FcSubscribed);
 
@@ -1115,9 +1116,6 @@ mod tests {
         write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
         let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
         assert!(result.is_ok());
-        assert!(rtmp_context.get_encryption_algorithm().is_some());
-        assert!(rtmp_context.get_server_handshake().is_some());
-        assert!(rtmp_context.get_client_handshake().is_some());
 
         let received_encryption_algorithm = read_encryption_algorithm(stream.as_mut()).await.unwrap();
         let received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
@@ -1157,9 +1155,6 @@ mod tests {
         write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
         let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
         assert!(result.is_ok());
-        assert!(rtmp_context.get_encryption_algorithm().is_some());
-        assert!(rtmp_context.get_server_handshake().is_some());
-        assert!(rtmp_context.get_client_handshake().is_some());
 
         read_encryption_algorithm(stream.as_mut()).await.unwrap();
         let mut received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
@@ -1184,9 +1179,6 @@ mod tests {
         write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
         let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
         assert!(result.is_ok());
-        assert!(rtmp_context.get_encryption_algorithm().is_some());
-        assert!(rtmp_context.get_server_handshake().is_some());
-        assert!(rtmp_context.get_client_handshake().is_some());
 
         let received_encryption_algorithm = read_encryption_algorithm(stream.as_mut()).await.unwrap();
         let mut received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
@@ -1221,9 +1213,6 @@ mod tests {
         write_handshake(stream.as_mut(), &sent_client_handshake).await.unwrap();
         let result = handle_handshake(stream.as_mut()).handle_first_handshake(&mut rtmp_context).await;
         assert!(result.is_ok());
-        assert!(rtmp_context.get_encryption_algorithm().is_some());
-        assert!(rtmp_context.get_server_handshake().is_some());
-        assert!(rtmp_context.get_client_handshake().is_some());
 
         let received_encryption_algorithm = read_encryption_algorithm(stream.as_mut()).await.unwrap();
         let received_server_handshake = read_handshake(stream.as_mut()).await.unwrap();
@@ -1458,31 +1447,31 @@ mod tests {
         assert!(handle_message(stream).write_connect_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Connected, rtmp_context.get_publisher_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&ReleaseStream::new(AmfString::new(topic_path.clone())));
         handle_message(stream.as_mut()).handle_release_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream).write_release_stream_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Released, rtmp_context.get_publisher_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&FcPublish::new(AmfString::new(topic_path.clone())));
         handle_message(stream.as_mut()).handle_fc_publish_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream).write_fc_publish_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::FcPublished, rtmp_context.get_publisher_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&CreateStream);
         handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream).write_create_stream_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Created, rtmp_context.get_publisher_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&Publish::new(AmfString::new(topic_path), "live".into()));
         handle_message(stream.as_mut()).handle_publish_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_stream_begin(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Began, rtmp_context.get_publisher_status().unwrap());
         assert!(handle_message(stream).write_publish_response(&mut rtmp_context).await.is_ok());
@@ -1549,16 +1538,15 @@ mod tests {
         assert!(handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Connected, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&WindowAcknowledgementSize::default());
         handle_message(stream.as_mut()).handle_window_acknowledgement_size(&mut rtmp_context, buffer).await.unwrap();
         assert_eq!(SubscriberStatus::WindowAcknowledgementSizeGotSent, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&CreateStream);
         handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_create_stream_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Created, rtmp_context.get_subscriber_status().unwrap());
 
@@ -1568,14 +1556,13 @@ mod tests {
         handle_message(stream.as_mut()).handle_fc_subscribe_request(&mut rtmp_context, buffer).await.unwrap();
         assert_eq!(SubscriberStatus::FcSubscribed, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&GetStreamLength::new(AmfString::new(topic_path.clone())));
         handle_message(stream.as_mut()).handle_stream_length_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_stream_length_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::AdditionalCommandGotSent, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(
             &Play::new(
@@ -1585,12 +1572,12 @@ mod tests {
             )
         );
         handle_message(stream.as_mut()).handle_play_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_stream_begin(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Began, rtmp_context.get_subscriber_status().unwrap());
         assert!(handle_message(stream.as_mut()).write_play_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Played, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&SetBufferLength::new(rtmp_context.get_message_id().unwrap(), 0));
         handle_message(stream.as_mut()).handle_buffer_length(&mut rtmp_context, buffer).await.unwrap();
@@ -1658,26 +1645,23 @@ mod tests {
         assert!(handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Connected, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&WindowAcknowledgementSize::default());
         handle_message(stream.as_mut()).handle_window_acknowledgement_size(&mut rtmp_context, buffer).await.unwrap();
         assert_eq!(SubscriberStatus::WindowAcknowledgementSizeGotSent, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&CreateStream);
         handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_create_stream_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Created, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&FcSubscribe::new(AmfString::new(topic_path.clone())));
         handle_message(stream.as_mut()).handle_fc_subscribe_request(&mut rtmp_context, buffer).await.unwrap();
         assert_eq!(SubscriberStatus::FcSubscribed, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(
             &SetPlaylist::new(
@@ -1687,10 +1671,10 @@ mod tests {
             )
         );
         handle_message(stream.as_mut()).handle_playlist_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_playlist_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::AdditionalCommandGotSent, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(
             &Play::new(
@@ -1700,12 +1684,12 @@ mod tests {
             )
         );
         handle_message(stream.as_mut()).handle_play_request(&mut rtmp_context, buffer).await.unwrap();
+        let mut stream = pin!(VecStream::default());
         assert!(handle_message(stream.as_mut()).write_stream_begin(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Began, rtmp_context.get_subscriber_status().unwrap());
         assert!(handle_message(stream.as_mut()).write_play_response(&mut rtmp_context).await.is_ok());
         assert_eq!(SubscriberStatus::Played, rtmp_context.get_subscriber_status().unwrap());
 
-        let mut stream = pin!(VecStream::default());
         let mut buffer = ByteBuffer::default();
         buffer.encode(&SetBufferLength::new(rtmp_context.get_message_id().unwrap(), 0));
         handle_message(stream.as_mut()).handle_buffer_length(&mut rtmp_context, buffer).await.unwrap();
