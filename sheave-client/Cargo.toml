@@ -12,3 +12,6 @@ log.workspace = true
 futures.workspace = true
 sheave-core = { path = "../sheave-core" }
 tokio.workspace = true
+
+[dev-dependencies]
+uuid.workspace = true
