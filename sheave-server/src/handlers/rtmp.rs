@@ -287,7 +287,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
     async fn handle_stream_length_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         let get_stream_length_request: GetStreamLength = buffer.decode()?;
-        rtmp_context.set_topic_path(get_stream_length_request.get_topic_path());
+        rtmp_context.set_topic_path(get_stream_length_request.into());
 
         info!("getStreamLength got handled.");
         Ok(())
@@ -1337,7 +1337,7 @@ mod tests {
         let mut stream = pin!(VecStream::default());
         let mut rtmp_context = RtmpContext::default();
         rtmp_context.set_message_id(0);
-        rtmp_context.set_topic_path(&Uuid::now_v7().to_string());
+        rtmp_context.set_topic_path(AmfString::new(Uuid::now_v7().to_string()));
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&Publish::new(AmfString::default(), "live".into()));
@@ -1388,7 +1388,7 @@ mod tests {
     async fn err_inconsistent_topic_path_in_play() {
         let mut stream = pin!(VecStream::default());
         let mut rtmp_context = RtmpContext::default();
-        rtmp_context.set_topic_path(&Uuid::now_v7().to_string());
+        rtmp_context.set_topic_path(AmfString::new(Uuid::now_v7().to_string()));
         rtmp_context.set_message_id(0);
 
         let mut buffer = ByteBuffer::default();
@@ -1444,28 +1444,28 @@ mod tests {
             )
         );
         handle_message(stream.as_mut()).handle_connect_request(&mut rtmp_context, buffer).await.unwrap();
-        assert!(handle_message(stream).write_connect_response(&mut rtmp_context).await.is_ok());
+        assert!(handle_message(stream.as_mut()).write_connect_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Connected, rtmp_context.get_publisher_status().unwrap());
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&ReleaseStream::new(AmfString::new(topic_path.clone())));
         handle_message(stream.as_mut()).handle_release_stream_request(&mut rtmp_context, buffer).await.unwrap();
         let mut stream = pin!(VecStream::default());
-        assert!(handle_message(stream).write_release_stream_response(&mut rtmp_context).await.is_ok());
+        assert!(handle_message(stream.as_mut()).write_release_stream_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Released, rtmp_context.get_publisher_status().unwrap());
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&FcPublish::new(AmfString::new(topic_path.clone())));
         handle_message(stream.as_mut()).handle_fc_publish_request(&mut rtmp_context, buffer).await.unwrap();
         let mut stream = pin!(VecStream::default());
-        assert!(handle_message(stream).write_fc_publish_response(&mut rtmp_context).await.is_ok());
+        assert!(handle_message(stream.as_mut()).write_fc_publish_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::FcPublished, rtmp_context.get_publisher_status().unwrap());
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&CreateStream);
         handle_message(stream.as_mut()).handle_create_stream_request(&mut rtmp_context, buffer).await.unwrap();
         let mut stream = pin!(VecStream::default());
-        assert!(handle_message(stream).write_create_stream_response(&mut rtmp_context).await.is_ok());
+        assert!(handle_message(stream.as_mut()).write_create_stream_response(&mut rtmp_context).await.is_ok());
         assert_eq!(PublisherStatus::Created, rtmp_context.get_publisher_status().unwrap());
 
         let mut buffer = ByteBuffer::default();
