@@ -1,4 +1,4 @@
-FROM rust:1.84.1
+FROM rust:1.86.0
 ADD . /sheave
 WORKDIR /sheave
 ENV HOST=127.0.0.1
