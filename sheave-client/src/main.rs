@@ -285,7 +285,7 @@ async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOpt
                 rtmp_context.set_await_duration(Duration::from_millis(options.await_duration));
 
                 rtmp_context.set_publishing_name(topic_path.into());
-                rtmp_context.set_publishing_type(&options.publishing_type.to_string());
+                rtmp_context.set_publishing_type((&options.publishing_type).into());
             }
         },
         CoreClientType::Subscriber => match options.format[0] {
