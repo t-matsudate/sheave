@@ -847,6 +847,7 @@ fn handle_close<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>)
 /// [`WindowAcknowledgementSize`]: sheave_core::messages::WindowAcknowledgementSize
 /// [`FcSubscribe`]: sheave_core::messages::FcSubscribe
 /// [`GetStreamLength`]: sheave_core::messages::GetStreamLength
+/// [`SetPlaylist`]: sheave_core::messages::SetPlaylist
 /// [`Play`]: sheave_core::messages::Play
 /// [`SetBufferLength`]: sheave_core::messages::SetBufferLength
 #[derive(Debug)]
