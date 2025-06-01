@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
       - id: setup-rust
         name: Setup Rust
-        uses: docker://rust:1.84.1
+        uses: docker://rust:1.87.0
       - id: setup-qemu
         name: Setup QEMU
         uses: docker/setup-qemu-action@v3
@@ -61,7 +61,7 @@ jobs:
         run: sudo apt install -y ffmpeg
       - id: run
         name: Runs FFmpeg with examples
-        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost
+        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost/ondemand/test
   sheave-client-amd64:
     name: Tests with Sheave client (AMD64)
     needs: push
@@ -80,13 +80,13 @@ jobs:
         uses: actions/checkout@v4
       - id: setup
         name: Setup Rust
-        uses: docker://rust:1.84.1
+        uses: docker://rust:1.87.0
       - id: build
         name: Builds sheave-client
         run: cargo update && cargo build -p sheave-client --release --bins
       - id: run
         name: Runs Sheave client with examples
-        run: ./target/release/sheave-client --loglevel info -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935
+        run: ./target/release/sheave-client --loglevel info -f flv -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test
   ffmpeg-aarch64:
     name: Tests with FFmpeg (AArch64)
     needs: push
@@ -111,7 +111,7 @@ jobs:
         run: sudo apt install -y ffmpeg
       - id: run
         name: Runs FFmpeg with examples
-        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost
+        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost/ondemand/test
   sheave-client-aarch64:
     name: Tests with Sheave client (AArch64)
     needs: push
@@ -130,10 +130,10 @@ jobs:
         uses: actions/checkout@v4
       - id: setup
         name: Setup Rust
-        uses: docker://rust:1.84.1
+        uses: docker://rust:1.87.0
       - id: build
         name: Builds sheave-client
         run: cargo update && cargo build -p sheave-client --release --bins
       - id: run
         name: Runs Sheave client with examples
-        run: ./target/release/sheave-client --loglevel info -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935
+        run: ./target/release/sheave-client --loglevel info -f flv -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test

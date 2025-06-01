@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
       - id: setup-rust
         name: Setup Rust
-        uses: docker://rust:1.84.1
+        uses: docker://rust:1.87.0
       - id: setup-qemu
         name: Setup QEMU
         uses: docker/setup-qemu-action@v3
@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - id: build-and-push
         name: Build a docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           tags: tmatsudate/sheave-server:${{ github.ref_name }}
