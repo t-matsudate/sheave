@@ -272,10 +272,7 @@ impl Decoder<AudioTag> for ByteBuffer {
     /// # Examples
     ///
     /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
+    /// use rand::fill;
     /// use sheave_core::{
     ///     ByteBuffer,
     ///     Decoder,
@@ -291,7 +288,7 @@ impl Decoder<AudioTag> for ByteBuffer {
     /// let mut buffer = ByteBuffer::default();
     /// buffer.encode(&AudioTagHeader::new(SoundFormat::LinearPcmNe, SoundRate::FivePointFive, false, false, None));
     /// let mut bytes: [u8; 127] = [0; 127];
-    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut bytes);
     /// buffer.put_bytes(&bytes);
     /// assert!(Decoder::<AudioTag>::decode(&mut buffer).is_ok());
     ///
@@ -338,10 +335,7 @@ impl TryFrom<AudioTag> for Audio {
 
 #[cfg(test)]
 mod tests {
-    use rand::{
-        Fill,
-        thread_rng
-    };
+    use rand::fill;
     use super::*;
 
     #[test]
@@ -349,7 +343,7 @@ mod tests {
         let mut buffer = ByteBuffer::default();
         buffer.put_u8(0);
         let mut data: [u8; 128] = [0; 128];
-        data.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut data);
         buffer.put_bytes(&data);
         assert!(Decoder::<AudioTag>::decode(&mut buffer).is_ok())
     }
@@ -358,7 +352,7 @@ mod tests {
     fn encode_audio_tag() {
         let mut buffer = ByteBuffer::default();
         let mut expected_data: [u8; 128] = [0; 128];
-        expected_data.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut expected_data);
         let expected = AudioTag::new(
             AudioTagHeader::new(
                 SoundFormat::LinearPcmNe,

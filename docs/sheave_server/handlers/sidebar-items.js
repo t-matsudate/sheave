@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["middlewares"],"struct":["RtmpHandler"]};
+window.SIDEBAR_ITEMS = {"struct":["RtmpHandler"]};

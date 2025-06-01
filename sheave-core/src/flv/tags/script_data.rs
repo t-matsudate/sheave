@@ -15,7 +15,17 @@ use crate::{
     }
 };
 
-/// The meta data which consists of a name-value pair.
+/// The meta data which consists of name-value pairs.
+///
+/// Following format is required:
+///
+/// |Field|AMF Type|Value|
+/// | :- | :- | :- |
+/// |Data Name|[`String`]|`"onMetaData"`|
+/// |Data|[`EcmaArray`]|e.g. `"audiocodecid"`, `"videocodecid"`|
+///
+/// [`String`]: crate::messages::amf::v0::AmfString
+/// [`EcmaArray`]: crate::messages::amf::v0::EcmaArray
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScriptDataTag {
     name: AmfString,

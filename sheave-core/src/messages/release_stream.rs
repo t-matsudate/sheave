@@ -15,7 +15,22 @@ use crate::{
     }
 };
 
-/// The command to tell the Play Path (e.g. something file name).
+/// The command to tell some path to the server.
+///
+/// Following format is required.
+///
+/// |Field|AMF Type|Value|
+/// | :- | :- | :- |
+/// |Command Name|[`String`]|`"releaseStream"`|
+/// |Transaction ID|[`Number`]|A number which is next of the connect.|
+/// ||[`Null`]|Nothing but an AMF's type marker is in.|
+/// |Path|[`String`]|Some path to audio/video data to make server opened.|
+///
+/// For example, path is defined as some file name in FFmpeg and OBS.
+///
+/// [`Number`]: crate::messages::amf::v0::Number
+/// [`String`]: crate::messages::amf::v0::AmfString
+/// [`Null`]: crate::messages::amf::v0::Null
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReleaseStream(AmfString);
 

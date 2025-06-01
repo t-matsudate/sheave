@@ -48,21 +48,21 @@
 //! The SoundFormat field corresponds to:
 //!
 //! |Value|Sound Format|
-//! | :- | :- |
-//! |0|Linear PCM (Native Endian)|
-//! |1|ADPCM|
-//! |2|MP3|
-//! |3|Linear PCM (Little Endian)|
-//! |4|Nellymoser (16 kHz, mono)|
-//! |5|Nellymoser (8 kHz, mono)|
-//! |6|Nellymoser|
-//! |7|G.711 (A-law)|
-//! |8|G.711 (mu-law)|
-//! |9|reserved|
-//! |10|AAC|
-//! |11|Speex|
-//! |14|MP3 (8 kHz)|
-//! |15|Device-specific format|
+//! | -: | :- |
+//! |`0`|Linear PCM (Native Endian)|
+//! |`1`|ADPCM|
+//! |`2`|MP3|
+//! |`3`|Linear PCM (Little Endian)|
+//! |`4`|Nellymoser (16 kHz, mono)|
+//! |`5`|Nellymoser (8 kHz, mono)|
+//! |`6`|Nellymoser|
+//! |`7`|G.711 (A-law)|
+//! |`8`|G.711 (mu-law)|
+//! |`9`|reserved|
+//! |`10`|AAC|
+//! |`11`|Speex|
+//! |`14`|MP3 (8 kHz)|
+//! |`15`|Device-specific format|
 //!
 //! ## [`Video`]
 //!
@@ -87,13 +87,13 @@
 //! The CodecID field corresponds to:
 //!
 //! |Value|Codec|
-//! | :- | :- |
-//! |2|H.263|
-//! |3|Screen Video|
-//! |4|VP6|
-//! |5|VP6 with alpha channel|
-//! |6|Screen Video (v2)|
-//! |7|AVC|
+//! | -: | :- |
+//! |`2`|H.263|
+//! |`3`|Screen Video|
+//! |`4`|VP6|
+//! |`5`|VP6 with alpha channel|
+//! |`6`|Screen Video (v2)|
+//! |`7`|AVC|
 //!
 //! ## [`ScriptData`]
 //!
@@ -101,8 +101,8 @@
 //!
 //! |Field|AMF Type|Value|
 //! | :- | :- | :- |
-//! |name|`String`|`"onMetaData"`|
-//! |value|`EcmaArray`|See [Meta Data](#meta-data)|
+//! |name|[`String`]|`"onMetaData"`|
+//! |value|[`EcmaArray`]|See [Meta Data](#meta-data)|
 //!
 //! ### Meta Data
 //!
@@ -111,26 +111,31 @@
 //!
 //! |Name|AMF Type|Value|
 //! | :- | :- | :- |
-//! |audiocodecid|`Number`|See [`Audio`].|
-//! |audiodatarate|`Number`|An audio's bitrate.|
-//! |audiodelay|`Number`|A time to indicate overhead by encoding/decoding in seconds.|
-//! |audiosamplerate|`Number`|An audio's sampling frequency.|
-//! |audiosamplesize|`Number`|An audio's sampling bitwidth.|
-//! |canSeekToEnd|`Boolean`|Whether the last video frame is key frame.|
-//! |creationdate|`String`|A datetime this FLV data is created. (Probably the ISO 8601 format)|
-//! |duration|`Number`|A total duration range of this FLV data in seconds.|
-//! |filesize|`Number`|A total file size of this FLV data in bytes.|
-//! |framerate|`Number`|A video's framerate.|
-//! |height|`Number`|A video frame's vertical size in pixels.|
-//! |stereo|`Boolean`|Whether audio is sampled as stereo.|
-//! |videocodecid|`Number`|See [`Video`]|
-//! |videodatarate|`Number`|A video's bitrate.|
-//! |width|`Number`|A video frame's horizonal size in pixels.|
+//! |`audiocodecid`|[`Number`]|See [`Audio`].|
+//! |`audiodatarate`|[`Number`]|An audio's bitrate.|
+//! |`audiodelay`|[`Number`]|A time to indicate overhead by encoding/decoding in seconds.|
+//! |`audiosamplerate`|[`Number`]|An audio's sampling frequency.|
+//! |`audiosamplesize`|[`Number`]|An audio's sampling bitwidth.|
+//! |`canSeekToEnd`|[`Boolean`]|Whether the last video frame is key frame.|
+//! |`creationdate`|[`String`]|A datetime this FLV data is created. (Probably the ISO 8601 format)|
+//! |`duration`|[`Number`]|A total duration range of this FLV data in seconds.|
+//! |`filesize`|[`Number`]|A total file size of this FLV data in bytes.|
+//! |`framerate`|[`Number`]|A video's framerate.|
+//! |`height`|[`Number`]|A video frame's vertical size in pixels.|
+//! |`stereo`|[`Boolean`]|Whether audio is sampled as stereo.|
+//! |`videocodecid`|[`Number`]|See [`Video`]|
+//! |`videodatarate`|[`Number`]|A video's bitrate.|
+//! |`width`|[`Number`]|A video frame's horizonal size in pixels.|
 //!
 //! [`Audio`]: AudioTag
 //! [`Video`]: VideoTag
 //! [`ScriptData`]: ScriptDataTag
 //! [`MessageType`]: crate::messages::headers::MessageType
+//! [`Number`]: crate::messages::amf::v0::Number
+//! [`Boolean`]: crate::messages::amf::v0::Boolean
+//! [`String`]: crate::messages::amf::v0::AmfString
+//! [`Object`]: crate::messages::amf::v0::Object
+//! [`EcmaArray`]: crate::messages::amf::v0::EcmaArray
 mod audio;
 mod video;
 mod script_data;

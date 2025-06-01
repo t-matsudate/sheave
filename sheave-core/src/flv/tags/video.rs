@@ -243,10 +243,7 @@ impl Decoder<VideoTag> for ByteBuffer {
     /// # Examples
     ///
     /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
+    /// use rand::fill;
     /// use sheave_core::{
     ///     ByteBuffer,
     ///     Decoder,
@@ -263,7 +260,7 @@ impl Decoder<VideoTag> for ByteBuffer {
     /// let mut buffer = ByteBuffer::default();
     /// buffer.encode(&VideoTagHeader::new(FrameType::Disposable, Codec::H263, None, None));
     /// let mut bytes: [u8; 127] = [0; 127];
-    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut bytes);
     /// buffer.put_bytes(&bytes);
     /// assert!(Decoder::<VideoTag>::decode(&mut buffer).is_ok());
     ///
@@ -310,10 +307,7 @@ impl TryFrom<VideoTag> for Video {
 
 #[cfg(test)]
 mod tests {
-    use rand::{
-        Fill,
-        thread_rng
-    };
+    use rand::fill;
     use super::*;
 
     #[test]
@@ -323,7 +317,7 @@ mod tests {
         byte |= u8::from(Codec::H263);
         buffer.put_u8(byte);
         let mut data: [u8; 128] = [0; 128];
-        data.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut data);
         buffer.put_bytes(&data);
         assert!(Decoder::<VideoTag>::decode(&mut buffer).is_ok())
     }
@@ -332,7 +326,7 @@ mod tests {
     fn encode_video_tag() {
         let mut buffer = ByteBuffer::default();
         let mut expected_data: [u8; 128] = [0; 128];
-        expected_data.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut expected_data);
         let expected = VideoTag::new(
             VideoTagHeader::new(
                 FrameType::Disposable,

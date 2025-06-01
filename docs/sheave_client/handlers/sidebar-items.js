@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["connection_error","publication_error"],"mod":["middlewares"],"struct":["ConnectionError","PublicationError","RtmpHandler"]};
+window.SIDEBAR_ITEMS = {"fn":["error_response"],"struct":["ErrorResponse","RtmpHandler"]};

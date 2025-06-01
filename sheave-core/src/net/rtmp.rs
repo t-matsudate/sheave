@@ -45,6 +45,7 @@ use tokio::{
 
 pin_project! {
     /// A stream for RTMP that wrapped Tokio's `TcpStream`.
+    ///
     /// If you constructs this struct from some address,  use `RtmpStream::connect("aaa.bbb.ccc.ddd:1935")`.
     /// If you do it from already created std's TCPStream. use `RtmpStream::from_std(std_stream)`
     pub struct RtmpStream {
@@ -59,14 +60,14 @@ impl RtmpStream {
     }
 
     /// Opens a RTMP connection to a remote host.
-    /// When connection succeeded, this wraps tokio's TcpStream in RtmpStream.
+    /// When connection succeeded, this wraps tokio's TcpStream into RtmpStream.
     /// [Read more](https://docs.rs/tokio/latest/tokio/net/struct.TcpStream.html#method.connect)
     pub async fn connect<A: ToSocketAddrs>(addr: A) -> IOResult<Self> {
         TokioStream::connect(addr).await.map(Self::new)
     }
 
     /// Creates new RtmpStream from a `std::net::TcpStream`.
-    /// When connection succeeded, this wraps tokio's TcpStream in RtmpStream.
+    /// When connection succeeded, this wraps tokio's TcpStream into RtmpStream.
     /// [Read more](https://docs.rs/tokio/latest/tokio/net/struct.TcpStream.html#method.from_std)
     pub fn from_std(std_stream: StdStream) -> IOResult<Self> {
         TokioStream::from_std(std_stream).map(Self::new)

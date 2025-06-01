@@ -1,21 +1,3 @@
-//! # Handling RTMP connections and data streaming.
-//!
-//! Currently following handlers have been implemented.
-//!
-//! * [`Handshake`]
-//! * [`connect`]
-//! * [`releaseStream`]
-//! * [`FCPublish`]
-//! * [`createStream`]
-//! * [`publish`]
-//!
-//! [`Handshake`]: crate::handshake::Handshake
-//! [`connect`]: crate::messages::Connect
-//! [`releaseStream`]: crate::messages::ReleaseStream
-//! [`FCPublish`]: crate::messages::FcPublish
-//! [`createStream`]: crate::messages::CreateStream
-//! [`publish`]: crate::messages::Publish
-
 mod rtmp_context;
 mod inconsistent_sha;
 mod stream_wrapper;

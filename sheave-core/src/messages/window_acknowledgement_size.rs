@@ -14,8 +14,19 @@ use crate::{
     }
 };
 
-/// The message to tell the server-side bandwidth.
+/// The message to tell the bandwidth limit as a receiver side.
+///
+/// Following format is required.
+///
+/// |Field|Length (in bytes)|Description|
+/// | :- | -: | :- |
+/// |Bandwidth|4|The bandwidth number of a receiver side.|
+///
+/// When some amount of receiving data got exceeded this bandwidth, a receiver must send about it to a sender, by the [`Acknowledgement`] message.
+///
 /// Almost RTMP tools are specifying it 2500000 in bits as their defaults.
+///
+/// [`Acknowledgement`]: crate::messages::Acknowledgement
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WindowAcknowledgementSize(u32);
 

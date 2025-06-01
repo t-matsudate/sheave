@@ -12,6 +12,7 @@ use std::{
 };
 
 /// An error that stream has no data to write.
+///
 /// Note this is currently used as to mean sucessful termination.
 #[derive(Debug)]
 pub struct StreamGotExhausted;

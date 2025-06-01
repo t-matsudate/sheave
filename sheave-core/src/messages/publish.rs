@@ -19,6 +19,28 @@ use crate::{
 pub use self::invalid_publishing_type::*;
 
 /// The command to tell publishing information.
+///
+/// Following format is required:
+///
+/// |Field|AMF Type|Value|
+/// | :- | :- | :- |
+/// ||[`Null`]|Nothing but an AMF's type marker is in.|
+/// |Publishing Name|[`String`]|A name for publishing a data to the server.|
+/// |Publishing Type|[`String`]|See [Publishing Type](#publishing-type).|
+///
+/// # Publishing Type
+///
+/// The publish command requires you to specify one of "Publishing Type" in its request.
+/// Publishing Type means:
+///
+/// |Pubishing Type|Description|
+/// | :- | :- |
+/// |`"live"`|Only streaming.<br />Its data will never be stored.|
+/// |`"record"`|Its data will be stored.<br />If publishing name duplicated, it is rewritten as a new file.|
+/// |`"append"`|Same as `"record"` excepts is appended its data if publishing name duplicated.|
+///
+/// [`String`]: crate::messages::amf::v0::AmfString
+/// [`Null`]: crate::messages::amf::v0::Null
 #[derive(Debug, Clone, PartialEq)]
 pub struct Publish {
     publishing_name: AmfString,

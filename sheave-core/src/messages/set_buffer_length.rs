@@ -14,7 +14,14 @@ use crate::{
 
 /// The event to tell that its stream will be buffered, to the server.
 ///
-/// Note this event name is SetBufferLength but actual input is a time in milliseconds.
+/// Following format is required:
+///
+/// |Event Data|Length (in bytes)|Description|
+/// | :- | -: | :- |
+/// |Message ID|4|The message ID which is same as contained in [`createStream`].|
+/// |Buffer Length|4|**A time length** to charge a data into a stream (in milliseconds).|
+///
+/// [`createStream`]: crate::messages::CreateStream
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SetBufferLength(u32, u32);
 

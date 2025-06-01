@@ -12,7 +12,42 @@ use crate::{
     messages::amf::v0::Object,
 };
 
-/// The command to tell the information that where connects from/to.
+/// The command to exchange an information about application using.
+///
+/// Following format is required.
+///
+/// |Setting Data|AMF Type|Value|
+/// | :- | :- | :- |
+/// |Command Object|[`Object`]|See [Command Object](#command-object).|
+///
+/// # Command Object
+///
+/// The Command Object is written detailed informations of both applications.
+/// Concretely, several of following pair is exchanged:
+///
+/// ## Publisher side
+///
+/// |Key|AMF Type|Description|
+/// | :- | :- | :- |
+/// |`app`|[`String`]|Server application name.|
+/// |`type`|[`String`]|`"nonprivate"`|
+/// |`flashVer`|[`String`]|Either a flash player version(client) or an FLV encoder version(server).|
+/// |`tcUrl`|[`String`]|The URL to connect server as the TCP. `app` value is included in this value.|
+///
+/// ## Subscriber side
+///
+/// |Key|AMF Type|Description|
+/// | :- | :- | :- |
+/// |`fpad`|[`Boolean`]|Whether a proxy is used.|
+/// |`audioCodecs`|[`Number`]|Supported audio codecs.|
+/// |`videoCodecs`|[`Number`]|Supported video codecs.|
+/// |`videoFunctions`|[`Number`]|Supported video functions.|
+/// |`objectEncoding`|[`Number`]|A version of the Action Message Format.|
+///
+/// [`Number`]: crate::messages::amf::v0::Number
+/// [`Boolean`]: crate::messages::amf::v0::Boolean
+/// [`String`]: crate::messages::amf::v0::AmfString
+/// [`Object`]: crate::messages::amf::v0::Object
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Connect(Object);
 

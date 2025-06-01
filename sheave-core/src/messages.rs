@@ -1,184 +1,80 @@
 //! # The RTMP Messages
 //!
-//! After handshake, both are required to negosiate what are needed for sending/receiving.
-//! It consists of following steps:
+//! After handshake, both are required to negotiate what are needed for sending/receiving.
+//! Currently, following messages are used in negotiation:
+//! 
+//! * User Control
+//! * [`Window Acknowledgement Size`]
+//! * Command
 //!
-//! 1. [`connect`]
-//! 2. [`releaseStream`]
-//! 3. [`FCPublish`]
-//! 4. [`createStream`]
-//! 5. [`publish`]
-//!
-//! ## [`connect`]
-//!
-//! Exchanges informations about their applications each other.
-//! In this case, next format is required:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|`String`|`"connect"`|
-//! |Transaction ID|`Number`|`1`|
-//! |Command Object|`Object`|See [Command Object](#command-object).|
-//!
-//! In the command message, we negotiate by using [the Action Message Format (v0)].
-//!
-//! <h3><a id="command-object">Command Object</a></h3>
-//!
-//! The Command Object is written detailed informations of both applications.
-//! Concretely, several of following pair is exchanged:
-//!
-//! |Key|AMF Type|Description|
-//! | :- | :- | :- |
-//! |app|[`String`]|Server application name.|
-//! |flashVer|[`String`]|Either a flash player version(client) or an FLV encoder version(server).|
-//! |swfUrl|[`String`]|The source SWF file URL.|
-//! |tcURL|[`String`]|The URL to connect server as the TCP. `app` value is included in this value.|
-//! |fpad|[`Boolean`]|Whether a proxy is used.|
-//! |audioCodecs|[`Number`]|Supported audio codecs.|
-//! |videoCodecs|[`Number`]|Supported video codecs.|
-//! |videoFunctions|[`Number`]|Supported video functions.|
-//! |pageUrl|[`String`]|The URL of web page which SWF file is loaded.|
-//! |objectEncoding|[`Number`]|A version of the Action Message Format.|
-//!
-//! Note: Something not in above can be exchanged.
-//!
-//! Against, the result for connect request is required to be next format:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"_result"` or `"_error"`|
-//! |Transaction ID|[`Number`]|Same as the connect request|
-//! |Properties|[`Object`]|e.g. server-side informations.|
-//! |Information|[`Object`]|Contents for describing its response.|
-//!
-//! ## [`releaseStream`]
-//!
-//! Tells "Play Path" to the parter.
-//! In this case, next format is required:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"releaseStream"`|
-//! |Transaction ID|[`Number`]|A number which is next of the connect.|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//! |Play Path|[`String`]|Any string is in if it is specified.|
-//!
-//! For example, Play Path is defined as some file name in [FFmpeg](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/rtmpproto.c#L2624-L2625).
-//!
-//! Against, the result for releaseStream request is required to be next format:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"_result"` or `"_error"`|
-//! |Transaction ID|[`Number`]|Same as the releaseStream request.|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//!
-//! ## [`FCPublish`]
-//!
-//! Tells to the partner what is same as the releaseStream request.
-//! In this case, next format is required:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"FCPublish"`|
-//! |Transaction ID|[`Number`]|A number which is next of the releaseStream.|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//! |Play Path|[`String`]|(Probably) Same as the releaseStream request.|
-//!
-//! Against, the result for FCPublish request is required to be next format:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"onFCPublish"`|
-//!
-//! ## [`createStream`]
-//!
-//! Requests to create a new Message Stream ID to the partner.
-//! In this case, next format is required:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"createStream"`|
-//! |Transaction ID|[`Number`]|A number which is next of the FCPublish.|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//!
-//! Against, the result for createStream request is required to be next format:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"_result"` or `"_error"`|
-//! |Transaction ID|[`Number`]|Same as the createStream request.|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//! |Message ID|[`Number`]|A Message Stream ID which is assigned by the partner.|
-//!
-//! ## [`publish`]
-//!
-//! Tells to the partner what is an way to publish its stream.
-//! In this case, next format is required:
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"publish"`|
-//! |Transaction ID|[`Number`]|A number which is next of the createStream.|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//! |Publishing Name|[`String`]|A name for publishing its stream to the partner.|
-//! |Publishing Type|[`String`]|Either `"live"`, `"record"` or `"append"`. See [Publishing Type](#publishing-type).|
-//!
-//! Against, result**s** for publish request **are** required to be next format:
-//!
-//! 1. [`Stream Begin`]
-//! 2. [`onStatus`]
-//!
-//! ### [`Stream Begin`]
-//!
-//! This is an event message of the User Control Message.
-//! This has following data:
-//!
-//! 1. Event Type (2 bytes / `0`)
-//! 2. A Message ID (4 bytes.)
-//!
-//! ### [`onStatus`]
-//!
-//! |Field|AMF Type|Value|
-//! | :- | :- | :- |
-//! |Command Name|[`String`]|`"onStatus"`|
-//! |Transaction ID|[`Number`]|`0`|
-//! ||[`Null`]|Nothing but an AMF's type marker is in.|
-//! |Info Object|[`Object`]|Similar to the information of connect result.|
-//!
-//! <h3><a id="publishing-type">Publishing Type</a></h3>
-//!
-//! The publish command requires you to specify one of "Publishing Type" in its request.
-//! Publishing Type means:
-//!
-//! * `"live"`
-//!
-//! Only streaming. Media data will never be stored.
-//!
-//! * `"record"`
-//!
-//! Media data will be stored. If publishing name duplicated, it is rewritten as a new file.
-//!
-//! * `"append"`
-//!
-//! Same as `"record"` excepts is appended media data if publishing name duplicated.
-//!
-//! Every chunk has the chunk headers.
+//! Every message has headers.
 //! See [`sheave_core::messages::headers`] about them.
+//!
+//! ## User Control
+//!
+//! User Control messages are additional informations for starting streaming.
+//! These consist of following format:
+//!
+//! |Field|Length (in bytes)|Description|
+//! | :- | -: | :- |
+//! |Event Type|2|A marker which indicates a kind of data sent.|
+//! |Event Data|Various|Actual data of this message.|
+//!
+//! ### Events
+//!
+//! Currently, following events are used:
+//!
+//! * [`Stream Begin`]
+//! * [`Set Buffer Length`]
+//!
+//! ## Command
+//!
+//! Command messages are contained basic informations actually required to negotiate.
+//! These encodes/decodes into/from [`the Action Message Format 0`].
+//! These consist of following format:
+//!
+//! |Field|AMF Type|Description|
+//! | :- | :- | :- |
+//! |Command Name|[`String`]|The command which is currently negotiated.|
+//! |Transaction ID|[`Number`]|A number which indicates a step of this negotiation.|
+//! |Setting Data|Various|Actually negotiated data.|
+//!
+//! Furthermore commands have following patterns:
+//!
+//! * NetConnection
+//! * NetStream
+//!
+//! ### NetConnection
+//!
+//! NetConnection commands are defined as following messages:
+//!
+//! * [`connect`]
+//! * [`releaseStream`]
+//! * [`FCPublish`]
+//! * [`createStream`]
+//! * [`FCSubscribe`]
+//! * [`getStreamLength`] (in FFmpeg) / [`set_playlist`] (in OBS) (note these mayn't be sent.)
+//!
+//! ### NetStream
+//!
+//! NetStream commands are defined as following messages:
+//!
+//! * [`publish`]
+//! * [`play`]
+//!
+//! ## Any data
 //!
 //! After negotiation, the server receives actual audio/video data from clients.
 //! However also FLV metadata is received as the AMF (v0).
-//! The message what contains FLV metadata is called [`SetDataFrame`].
+//! The message what contains FLV metadata is called [`@setDataFrame`].
+//! This consists of following format:
 //!
-//! ## [`SetDataFrame`]
-//!
-//! |Field|AMF Type|Value|
+//! |Field|AMF Type|Description|
 //! | :- | :- | :- |
-//! |Command Name (Probably)|[`String`]|`"@setDataFrame"`|
-//! |Data Name|[`String`]|`"onMetaData"`|
-//! |Data|[`EcmaArray`]|e.g. `"audiocodecid"`, `"videocodecid"`|
+//! |Command Name (probably)|[`String`]|`"@setDataFrame"`|
+//! |Setting Data|Various|In this case, see [`ScriptDataTag`].|
 //!
-//! [the Action Message Format (v0)]: amf::v0
+//! [the Action Message Format 0]: amf::v0
 //! [`sheave_core::messages::headers`]: headers
 //! [`Number`]: amf::v0::Number
 //! [`Boolean`]: amf::v0::Boolean
@@ -193,7 +89,14 @@
 //! [`publish`]: Publish
 //! [`Stream Begin`]: StreamBegin
 //! [`onStatus`]: OnStatus
-//! [`SetDataFrame`]: SetDataFrame
+//! [`@setDataFrame`]: SetDataFrame
+//! [`ScriptDataTag`]: crate::flv::tags::ScriptDataTag
+//! [`Window Acknowledgement Size`]: WindowAcknowledgementSize
+//! [`FCSubscribe`]: FcSubscribe
+//! [`getStreamLength`]: GetStreamLength
+//! [`set_playlist`]: SetPlaylist
+//! [`play`]: Play
+//! [`Set Buffer Length`]: SetBufferLength
 
 pub mod headers;
 pub mod amf;

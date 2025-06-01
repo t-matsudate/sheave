@@ -557,7 +557,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         /*
          *  NOTE:
          *      Some error in subscription step is checkable only by information the field.
-         *      Because the publish command doesn't have _error command.
+         *      Because the play command doesn't have _error command.
          */
         if information.get_properties()["level"] == AmfString::from("error") {
             return self.handle_error_response(rtmp_context, information).await
@@ -802,6 +802,10 @@ fn handle_close<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>)
 /// 4. Specifies publication informations via the [`Publish`] command.
 /// 5. Then sends FLV media data.
 ///
+/// If some error occurs in any step, sends commands which are [`FcUnpublish`] and [`DeleteStream`] to its server, then terminates its connection.
+/// These perform to delete the topic path and a message ID from its context.
+/// However also these can be sent from servers.
+///
 /// # As a subscriber
 ///
 /// 1. Specifies the application name via the [`Connect`] command.
@@ -816,9 +820,6 @@ fn handle_close<'a, RW: AsyncRead + AsyncWrite + Unpin>(stream: Pin<&'a mut RW>)
 /// 8. Then receives FLV media data.
 ///
 /// If receiving data size exceeds client's bandwidth, this reports its thing via the [`Acknowledgement`] message to its server.
-/// And if some error occurs in any step, sends commands which are [`FcUnpublish`] and [`DeleteStream`] to its server, then terminates its connection.
-/// These perform to delete the topic_path and a message ID from its context.
-/// However also these can be sent from servers.
 ///
 /// # Examples
 ///

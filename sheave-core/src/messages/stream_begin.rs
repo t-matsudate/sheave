@@ -13,6 +13,14 @@ use crate::{
 };
 
 /// The event to tell that the stream is ready to a client.
+///
+/// Following format is required.
+///
+/// |Event Data|Length (in bytes)|Description|
+/// | :- | -: | :- |
+/// |Message ID|4|The message ID which is same as contained in [`createStream`].|
+///
+/// [`createStream`]: crate::messages::CreateStream
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StreamBegin(u32);
 

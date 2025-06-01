@@ -13,6 +13,14 @@ use crate::{
 };
 
 /// The command to request emitting a message ID to a server.
+///
+/// Following format is required:
+///
+/// |Field|AMF Type|Value|
+/// | :- | :- | :- |
+/// ||[`Null`]|Nothing but an AMF's type marker is in.|
+///
+/// [`Null`]: crate::messages::amf::v0::Null
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct CreateStream;
 

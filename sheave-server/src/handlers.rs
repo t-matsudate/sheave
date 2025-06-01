@@ -1,3 +1,4 @@
+#[doc(hidden)]
 pub mod middlewares;
 mod rtmp;
 mod message_id_provider;

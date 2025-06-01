@@ -1,3 +1,4 @@
+#[doc(hidden)]
 pub mod middlewares;
 mod rtmp;
 mod error_response;

@@ -15,8 +15,18 @@ use crate::{
     }
 };
 
-/// The command to tell the topic path.
+/// The command to tell a path to the server.
+///
 /// Typically, this becomes same as the releaseStream's one.
+/// Following format is required:
+///
+/// |Field|AMF Type|Value|
+/// | :- | :- | :- |
+/// ||[`Null`]|Nothing but an AMF's type marker is in.|
+/// |Path|[`String`]|Same as the releaseStream request.|
+///
+/// [`Null`]: crate::messages::amf::v0::Null
+/// [`String`]: crate::messages::amf::v0::AmfString
 #[derive(Debug, Clone, PartialEq)]
 pub struct FcPublish(AmfString);
 

@@ -12,7 +12,7 @@
 //!    * Whether some video data is contained (1 bit)
 //!    * Offset to FLV data (that is, a size of this header = 9) (32 bits)
 //! 2. FLV file body
-//!    * PreviousTagSize (32 bits. this of the first is 0)
+//!    * Previous Tag Size (32 bits. this of the first is 0)
 //!    * FLV Tag (arbitrary size)
 //!
 //! Note the FLV header is skipped by almost RTMP tools.
@@ -89,7 +89,7 @@ impl Display for FilterName {
 /// The FLV container.
 /// This holds just 2 elements:
 ///
-/// * Playpath to actual FLV file
+/// * A path to actual FLV file
 /// * Offset in FLV file (for reading).
 ///
 /// By not to hold actual file handle, this makes plural users to read/write FLV file not to bump.
@@ -256,12 +256,14 @@ impl Flv {
     }
 
     /// Appends a FLV tag into the tag container.
+    ///
     /// This reuses the Codec IDs in the metadata for checking whether FLV has audio/video data.
+    ///
     /// That is,
     ///
-    /// If `audiocodecid` exists, FLV contains auduo data.
-    /// Or if `videocodecid` exists, FLV contains video data.
-    /// Otherwise FLV consists of just script data.
+    /// * If `audiocodecid` exists, FLV contains auduo data.
+    /// * Or if `videocodecid` exists, FLV contains video data.
+    /// * Otherwise FLV consists of just script data.
     pub fn append_flv_tag(&self, flv_tag: FlvTag) -> IOResult<()> {
         let mut file = OpenOptions::new()
             .append(true)
@@ -295,7 +297,8 @@ impl Flv {
 impl Iterator for Flv {
     type Item = IOResult<FlvTag>;
 
-    /// Reads a FLV tag from the playpath.
+    /// Reads a FLV tag from the path.
+    ///
     /// Note this can return some error when following causes:
     ///
     /// * `UnknownTag`

@@ -6,10 +6,10 @@ pub use self::message_format::MessageFormat;
 /// This header has 3 types.
 ///
 /// |Total Length|Message Header Format|Chunk ID|Chunk ID Range|
-/// | ---------: | ------------------: | -----: | -----------: |
-/// |8           |2                    |6       |0 - 63        |
-/// |16          |2                    |8       |64 - 319      |
-/// |24          |2                    |16      |64 - 65599    |
+/// | -: | -: | -: | -: |
+/// | 8|2| 6| 0 -    63|
+/// |16|2| 8|64 -   319|
+/// |24|2|16|64 - 65599|
 ///
 /// Unit of every item is bits.
 /// Basic header which is and above 16 bits has a flag bits in first 8 bits.

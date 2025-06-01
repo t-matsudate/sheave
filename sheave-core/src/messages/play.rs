@@ -23,6 +23,28 @@ use crate::{
 pub use self::play_mode::*;
 
 /// The command to tell playing information.
+///
+/// Following format is required:
+///
+/// |Field|AMF Type|Value|
+/// | :- | :- | :- |
+/// ||[`Null`]|Nothing but an AMF's type marker is in.|
+/// |Stream Name|[`String`]|A name for subscribing a data from the server.|
+/// |Start Time|[`Number`]|Time offset of data subscribing.<br />*Note this can be several negative number* (See [Play Mode](#play-mode)).|
+///
+/// # Play Mode
+///
+/// |Value|Play Mode|Description|
+/// | :- | :- | :- |
+/// |`-2`|Both|Subscribes recorded data if its data isn't on a livestream (default).|
+/// |`-1`|Live|Subscribes only as livestream.|
+/// |`0`<br />(And above)|Recorded|Subscribes only as recorded data.|
+///
+/// Note the server can treat as some error if its data doesn't exist as specified mode.
+///
+/// [`Number`]: crate::messages::amf::v0::Number
+/// [`String`]: crate::messages::amf::v0::AmfString
+/// [`Null`]: crate::messages::amf::v0::Null
 #[derive(Debug, Clone, PartialEq)]
 pub struct Play {
     stream_name: AmfString,
