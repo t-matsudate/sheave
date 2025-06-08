@@ -10,19 +10,27 @@ The RTMP server/client written by Rust.
 
 1. `git clone https://github.com/t-matsudate/sheave`
 2. `cd ./sheave/sheave-server`
-3. `cargo run -- --rtmp 127.0.0.1:1935`
+3. `cargo run -- --topic-database-url sqlite::memory: --listeners rtmp://127.0.0.1:1935/ondemand`
 
 * On the docker image
 
-`docker run --rm -it -e PROTOCOL=rtmp -e HOST=127.0.0.1 -e PORT=1935 tmatsudate/sheave-server:latest`
+`docker run --rm -it -e TOPIC_DATABASE_URL=sqlite::memory: -e LISTENERS=rtmp://127.0.0.1:1935/ondemand tmatsudate/sheave-server:latest`
 
-### Client
+### Client(as a publisher)
 
 * Just on this repository
 
 1. `git clone https://github.com/t-matsudate/sheave`
 2. `cd ./sheave/sheave-client`
-3. `cargo run -- -i filename.flv -f flv rtmp://127.0.0.1:1935`
+3. `cargo run -- --client-type publisher -f flv -i filename.flv -f flv rtmp://127.0.0.1:1935/ondemand`
+
+### Client(as a subscriber)
+
+* Just on this repository
+
+1. `git clone https://github.com/t-matsudate/sheave`
+2. `cd ./sheave/sheave-client`
+3. `cargo run -- --client-type subscriber -f flv -o filename.flv -f flv rtmp://127.0.0.1:1935/ondemand`
 
 ## Documentation
 
