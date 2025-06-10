@@ -106,6 +106,7 @@ mod tests {
     #[test]
     fn decode_set_playlist() {
         let mut buffer = ByteBuffer::default();
+        buffer.encode(&Null);
         buffer.encode(
             &ecma_array!(
                 "0" => AmfString::default()
