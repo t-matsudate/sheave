@@ -1,9 +1,6 @@
 mod play_mode;
 
-use std::{
-    io::Result as IOResult,
-    time::Duration
-};
+use std::io::Result as IOResult;
 use super::{
     Channel,
     ChunkData,
@@ -66,7 +63,7 @@ impl Play {
     }
 
     /// Gets the start time.
-    pub fn get_start_time(&self) -> Duration {
+    pub fn get_start_time(&self) -> Number {
         self.start_time
     }
 
