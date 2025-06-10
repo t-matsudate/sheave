@@ -141,7 +141,7 @@ impl Decoder<Play> for ByteBuffer {
         let stream_name: AmfString = self.decode()?;
         let start_time: Number = self.decode()?;
 
-        Ok(Play { stream_name, start_time, play_mode })
+        Ok(Play { stream_name, start_time })
     }
 }
 
@@ -150,7 +150,7 @@ impl Encoder<Play> for ByteBuffer {
     fn encode(&mut self, play: &Play) {
         self.encode(&Null);
         self.encode(play.get_stream_name());
-        self.encode(play.get_start_time());
+        self.encode(&play.get_start_time());
     }
 }
 
