@@ -66,11 +66,15 @@ impl Decoder<SetPlaylist> for ByteBuffer {
     ///     Encoder,
     ///     messages::{
     ///         SetPlaylist,
-    ///         amf::v0::EcmaArray,
+    ///         amf::v0::{
+    ///             Null,
+    ///             EcmaArray
+    ///         },
     ///     }
     /// };
     ///
     /// let mut buffer = ByteBuffer::default();
+    /// buffer.encode(&Null);
     /// buffer.encode(&EcmaArray::default());
     /// assert!(Decoder::<SetPlaylist>::decode(&mut buffer).is_ok());
     ///

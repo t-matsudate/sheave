@@ -18,7 +18,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>reader: [u8; <span class="number">1536</span>] = [<span class="number">0</span>; <span class="number">1536</span>];
     reader[..<span class="number">4</span>].copy_from_slice((Duration::default().as_millis() <span class="kw">as </span>u32).to_be_bytes().as_slice());
     reader[<span class="number">4</span>..<span class="number">8</span>].copy_from_slice(&lt;[u8; <span class="number">4</span>]&gt;::from(Version::UNSIGNED).as_slice());
-    fill(<span class="kw-2">&amp;mut </span>reader[<span class="number">8</span>..]).unwrap();
+    fill(<span class="kw-2">&amp;mut </span>reader[<span class="number">8</span>..]);
     <span class="kw">let </span>compared = reader;
     <span class="kw">let </span>handshake = read_handshake(<span class="macro">pin!</span>(reader.as_slice())).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="macro">assert_eq!</span>(compared.as_slice(), handshake.get_bytes());
