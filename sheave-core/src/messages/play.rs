@@ -176,7 +176,7 @@ mod tests {
         let mut buffer = ByteBuffer::default();
         let expected_stream_name = "";
         let expected_start_time = -2000f64;
-        let expected = Play::new(AmfString::from(expected_stream_name), Number::new(expected_start_time);
+        let expected = Play::new(AmfString::from(expected_stream_name), Number::new(expected_start_time));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
         let actual_stream_name: AmfString = buffer.decode().unwrap();
