@@ -67,10 +67,7 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///         pin
 ///     }
 /// };
-/// use rand::{
-///     Fill,
-///     thread_rng
-/// };
+/// use rand::fill;
 /// use sheave_core::{
 ///     messages::{
 ///         ChunkSize,
@@ -84,14 +81,14 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     // When it's just one chunk.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 128] = [0; 128];
-///     chunk_data.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut chunk_data);
 ///     write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(128, writer.len());
 ///
 ///     // When it requires the one byte header.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 256] = [0; 256];
-///     chunk_data.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut chunk_data);
 ///     write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(257, writer.len());
 ///     let message_format: MessageFormat = (writer[128] >> 6).into();
@@ -102,7 +99,7 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     // When it requires the two bytes header.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 256] = [0; 256];
-///     chunk_data.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut chunk_data);
 ///     write_chunk_data(writer.as_mut(), 64, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(258, writer.len());
 ///     let message_format: MessageFormat = (writer[128] >> 6).into();
@@ -114,7 +111,7 @@ impl<W: AsyncWrite> Future for ChunkDataWriter<'_, W> {
 ///     // When it requires the three bytes header.
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
 ///     let mut chunk_data: [u8; 256] = [0; 256];
-///     chunk_data.try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut chunk_data);
 ///     write_chunk_data(writer.as_mut(), 320, ChunkSize::default(), &chunk_data).await?;
 ///     assert_eq!(259, writer.len());
 ///     let message_format: MessageFormat = (writer[128] >> 6).into();

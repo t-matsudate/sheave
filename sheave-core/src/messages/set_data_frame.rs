@@ -56,10 +56,7 @@ impl Decoder<SetDataFrame> for ByteBuffer {
     /// # Examples
     ///
     /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
+    /// use rand::fill;
     /// use sheave_core::{
     ///     ByteBuffer,
     ///     Decoder,
@@ -69,7 +66,7 @@ impl Decoder<SetDataFrame> for ByteBuffer {
     ///
     /// let mut buffer = ByteBuffer::default();
     /// let mut bytes: [u8; 128] = [0; 128];
-    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut bytes);
     /// buffer.put_bytes(&bytes);
     /// assert!(Decoder::<SetDataFrame>::decode(&mut buffer).is_ok());
     /// ```

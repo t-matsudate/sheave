@@ -126,14 +126,11 @@ impl ByteBuffer {
     /// # Examples
     ///
     /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
+    /// use rand::fill;
     /// use sheave_core::ByteBuffer;
     ///
     /// let mut bytes: [u8; 3] = [0; 3];
-    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut bytes);
     /// let mut buffer: ByteBuffer = bytes.to_vec().into();
     /// assert!(buffer.get_i24_be().is_ok());
     ///
@@ -173,14 +170,11 @@ impl ByteBuffer {
     /// # Examples
     ///
     /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
+    /// use rand::fill;
     /// use sheave_core::ByteBuffer;
     ///
     /// let mut bytes: [u8; 3] = [0; 3];
-    /// bytes.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut bytes);
     /// let mut buffer: ByteBuffer = bytes.to_vec().into();
     /// assert!(buffer.get_u24_be().is_ok());
     ///
@@ -396,15 +390,12 @@ impl From<ByteBuffer> for Vec<u8> {
     /// # Examples
     ///
     /// ```rust
-    /// use rand::{
-    ///     Fill,
-    ///     thread_rng
-    /// };
+    /// use rand::fill;
     /// use sheave_core::ByteBuffer;
     ///
     /// // When all byte is remained.
     /// let mut array: [u8; 128] = [0; 128];
-    /// array.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut array);
     /// let mut buffer = ByteBuffer::default();
     /// buffer.put_bytes(&array);
     /// let bytes: Vec<u8> = buffer.into();
@@ -412,7 +403,7 @@ impl From<ByteBuffer> for Vec<u8> {
     ///
     /// // When some bytes are consumed.
     /// let mut array: [u8; 128] = [0; 128];
-    /// array.try_fill(&mut thread_rng()).unwrap();
+    /// fill(&mut array);
     /// let mut buffer = ByteBuffer::default();
     /// buffer.put_bytes(&array);
     /// buffer.get_u8().unwrap();

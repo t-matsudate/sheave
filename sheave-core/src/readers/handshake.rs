@@ -42,10 +42,7 @@ impl<R: AsyncRead> Future for HandshakeReader<'_, R> {
 ///     pin::pin,
 ///     time::Duration,
 /// };
-/// use rand::{
-///     Fill,
-///     thread_rng
-/// };
+/// use rand::fill;
 /// use sheave_core::{
 ///     handshake::Version,
 ///     readers::read_handshake
@@ -56,7 +53,7 @@ impl<R: AsyncRead> Future for HandshakeReader<'_, R> {
 ///     let mut reader: [u8; 1536] = [0; 1536];
 ///     reader[..4].copy_from_slice((Duration::default().as_millis() as u32).to_be_bytes().as_slice());
 ///     reader[4..8].copy_from_slice(<[u8; 4]>::from(Version::UNSIGNED).as_slice());
-///     reader[8..].try_fill(&mut thread_rng()).unwrap();
+///     fill(&mut reader[8..]).unwrap();
 ///     let compared = reader;
 ///     let handshake = read_handshake(pin!(reader.as_slice())).await?;
 ///     assert_eq!(compared.as_slice(), handshake.get_bytes());
