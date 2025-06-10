@@ -48,17 +48,15 @@ pub use self::play_mode::*;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Play {
     stream_name: AmfString,
-    start_time: Duration,
-    play_mode: PlayMode
+    start_time: Number
 }
 
 impl Play {
     /// Constructs a Play command.
-    pub fn new(stream_name: AmfString, start_time: Duration, play_mode: PlayMode) -> Self {
+    pub fn new(stream_name: AmfString, start_time: Number) -> Self {
         Self {
             stream_name,
-            start_time,
-            play_mode
+            start_time
         }
     }
 
@@ -74,13 +72,13 @@ impl Play {
 
     /// Gets the play mode.
     pub fn get_play_mode(&self) -> PlayMode {
-        self.play_mode
+        self.start_time.into()
     }
 }
 
-impl From<Play> for (AmfString, Duration, PlayMode) {
+impl From<Play> for (AmfString, Number) {
     fn from(play: Play) -> Self {
-        (play.stream_name, play.start_time, play.play_mode)
+        (play.stream_name, play.start_time)
     }
 }
 
@@ -142,13 +140,7 @@ impl Decoder<Play> for ByteBuffer {
         Decoder::<Null>::decode(self)?;
         let stream_name: AmfString = self.decode()?;
         let start_time: Number = self.decode()?;
-        let play_mode: PlayMode = (start_time / 1000f64).into();
 
-        let start_time = if start_time < 0f64 {
-            Duration::default()
-        } else {
-            Duration::from_secs(start_time.as_integer())
-        };
         Ok(Play { stream_name, start_time, play_mode })
     }
 }
@@ -156,18 +148,9 @@ impl Decoder<Play> for ByteBuffer {
 impl Encoder<Play> for ByteBuffer {
     /// Encodes a Play command into bytes.
     fn encode(&mut self, play: &Play) {
-        use PlayMode::*;
-
-        let start_time = match play.get_play_mode() {
-            Both => -2000f64,
-            Live => -1000f64,
-            Record => (play.get_start_time().as_secs() * 1000) as f64,
-            Other => unimplemented!("Play mode is neither both, live nor recorded.")
-        };
-
         self.encode(&Null);
         self.encode(play.get_stream_name());
-        self.encode(&Number::new(start_time));
+        self.encode(play.get_start_time());
     }
 }
 
@@ -184,7 +167,7 @@ mod tests {
         let result: IOResult<Play> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = Play::new(AmfString::default(), Number::new(-2000f64), PlayMode::default());
+        let expected = Play::new(AmfString::default(), Number::new(-2000f64));
         assert_eq!(expected, actual)
     }
 
@@ -193,7 +176,7 @@ mod tests {
         let mut buffer = ByteBuffer::default();
         let expected_stream_name = "";
         let expected_start_time = -2000f64;
-        let expected = Play::new(AmfString::from(expected_stream_name), Number::new(expected_start_time), PlayMode::default());
+        let expected = Play::new(AmfString::from(expected_stream_name), Number::new(expected_start_time);
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
         let actual_stream_name: AmfString = buffer.decode().unwrap();
