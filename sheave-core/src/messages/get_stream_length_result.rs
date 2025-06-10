@@ -107,7 +107,7 @@ mod tests {
         let result: IOResult<GetStreamLengthResult> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = GetStreamLengthResult::new(Nmber::default());
+        let expected = GetStreamLengthResult::new(Number::default());
         assert_eq!(expected, actual)
     }
 

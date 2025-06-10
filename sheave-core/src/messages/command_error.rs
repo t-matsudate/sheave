@@ -131,7 +131,7 @@ mod tests {
         );
         let expected = CommandError::new(expected_information.clone());
         buffer.encode(&expected);
-        let actual_information: Object = buffer.decode();
+        let actual_information: Object = buffer.decode().unwrap();
         assert_eq!(expected_information, actual_information)
     }
 }

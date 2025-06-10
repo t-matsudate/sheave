@@ -184,7 +184,7 @@ mod tests {
         let result: IOResult<Play> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
-        let expected = Play::new(AmfString::default(), Number::new(-2000f64));
+        let expected = Play::new(AmfString::default(), Number::new(-2000f64), PlayMode::default());
         assert_eq!(expected, actual)
     }
 
@@ -193,7 +193,7 @@ mod tests {
         let mut buffer = ByteBuffer::default();
         let expected_stream_name = "";
         let expected_start_time = -2000f64;
-        let expected = Play::new(AmfString::from(expected_stream_name), Number::new(expected_start_time));
+        let expected = Play::new(AmfString::from(expected_stream_name), Number::new(expected_start_time), PlayMode::default());
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
         let actual_stream_name: AmfString = buffer.decode().unwrap();

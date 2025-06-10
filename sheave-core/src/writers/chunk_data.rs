@@ -135,17 +135,14 @@ pub fn write_chunk_data<'a, W: AsyncWrite>(writer: Pin<&'a mut W>, chunk_id: u16
 #[cfg(test)]
 mod tests {
     use std::pin::pin;
-    use rand::{
-        Fill,
-        thread_rng
-    };
+    use rand::fill;
     use super::*;
 
     #[tokio::test]
     async fn write_one_chunk() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 128] = [0; 128];
-        chunk_data.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut chunk_data);
         let result = write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(128, writer.len())
@@ -155,7 +152,7 @@ mod tests {
     async fn write_with_one_byte_header() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 256] = [0; 256];
-        chunk_data.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut chunk_data);
         let result = write_chunk_data(writer.as_mut(), 2, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(257, writer.len())
@@ -165,7 +162,7 @@ mod tests {
     async fn write_with_two_bytes_header() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 256] = [0; 256];
-        chunk_data.try_fill(&mut thread_rng()).unwrap();
+        try_fill(&mut chunk_data);
         let result = write_chunk_data(writer.as_mut(), 64, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(258, writer.len())
@@ -175,7 +172,7 @@ mod tests {
     async fn write_with_three_bytes_header() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
         let mut chunk_data: [u8; 256] = [0; 256];
-        chunk_data.try_fill(&mut thread_rng()).unwrap();
+        try_fill(&mut chunk_data);
         let result = write_chunk_data(writer.as_mut(), 320, ChunkSize::default(), &chunk_data).await;
         assert!(result.is_ok());
         assert_eq!(259, writer.len());

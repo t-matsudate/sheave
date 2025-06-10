@@ -94,17 +94,14 @@ impl Encoder<SetDataFrame> for ByteBuffer {
 
 #[cfg(test)]
 mod tests {
-    use rand::{
-        Fill,
-        thread_rng
-    };
+    use rand::fill;
     use super::*;
 
     #[test]
     fn decode_set_data_frame() {
         let mut buffer = ByteBuffer::default();
         let mut bytes: [u8; 128] = [0; 128];
-        bytes.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut bytes);
         buffer.put_bytes(&bytes);
         let result: IOResult<SetDataFrame> = buffer.decode();
         assert!(result.is_ok());
@@ -117,7 +114,7 @@ mod tests {
     fn encode_set_data_frame() {
         let mut buffer = ByteBuffer::default();
         let mut expected_bytes: [u8; 128] = [0; 128];
-        expected_bytes.try_fill(&mut thread_rng()).unwrap();
+        fill(&mut expected_bytes);
         let expected = SetDataFrame::new(expected_bytes.to_vec());
         buffer.encode(&expected);
         let actual_data: Vec<u8> = buffer.into();

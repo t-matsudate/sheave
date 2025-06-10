@@ -73,10 +73,7 @@ mod tests {
         pin::pin,
         time::Duration
     };
-    use rand::{
-        Fill,
-        thread_rng
-    };
+    use rand::fill;
     use crate::handshake::Version;
     use super::*;
 
@@ -85,7 +82,7 @@ mod tests {
         let mut handshake: [u8; 1536] = [0; 1536];
         handshake[..4].copy_from_slice((Duration::default().as_millis() as u32).to_be_bytes().as_slice());
         handshake[4..8].copy_from_slice(<[u8; 4]>::from(Version::UNSIGNED).as_slice());
-        handshake[8..].try_fill(&mut thread_rng()).unwrap();
+        fill(&mut handshake[8..]);
         let compared = handshake;
         let result = read_handshake(pin!(handshake.as_slice())).await;
         assert!(result.is_ok());

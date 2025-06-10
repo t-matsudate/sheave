@@ -44,7 +44,7 @@ mod tests {
     #[test]
     fn decode_playlist_ready() {
         let mut buffer = ByteBuffer::default();
-        let result: IOResult<Playlist> = buffer.decode();
+        let result: IOResult<PlaylistReady> = buffer.decode();
         assert!(result.is_ok());
         let actual = result.unwrap();
         assert_eq!(PlaylistReady, actual)

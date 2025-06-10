@@ -175,7 +175,7 @@ mod tests {
     async fn read_with_three_bytes_header() {
         let mut reader: [u8; 259] = [0; 259];
         let mut part: [u8; 128] = [0; 128];
-        fill(&mut part).unwrap();
+        fill(&mut part);
         reader[..128].copy_from_slice(&part);
         reader[128] = u8::from(MessageFormat::Continue) << 6 | 1;
         reader[129..131].copy_from_slice(&2u16.to_le_bytes());
