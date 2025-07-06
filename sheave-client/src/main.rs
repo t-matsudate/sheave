@@ -33,6 +33,7 @@ use sheave_core::{
         ClientType as CoreClientType,
         RtmpContext
     },
+    messages::amf::v0::AmfString,
     net::rtmp::RtmpStream
 };
 use self::handlers::RtmpHandler;
@@ -285,7 +286,7 @@ async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOpt
                 rtmp_context.set_await_duration(Duration::from_millis(options.await_duration));
 
                 rtmp_context.set_publishing_name(topic_path.into());
-                rtmp_context.set_publishing_type((&options.publishing_type).into());
+                rtmp_context.set_publishing_type(AmfString::new(options.publishing_type.to_string()));
             }
         },
         CoreClientType::Subscriber => match options.format[0] {
@@ -294,12 +295,9 @@ async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOpt
                 rtmp_context.set_topic(topic);
 
                 rtmp_context.set_stream_name(topic_path.into());
-                if options.start_time < 0 {
-                    rtmp_context.set_start_time(Duration::default());
-                } else {
-                    rtmp_context.set_start_time(Duration::from_secs(options.start_time as u64));
+                if options.start_time >= 0 {
+                    rtmp_context.set_start_time(Some(Duration::from_secs(options.start_time as u64)));
                 }
-
                 rtmp_context.set_play_mode(options.start_time.into());
             }
         }
@@ -307,7 +305,6 @@ async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOpt
     rtmp_context.set_client_type(client_type);
 
     let client = Client::new(stream, rtmp_context, PhantomData::<RtmpHandler<RtmpStream>>);
-
     spawn(client).await?
 }
 
