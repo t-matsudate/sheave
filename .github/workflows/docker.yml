@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
       - id: setup-rust
         name: Setup Rust
-        uses: docker://rust:1.87.0
+        uses: docker://rust:1.88.0
       - id: setup-qemu
         name: Setup QEMU
         uses: docker/setup-qemu-action@v3
@@ -37,10 +37,57 @@ jobs:
           push: true
           tags: tmatsudate/sheave-server:latest
           platforms: linux/amd64,linux/arm64/v8
-  ffmpeg-amd64:
-    name: Tests with FFmpeg (AMD64)
+  ffmpeg-publisher:
+    name: Tests with FFmpeg (as a publisher)
     needs: push
     runs-on: ubuntu-latest
+    services:
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: update
+        name: Updates Apt caches
+        run: sudo apt update -y
+      - id: install
+        name: Installs FFmpeg
+        run: sudo apt install -y ffmpeg
+      - id: run
+        name: Runs FFmpeg with examples
+        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost/ondemand/test
+  sheave-client-publisher:
+    name: Tests with Sheave client (as a publisher)
+    needs: push
+    runs-on: ubuntu-latest
+    services:
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+        env:
+          HOST: 0.0.0.0
+          PORT: 1935
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.88.0
+      - id: build
+        name: Builds sheave-client
+        run: cargo update && cargo build -p sheave-client --release --bins
+      - id: run
+        name: Runs Sheave client with examples
+        run: ./target/release/sheave-client --loglevel info --client-type publisher --publishing-type live -f flv -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test
+  ffmpeg-subscriber:
+    name: Tests with FFmpeg (as a subscriber)
+    needs: push
+    runs-on: ubuntu-24.04
     services:
       sheave-server:
         image: tmatsudate/sheave-server:latest
@@ -61,11 +108,11 @@ jobs:
         run: sudo apt install -y ffmpeg
       - id: run
         name: Runs FFmpeg with examples
-        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost/ondemand/test
-  sheave-client-amd64:
-    name: Tests with Sheave client (AMD64)
+        run: ffplay -loglevel info rtmp://localhost/ondemand/test
+  sheave-client-subscriber:
+    name: Tests with Sheave client (as a subscriber)
     needs: push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       sheave-server:
         image: tmatsudate/sheave-server:latest
@@ -80,60 +127,10 @@ jobs:
         uses: actions/checkout@v4
       - id: setup
         name: Setup Rust
-        uses: docker://rust:1.87.0
+        uses: docker://rust:1.88.0
       - id: build
         name: Builds sheave-client
         run: cargo update && cargo build -p sheave-client --release --bins
       - id: run
         name: Runs Sheave client with examples
-        run: ./target/release/sheave-client --loglevel info -f flv -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test
-  ffmpeg-aarch64:
-    name: Tests with FFmpeg (AArch64)
-    needs: push
-    runs-on: ubuntu-24.04-arm
-    services:
-      sheave-server:
-        image: tmatsudate/sheave-server:latest
-        ports:
-          - 1935:1935
-        env:
-          HOST: 0.0.0.0
-          PORT: 1935
-    steps:
-      - id: checkout
-        name: Checkout repository
-        uses: actions/checkout@v4
-      - id: update
-        name: Updates Apt caches
-        run: sudo apt update -y
-      - id: install
-        name: Installs FFmpeg
-        run: sudo apt install -y ffmpeg
-      - id: run
-        name: Runs FFmpeg with examples
-        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost/ondemand/test
-  sheave-client-aarch64:
-    name: Tests with Sheave client (AArch64)
-    needs: push
-    runs-on: ubuntu-24.04-arm
-    services:
-      sheave-server:
-        image: tmatsudate/sheave-server:latest
-        ports:
-          - 1935:1935
-        env:
-          HOST: 0.0.0.0
-          PORT: 1935
-    steps:
-      - id: checkout
-        name: Checkout repository
-        uses: actions/checkout@v4
-      - id: setup
-        name: Setup Rust
-        uses: docker://rust:1.87.0
-      - id: build
-        name: Builds sheave-client
-        run: cargo update && cargo build -p sheave-client --release --bins
-      - id: run
-        name: Runs Sheave client with examples
-        run: ./target/release/sheave-client --loglevel info -f flv -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test
+        run: ./target/release/sheave-client --loglevel info --client-type subscriber --start-time -2 -f flv -o /tmp/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test
