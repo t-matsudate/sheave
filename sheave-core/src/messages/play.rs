@@ -1,6 +1,9 @@
 mod play_mode;
 
-use std::io::Result as IOResult;
+use std::{
+    io::Result as IOResult,
+    time::Duration
+};
 use super::{
     Channel,
     ChunkData,
@@ -73,9 +76,17 @@ impl Play {
     }
 }
 
-impl From<Play> for (AmfString, Number) {
+impl From<Play> for (AmfString, Option<Duration>, PlayMode) {
     fn from(play: Play) -> Self {
-        (play.stream_name, play.start_time)
+        let start_time = play.start_time;
+        let start_time = if start_time >= 0f64 {
+            Some(Duration::from_millis(start_time.as_integer()))
+        } else {
+            None
+        };
+        let play_mode = play.get_play_mode();
+
+        (play.stream_name, start_time, play_mode)
     }
 }
 
