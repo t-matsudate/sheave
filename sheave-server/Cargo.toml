@@ -13,8 +13,8 @@ futures.workspace = true
 log.workspace = true
 pin-project-lite.workspace = true
 sheave-core = { path = "../sheave-core" }
-sqlx = "0.8.5"
-sqlx-macros = "0.8.5"
+sqlx = "0.8.6"
+sqlx-macros = "0.8.6"
 tokio.workspace = true
 uuid.workspace = true
 
