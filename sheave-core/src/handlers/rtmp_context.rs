@@ -683,8 +683,8 @@ impl RtmpContext {
     }
 
     /// Sets a start time of this stream.
-    pub fn set_start_time(&mut self, start_time: Duration) {
-        self.start_time = Some(start_time);
+    pub fn set_start_time(&mut self, start_time: Option<Duration>) {
+        self.start_time = start_time;
     }
 
     /// Gets a start time of this stream.
