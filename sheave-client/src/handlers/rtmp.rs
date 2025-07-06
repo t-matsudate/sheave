@@ -312,13 +312,17 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         rtmp_context.increase_transaction_id();
 
         let stream_name = rtmp_context.get_topic_path().unwrap().clone();
-        let start_time = rtmp_context.get_start_time().unwrap();
         let play_mode = rtmp_context.get_play_mode().unwrap();
+        let start_time: Number = if let Some(start_time) = rtmp_context.get_start_time() {
+            Number::new(start_time.as_millis() as u64 as f64)
+        } else {
+            Number::new((1000 * play_mode as i64) as f64)
+        };
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("play"));
         buffer.encode(&rtmp_context.get_transaction_id());
-        buffer.encode(&Play::new(stream_name.clone(), start_time, play_mode));
+        buffer.encode(&Play::new(stream_name.clone(), start_time));
         write_chunk(self.0.as_mut(), rtmp_context, Play::CHANNEL.into(), Duration::default(), Play::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         info!("play got sent.");
