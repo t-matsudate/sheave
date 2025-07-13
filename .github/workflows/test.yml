@@ -23,7 +23,9 @@ jobs:
         name: Cargo check to the server crate
         run: |
           cargo check -p sheave-server
-          TMPDIR=${{ vars.TMPDIR }} cargo test -p sheave-server
+          cargo test -p sheave-server
+        env:
+          TMPDIR=${{ vars.TMPDIR }}
       - id: check-client
         name: Cargo check to the client crate
         run: |
