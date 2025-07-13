@@ -1033,7 +1033,7 @@ mod tests {
         handle_message(stream.as_mut()).write_fc_subscribe_request(&mut rtmp_context).await.unwrap();
         assert_eq!(SubscriberStatus::FcSubscribed, rtmp_context.get_subscriber_status().unwrap());
 
-        rtmp_context.set_start_time(Duration::default());
+        rtmp_context.set_start_time(Some(Duration::default()));
         rtmp_context.set_play_mode(PlayMode::Both);
         let mut stream = pin!(VecStream::default());
         handle_message(stream.as_mut()).write_play_request(&mut rtmp_context).await.unwrap();
