@@ -1392,7 +1392,7 @@ mod tests {
         rtmp_context.set_message_id(0);
 
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&Play::new(AmfString::new(Uuid::now_v7().to_string()), Number::from(-2u8));
+        buffer.encode(&Play::new(AmfString::new(Uuid::now_v7().to_string()), Number::from(-2u8)));
         handle_message(stream.as_mut()).handle_play_request(&mut rtmp_context, buffer).await.unwrap();
         let result = handle_message(stream.as_mut()).write_play_response(&mut rtmp_context).await;
         assert!(result.is_err());
