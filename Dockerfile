@@ -1,6 +1,7 @@
 FROM rust:1.88.0
 ADD . /sheave
 WORKDIR /sheave
+ENV TMPDIR="/tmp"
 ENV FEATURES="sqlite"
 ENV TOPIC_DATABASE_URL="sqlite:/tmp/sheave/sheave.db?mode=rwc"
 ENV TOPIC_STORAGE_PATH="/tmp/sheave"
