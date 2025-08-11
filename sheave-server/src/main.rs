@@ -10,7 +10,8 @@ use std::{
         Error as IOError,
         Result as IOResult
     },
-    marker::PhantomData
+    marker::PhantomData,
+    path::Path
 };
 use log::{
     LevelFilter,
@@ -25,6 +26,18 @@ use clap::{
 };
 use dotenvy::from_filename;
 use tokio::spawn;
+use sqlx::{
+    Connection,
+    migrate::Migrator
+};
+
+#[cfg(feature = "sqlite")]
+use sqlx::SqliteConnection as Connector;
+#[cfg(feature = "mysql")]
+use sqlx::MySqlConnection as Connector;
+#[cfg(feature = "postgres")]
+use sqlx::PgConnection as Connector;
+
 use sheave_core::{
     handlers::RtmpContext,
     net::rtmp::RtmpStream
@@ -89,6 +102,12 @@ struct ServerOptions {
     /// |`trace`|<ul><li>Detailed process for tracing.</li></ul>|
     #[arg(long, value_enum, value_name = "LogLevel", env = "LOGLEVEL", default_value_t)]
     loglevel: LogLevel,
+
+    /// Specifies the path of migration files.
+    /// If present, the Sheave Server runs migration files in specified path.
+    /// Currnetly this is used for testing with the topic database.
+    #[arg(long, value_name = "PATH", env = "MIGRATIONS_PATH")]
+    migrations_path: Option<String>,
 
     /// Listening URIs which starts with protocol schemas of the RTMP.
     /// Currently only `rtmp` schema is available.
@@ -193,6 +212,12 @@ async fn main() -> IOResult<()> {
     let options = ServerOptions::parse();
 
     builder().filter_level(options.loglevel.into()).try_init().map_err(|e| IOError::other(e))?;
+
+    if let Some(migrations_path) = options.migrations_path.clone() {
+        let mut connection = Connector::connect(&options.topic_database_url).await.map_err(IOError::other)?;
+        let migrator = Migrator::new(Path::new(&migrations_path)).await.map_err(IOError::other)?;
+        migrator.run(&mut connection).await.map_err(IOError::other)?;
+    }
 
     let listener = options.listeners[0].clone();
     let (protocol, server_addr, app) = split_uri(&listener)?;
