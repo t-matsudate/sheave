@@ -1,0 +1,17 @@
+[package]
+name = "sheave-core"
+version = "0.5.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes.workspace = true
+clap.workspace = true
+digest = "0.10.7"
+futures.workspace = true
+hmac = "0.12.1"
+pin-project-lite.workspace = true
+rand.workspace = true
+sha2 = "0.10.9"
+tokio.workspace = true

@@ -1,0 +1,167 @@
+name: Docker
+on:
+  workflow_run:
+    workflows: ["Testing"]
+    types: ["completed"]
+jobs:
+  push:
+    name: Pushs into Docker Hub
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v5
+      - id: setup-rust
+        name: Setup Rust
+        uses: docker://rust:1.90.0
+      - id: setup-qemu
+        name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+      - id: setup-buildx
+        name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+          platforms: linux/amd64,linux/arm64/v8
+      - id: login
+        name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - id: build-and-push
+        name: Build a docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: tmatsudate/sheave-server:latest
+          platforms: linux/amd64,linux/arm64/v8
+  ffmpeg-publisher:
+    name: Tests with FFmpeg (as a publisher)
+    needs: push
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:12.0.2
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
+          MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+        env:
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+          FIXTURES: topics
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: update
+        name: Updates Apt caches
+        run: sudo apt update -y
+      - id: install
+        name: Installs FFmpeg
+        run: sudo apt install -y ffmpeg
+      - id: run
+        name: Runs FFmpeg with examples
+        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://localhost/ondemand/test
+  sheave-client-publisher:
+    name: Tests with Sheave client (as a publisher)
+    needs: push
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:12.0.2
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
+          MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+        env:
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+          FIXTURES: topics
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.90.0
+      - id: build
+        name: Builds sheave-client
+        run: cargo update && cargo build -p sheave-client --release --bins
+      - id: run
+        name: Runs Sheave client with examples
+        run: ./target/release/sheave-client --loglevel info --client-type publisher --publishing-type live -f flv -i ./resources/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test
+  ffmpeg-subscriber:
+    name: Tests with FFmpeg (as a subscriber)
+    needs: push
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:12.0.2
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
+          MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+        env:
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+          FIXTURES: topics
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: update
+        name: Updates Apt caches
+        run: sudo apt update -y
+      - id: install
+        name: Installs FFmpeg
+        run: sudo apt install -y ffmpeg
+      - id: run
+        name: Runs FFmpeg with examples
+        run: ffplay -loglevel info rtmp://localhost/ondemand/test
+  sheave-client-subscriber:
+    name: Tests with Sheave client (as a subscriber)
+    needs: push
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:12.0.2
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
+          MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      sheave-server:
+        image: tmatsudate/sheave-server:latest
+        ports:
+          - 1935:1935
+        env:
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+          FIXTURES: topics
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.90.0
+      - id: build
+        name: Builds sheave-client
+        run: cargo update && cargo build -p sheave-client --release --bins
+      - id: run
+        name: Runs Sheave client with examples
+        run: ./target/release/sheave-client --loglevel info --client-type subscriber --start-time -2 -f flv -o /tmp/test.flv -f flv rtmp://0.0.0.0:1935/ondemand/test

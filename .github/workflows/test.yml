@@ -1,0 +1,42 @@
+name: Testing
+on:
+  push:
+    branches:
+      - main
+jobs:
+  testing:
+    name: Testing
+    runs-on: ubuntu-24.04
+    services:
+      mariadb:
+        image: mariadb:12.0.2
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
+          MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    steps:
+      - id: checkout
+        name: Checkout repository
+        uses: actions/checkout@v5
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.90.0
+      - id: test-core
+        name: Test the core crate
+        run: |
+          cargo update
+          cargo test -p sheave-core
+      - id: check-server
+        name: Cargo check to the server crate
+        run: |
+          cargo check -p sheave-server
+          cargo test -p sheave-server
+        env:
+          TMPDIR: ${{ vars.TMPDIR }}
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+      - id: check-client
+        name: Cargo check to the client crate
+        run: |
+          cargo check -p sheave-client
+          cargo test -p sheave-client
