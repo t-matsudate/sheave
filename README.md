@@ -58,4 +58,4 @@ The third choice for personal use of RTMP tools.
 ## License
 
 MIT License
-Copyright (c) 2023 Tsuyoshi Matsudate
+Copyright (c) 2025 Tsuyoshi Matsudate
