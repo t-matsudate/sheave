@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["sheave_client",[["impl&lt;RW: AsyncRead + AsyncWrite + <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html\" title=\"trait core::marker::Unpin\">Unpin</a>&gt; <a class=\"trait\" href=\"sheave_core/handlers/trait.HandlerConstructor.html\" title=\"trait sheave_core::handlers::HandlerConstructor\">HandlerConstructor</a>&lt;<a class=\"struct\" href=\"sheave_core/handlers/stream_wrapper/struct.StreamWrapper.html\" title=\"struct sheave_core::handlers::stream_wrapper::StreamWrapper\">StreamWrapper</a>&lt;RW&gt;&gt; for <a class=\"struct\" href=\"sheave_client/handlers/struct.RtmpHandler.html\" title=\"struct sheave_client::handlers::RtmpHandler\">RtmpHandler</a>&lt;RW&gt;"]]],["sheave_server",[["impl&lt;RW: AsyncRead + AsyncWrite + <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html\" title=\"trait core::marker::Unpin\">Unpin</a>&gt; <a class=\"trait\" href=\"sheave_core/handlers/trait.HandlerConstructor.html\" title=\"trait sheave_core::handlers::HandlerConstructor\">HandlerConstructor</a>&lt;<a class=\"struct\" href=\"sheave_core/handlers/stream_wrapper/struct.StreamWrapper.html\" title=\"struct sheave_core::handlers::stream_wrapper::StreamWrapper\">StreamWrapper</a>&lt;RW&gt;&gt; for <a class=\"struct\" href=\"sheave_server/handlers/struct.RtmpHandler.html\" title=\"struct sheave_server::handlers::RtmpHandler\">RtmpHandler</a>&lt;RW&gt;"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[716,717]}

@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Types for the handshake step in RTMP."><title>sheave_core::handshake - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module handshake</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module handshake</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#types-for-the-handshake-step-in-rtmp" title="Types for the handshake step in RTMP.">Types for the handshake step in RTMP.</a><ul><li><a href="#rtmp-version" title="RTMP version">RTMP version</a></li><li><a href="#handshake" title="Handshake">Handshake</a></li></ul></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate sheave_<wbr>core</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">sheave_core</a></div><h1>Module <span>handshake</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/sheave_core/handshake.rs.html#1-418">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="types-for-the-handshake-step-in-rtmp"><a class="doc-anchor" href="#types-for-the-handshake-step-in-rtmp">§</a>Types for the handshake step in RTMP.</h2>
+<p>In RTMP, first, both sides are required doing handshake.
+It is done respectively following steps:</p>
+<ol>
+<li>Specifies RTMP version.</li>
+<li>Exchanges handshake data each other.</li>
+<li>Returns partner’s handshake data.</li>
+</ol>
+<h3 id="rtmp-version"><a class="doc-anchor" href="#rtmp-version">§</a>RTMP version</h3>
+<p>1 byte to specify a kind of encryption.
+Default is 3.
+This means doing handshake as the Raw RTMP, that is, not to encrypt.
+Server should respond 3 if encryption specified by client has not implemented.
+In this case, client can either degrade version to 3 or disconnect with server.</p>
+<h3 id="handshake"><a class="doc-anchor" href="#handshake">§</a>Handshake</h3>
+<p>1536 bytes of actual handshake data.
+Note this can be imprinted HMAC-SHA256 diegst/signature according to version of Flash Player/Flash Media Server.
+Concretely, it is imprinted when respective version is following:</p>
+<ul>
+<li>Flash Player: <code>&gt;= 9</code></li>
+<li>Flash Media Server: <code>&gt;= 3</code></li>
+</ul>
+<h4 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h4>
+<p>Both sides are required taking following steps each version.</p>
+<ul>
+<li>Below Flash Player 9/Flash Media Server 3</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span>sheave_core::handshake::{
+    Handshake,
+    Version
+};
+
+<span class="kw">let </span>handshake = Handshake::new(Duration::default(), Version::UNSIGNED);</code></pre></div>
+<ul>
+<li>And above Flash Player 9/Flash Media Server 3</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span>sheave_core::handshake::{
+    Handshake,
+    Version,
+    EncryptionAlgorithm
+};
+
+<span class="comment">// In a case of exchanging client-side request with server-side response.
+</span><span class="kw">let </span><span class="kw-2">mut </span>client_handshake = Handshake::new(Duration::default(), Version::LATEST_CLIENT);
+client_handshake.imprint_digest(EncryptionAlgorithm::NotEncrypted, Handshake::CLIENT_KEY);
+<span class="kw">let </span><span class="kw-2">mut </span>key: Vec&lt;u8&gt; = Vec::new();
+key.extend_from_slice(Handshake::SERVER_KEY);
+key.extend_from_slice(Handshake::COMMON_KEY);
+client_handshake.imprint_signature(EncryptionAlgorithm::NotEncrypted, key.as_slice());
+<span class="macro">assert!</span>(client_handshake.did_signature_match(EncryptionAlgorithm::NotEncrypted, key.as_slice()));
+
+<span class="comment">// In a case of exchanging server-side request with client-side response.
+</span><span class="kw">let </span><span class="kw-2">mut </span>server_handshake = Handshake::new(Duration::default(), Version::LATEST_SERVER);
+server_handshake.imprint_digest(EncryptionAlgorithm::NotEncrypted, Handshake::SERVER_KEY);
+<span class="kw">let </span><span class="kw-2">mut </span>key: Vec&lt;u8&gt; = Vec::new();
+key.extend_from_slice(Handshake::CLIENT_KEY);
+key.extend_from_slice(Handshake::COMMON_KEY);
+server_handshake.imprint_signature(EncryptionAlgorithm::NotEncrypted, key.as_slice());
+<span class="macro">assert!</span>(server_handshake.did_signature_match(EncryptionAlgorithm::NotEncrypted, key.as_slice()));</code></pre></div><h4 id="encryption"><a class="doc-anchor" href="#encryption">§</a>Encryption</h4>
+<p>Currently, to implement handshake encryption isn’t planned following causes:</p>
+<ol>
+<li>Connected socket is in full view from outside. This is insecure though chunk is encrypted.</li>
+<li>If chunk encryption is implemented on RTMPTS, To decrypt chunk/socket takes both sides time in no small way. This is inefficient for real-time communications.</li>
+<li>Therefore I’m thinking we should leave encryption to only HTTPS.</li>
+</ol>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Handshake.html" title="struct sheave_core::handshake::Handshake">Handshake</a></dt><dd>The 1536 bytes handshake data.
+This respectively consists of following parts:</dd><dt><a class="struct" href="struct.Version.html" title="struct sheave_core::handshake::Version">Version</a></dt><dd>Bytes to indicate Flash Player version/Flash Media Server version.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.EncryptionAlgorithm.html" title="enum sheave_core::handshake::EncryptionAlgorithm">Encryption<wbr>Algorithm</a></dt><dd>Representation of first 1 byte in handshake.</dd></dl></section></div></main></body></html>

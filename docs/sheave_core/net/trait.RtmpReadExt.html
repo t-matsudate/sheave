@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Reader extensions for RTMP."><title>RtmpReadExt in sheave_core::net - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">RtmpReadExt</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Rtmp<wbr>Read<wbr>Ext</a></h2><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.await_until_receiving" title="await_until_receiving">await_until_receiving</a></li><li><a href="#method.try_read_after" title="try_read_after">try_read_after</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In sheave_<wbr>core::<wbr>net</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">sheave_core</a>::<wbr><a href="index.html">net</a></div><h1>Trait <span class="trait">Rtmp<wbr>Read<wbr>Ext</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/sheave_core/net.rs.html#27-86">Source</a> </span></div><pre class="rust item-decl"><code>pub trait RtmpReadExt: AsyncRead {
+    // Provided methods
+    fn <a href="#method.await_until_receiving" class="fn">await_until_receiving</a>&lt;'a&gt;(&amp;'a mut self) -&gt; AwaitUntilReceiving&lt;'a, Self&gt;
+       <span class="where">where Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a></span> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.try_read_after" class="fn">try_read_after</a>&lt;'a&gt;(
+        &amp;'a mut self,
+        await_duration: <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>,
+    ) -&gt; TryReadAfter&lt;'a, Self&gt;
+       <span class="where">where Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a></span> { ... }
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Reader extensions for RTMP.</p>
+<p>In almost cases, the network communication is enough just to await until receiving some message.
+But RTMP clients are required to be able to read messages both <code>Acknowledgement</code> and stream closing from servers, and these messages aren’t necessarily always sent.
+In this moment, clients will be stayed their processings if await receiving forever.</p>
+<p>For solving above timing mismatches, to prepare several choices to receive chunks are required.</p>
+<p>This trait provides several flexibility to read chunk by preparing following methods.</p>
+<ul>
+<li><a href="trait.RtmpReadExt.html#method.await_until_receiving" title="method sheave_core::net::RtmpReadExt::await_until_receiving"><code>await_until_receiving</code></a>: The default of receiving behavior.</li>
+<li><a href="trait.RtmpReadExt.html#method.try_read_after" title="method sheave_core::net::RtmpReadExt::try_read_after"><code>try_read_after</code></a>: Currently for clients.</li>
+</ul>
+</div></details><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.await_until_receiving" class="method"><a class="src rightside" href="../../src/sheave_core/net.rs.html#51-55">Source</a><h4 class="code-header">fn <a href="#method.await_until_receiving" class="fn">await_until_receiving</a>&lt;'a&gt;(&amp;'a mut self) -&gt; AwaitUntilReceiving&lt;'a, Self&gt;<div class="where">where
+    Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,</div></h4></section></summary><div class="docblock"><p>Makes a stream awaiting until receiving some message.</p>
+<h5 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncReadExt,
+    AsyncWrite,
+    AsyncWriteExt
+};
+<span class="kw">use </span>sheave_core::{
+    handlers::VecStream,
+    net::RtmpReadExt
+};
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() {
+    <span class="kw">let </span><span class="kw-2">mut </span>stream = VecStream::default();
+    stream.write_u8(<span class="number">1</span>).<span class="kw">await</span>.unwrap();
+    <span class="macro">assert!</span>(stream.await_until_receiving().read_u8().<span class="kw">await</span>.is_ok())
+}</code></pre></div></div></details><details class="toggle method-toggle" open><summary><section id="method.try_read_after" class="method"><a class="src rightside" href="../../src/sheave_core/net.rs.html#81-85">Source</a><h4 class="code-header">fn <a href="#method.try_read_after" class="fn">try_read_after</a>&lt;'a&gt;(
+    &amp;'a mut self,
+    await_duration: <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>,
+) -&gt; TryReadAfter&lt;'a, Self&gt;<div class="where">where
+    Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,</div></h4></section></summary><div class="docblock"><p>Makes a stream sleeping during specified duration.</p>
+<h5 id="examples-1"><a class="doc-anchor" href="#examples-1">§</a>Examples</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::time::Duration;
+<span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncReadExt,
+    AsyncWrite,
+    AsyncWriteExt
+};
+<span class="kw">use </span>sheave_core::{
+    handlers::VecStream,
+    net::RtmpReadExt
+};
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() {
+    <span class="kw">let </span><span class="kw-2">mut </span>stream = VecStream::default();
+    stream.write_u8(<span class="number">1</span>).<span class="kw">await</span>.unwrap();
+    <span class="macro">assert!</span>(stream.try_read_after(Duration::from_secs(<span class="number">1</span>)).read_u8().<span class="kw">await</span>.is_ok())
+}</code></pre></div></div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-RtmpReadExt-for-R" class="impl"><a class="src rightside" href="../../src/sheave_core/net.rs.html#88">Source</a><a href="#impl-RtmpReadExt-for-R" class="anchor">§</a><h3 class="code-header">impl&lt;R: AsyncRead&gt; <a class="trait" href="trait.RtmpReadExt.html" title="trait sheave_core::net::RtmpReadExt">RtmpReadExt</a> for R</h3></section></div><script src="../../trait.impl/sheave_core/net/trait.RtmpReadExt.js" async></script></section></div></main></body></html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The AMF Data Types (version 0)."><title>sheave_core::messages::amf::v0 - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module v0</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module v0</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-amf-data-types-version-0" title="The AMF Data Types (version 0).">The AMF Data Types (version 0).</a><ul><li><a href="#number" title="`Number`"><code>Number</code></a></li><li><a href="#boolean" title="`Boolean`"><code>Boolean</code></a></li><li><a href="#string" title="`String`"><code>String</code></a></li><li><a href="#object" title="`Object`"><code>Object</code></a></li><li><a href="#null" title="`Null`"><code>Null</code></a></li><li><a href="#ecmaarray" title="`EcmaArray`"><code>EcmaArray</code></a></li></ul></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In sheave_<wbr>core::<wbr>messages::<wbr>amf</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../../index.html">sheave_core</a>::<wbr><a href="../../index.html">messages</a>::<wbr><a href="../index.html">amf</a></div><h1>Module <span>v0</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../../src/sheave_core/messages/amf/v0.rs.html#1-687">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="the-amf-data-types-version-0"><a class="doc-anchor" href="#the-amf-data-types-version-0">§</a>The AMF Data Types (version 0).</h2>
+<p>These are data types which are defined in the Action Message Format version 0 specification.
+Currently the RTMP uses following types:</p>
+<div><table><thead><tr><th style="text-align: right">Marker</th><th style="text-align: left">AMF Data Type</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: right"><code>0</code></td><td style="text-align: left"><a href="struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">The IEEE 754 double precision floating point number.</td></tr>
+<tr><td style="text-align: right"><code>1</code></td><td style="text-align: left"><code>Boolean</code></td><td style="text-align: left">The boolean that is represented as a 1 byte data. (C-like)</td></tr>
+<tr><td style="text-align: right"><code>2</code></td><td style="text-align: left"><a href="struct.AmfString.html" title="struct sheave_core::messages::amf::v0::AmfString"><code>AmfString</code></a></td><td style="text-align: left">The string that is limited its length the range of 2 bytes.</td></tr>
+<tr><td style="text-align: right"><code>3</code></td><td style="text-align: left"><a href="struct.Object.html" title="struct sheave_core::messages::amf::v0::Object"><code>Object</code></a></td><td style="text-align: left">The key/value-paired object that its value type is flexible.</td></tr>
+<tr><td style="text-align: right"><code>5</code></td><td style="text-align: left"><a href="struct.Null.html" title="struct sheave_core::messages::amf::v0::Null"><code>Null</code></a></td><td style="text-align: left">Only the marker. Any value doesn’t contain.</td></tr>
+<tr><td style="text-align: right"><code>8</code></td><td style="text-align: left"><a href="struct.EcmaArray.html" title="struct sheave_core::messages::amf::v0::EcmaArray"><code>EcmaArray</code></a></td><td style="text-align: left">Same as the <a href="struct.Object.html" title="struct sheave_core::messages::amf::v0::Object"><code>Object</code></a> except this has its length.</td></tr>
+<tr><td style="text-align: right"><code>9</code></td><td style="text-align: left">Object End</td><td style="text-align: left">Indicates a stream of object terminaites there.</td></tr>
+</tbody></table>
+</div>
+<p>These are checked whether matched its marker with an actual data, by the receiver-side.
+Therefore any stream which contains any unmatched marker will be considered it’s invalid.
+Note that a marker of the Object End must appear only in AMF’s Object.
+Following descriptions are the actual formats of AMF.</p>
+<h3 id="number"><a class="doc-anchor" href="#number">§</a><a href="struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></h3>
+<ol>
+<li><a href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker"><code>Marker</code></a> (1 byte)</li>
+<li>An IEEE 754 double precision value (8 bytes)</li>
+</ol>
+<h3 id="boolean"><a class="doc-anchor" href="#boolean">§</a><a href="struct.Boolean.html" title="struct sheave_core::messages::amf::v0::Boolean"><code>Boolean</code></a></h3>
+<ol>
+<li><a href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker"><code>Marker</code></a> (1 byte)</li>
+<li>A boolean value (1 byte)</li>
+</ol>
+<h3 id="string"><a class="doc-anchor" href="#string">§</a><a href="https://doc.rust-lang.org/1.91.1/alloc/string/struct.String.html" title="struct alloc::string::String"><code>String</code></a></h3>
+<ol>
+<li><a href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker"><code>Marker</code></a> (1 byte)</li>
+<li>Length (2 bytes)</li>
+<li>UTF-8 characters (variable)</li>
+</ol>
+<h3 id="object"><a class="doc-anchor" href="#object">§</a><a href="struct.Object.html" title="struct sheave_core::messages::amf::v0::Object"><code>Object</code></a></h3>
+<ol>
+<li><a href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker"><code>Marker</code></a> (1 byte)</li>
+<li>Arbitrary number key-value pairs (variable)</li>
+<li>The Object End marker that is associated with an empty string.</li>
+</ol>
+<p>Note keys are without markers of the AMF String.
+To be exact, these aren’t defined as the AMF String in the specification, that is, these are just strings with lengths (within 2 bytes) at the beginning.</p>
+<p>Next, values are limited just in the AMF data types.
+Currently, following AMF data types to be used in the RTMP are allowed to insert into the AMF Object type:</p>
+<ul>
+<li><a href="struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></li>
+<li><a href="struct.Boolean.html" title="struct sheave_core::messages::amf::v0::Boolean"><code>Boolean</code></a></li>
+<li><a href="struct.AmfString.html" title="struct sheave_core::messages::amf::v0::AmfString"><code>AmfString</code></a></li>
+<li><a href="struct.Object.html" title="struct sheave_core::messages::amf::v0::Object"><code>Object</code></a></li>
+<li><a href="struct.Null.html" title="struct sheave_core::messages::amf::v0::Null"><code>Null</code></a></li>
+<li><a href="struct.EcmaArray.html" title="struct sheave_core::messages::amf::v0::EcmaArray"><code>EcmaArray</code></a></li>
+</ul>
+<h3 id="null"><a class="doc-anchor" href="#null">§</a><a href="struct.Null.html" title="struct sheave_core::messages::amf::v0::Null"><code>Null</code></a></h3>
+<ol>
+<li><a href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker"><code>Marker</code></a> (1 byte)</li>
+</ol>
+<h3 id="ecmaarray"><a class="doc-anchor" href="#ecmaarray">§</a><a href="struct.EcmaArray.html" title="struct sheave_core::messages::amf::v0::EcmaArray"><code>EcmaArray</code></a></h3>
+<ol>
+<li><a href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker"><code>Marker</code></a> (1 byte)</li>
+<li>Length (4 bytes)</li>
+<li>Arbitrary number key-value pairs (variable)</li>
+<li>The Object End marker that is associated with an empty string.</li>
+</ol>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.AmfString.html" title="struct sheave_core::messages::amf::v0::AmfString">AmfString</a></dt><dd>The UTF-8 string of AMF data types.</dd><dt><a class="struct" href="struct.Boolean.html" title="struct sheave_core::messages::amf::v0::Boolean">Boolean</a></dt><dd>The boolean representation of AMF data types.
+This uses 1 byte unsigned integer as a boolean value.
+Usually, <code>0</code> is treated as <code>false</code>, else is <code>true</code>.</dd><dt><a class="struct" href="struct.EcmaArray.html" title="struct sheave_core::messages::amf::v0::EcmaArray">Ecma<wbr>Array</a></dt><dd>The <strong>sized</strong> object type of AMF.</dd><dt><a class="struct" href="struct.Null.html" title="struct sheave_core::messages::amf::v0::Null">Null</a></dt><dd>The value to mean that has no content.</dd><dt><a class="struct" href="struct.Number.html" title="struct sheave_core::messages::amf::v0::Number">Number</a></dt><dd>The IEEE 754 double precision floating point number of AMF data types.</dd><dt><a class="struct" href="struct.Object.html" title="struct sheave_core::messages::amf::v0::Object">Object</a></dt><dd>The anonymous object type of AMF.
+This consists of pairs of string keys and any AMF data types.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Marker.html" title="enum sheave_core::messages::amf::v0::Marker">Marker</a></dt><dd>Representation of markers of the AMF data types.</dd></dl></section></div></main></body></html>

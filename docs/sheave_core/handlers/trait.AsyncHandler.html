@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The interface for handling RTMP connection steps with `Future`."><title>AsyncHandler in sheave_core::handlers - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">AsyncHandler</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Async<wbr>Handler</a></h2><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.poll_handle" title="poll_handle">poll_handle</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In sheave_<wbr>core::<wbr>handlers</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">sheave_core</a>::<wbr><a href="index.html">handlers</a></div><h1>Trait <span class="trait">Async<wbr>Handler</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/sheave_core/handlers.rs.html#115-117">Source</a> </span></div><pre class="rust item-decl"><code>pub trait AsyncHandler {
+    // Required method
+    fn <a href="#tymethod.poll_handle" class="fn">poll_handle</a>(
+        self: <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;&amp;mut Self&gt;,
+        cx: &amp;mut <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/task/wake/struct.Context.html" title="struct core::task::wake::Context">FutureContext</a>&lt;'_&gt;,
+        rtmp_context: &amp;mut <a class="struct" href="struct.RtmpContext.html" title="struct sheave_core::handlers::RtmpContext">RtmpContext</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.91.1/core/task/poll/enum.Poll.html" title="enum core::task::poll::Poll">Poll</a>&lt;<a class="type" href="https://doc.rust-lang.org/1.91.1/std/io/error/type.Result.html" title="type std::io::error::Result">IOResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.91.1/std/primitive.unit.html">()</a>&gt;&gt;;
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The interface for handling RTMP connection steps with <code>Future</code>.</p>
+<p>This trait unifies surfaces of handler APIs:</p>
+<ul>
+<li><code>RtmpContext</code> is required.</li>
+<li>Terminating with unit (<code>()</code>) is required.</li>
+</ul>
+<p>The first requirement makes <code>RtmpContext</code> reusable for upper APIs.
+And the second requirement makes handlers return <code>Ok(())</code> when successfully terminates because currently they are run on <code>main</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::{
+    io::Result <span class="kw">as </span>IOResult,
+    pin::Pin,
+    sync::Arc,
+    task::{
+        Context <span class="kw">as </span>FutureContext,
+        Poll
+    }
+};
+<span class="kw">use </span>futures::future::poll_fn;
+<span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncWrite
+};
+<span class="kw">use </span>sheave_core::handlers::{
+    AsyncHandler,
+    RtmpContext
+};
+
+<span class="kw">struct </span>SomethingHandler&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>SomethingHandler&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="comment">// Something to handle
+
+        </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() -&gt; IOResult&lt;()&gt; {
+    <span class="comment">// Consider this is Tokio's `JoinHandle` which is run on `main`.
+    </span>poll_fn(
+        |cx| {
+            <span class="kw">use </span>std::{
+                pin::pin,
+                sync::Arc
+            };
+            <span class="kw">use </span>sheave_core::handlers::{
+                AsyncHandler,
+                VecStream,
+                StreamWrapper
+            };
+
+            <span class="kw">let </span>stream = Arc::new(StreamWrapper::new(VecStream::default()));
+            <span class="macro">pin!</span>(SomethingHandler(stream)).poll_handle(cx, <span class="kw-2">&amp;mut </span>RtmpContext::default())
+        }
+    ).<span class="kw">await
+</span>}</code></pre></div></div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><section id="tymethod.poll_handle" class="method"><a class="src rightside" href="../../src/sheave_core/handlers.rs.html#116">Source</a><h4 class="code-header">fn <a href="#tymethod.poll_handle" class="fn">poll_handle</a>(
+    self: <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;&amp;mut Self&gt;,
+    cx: &amp;mut <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/task/wake/struct.Context.html" title="struct core::task::wake::Context">FutureContext</a>&lt;'_&gt;,
+    rtmp_context: &amp;mut <a class="struct" href="struct.RtmpContext.html" title="struct sheave_core::handlers::RtmpContext">RtmpContext</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.91.1/core/task/poll/enum.Poll.html" title="enum core::task::poll::Poll">Poll</a>&lt;<a class="type" href="https://doc.rust-lang.org/1.91.1/std/io/error/type.Result.html" title="type std::io::error::Result">IOResult</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.91.1/std/primitive.unit.html">()</a>&gt;&gt;</h4></section></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../../trait.impl/sheave_core/handlers/trait.AsyncHandler.js" async></script></section></div></main></body></html>

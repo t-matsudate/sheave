@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The FLV tags"><title>sheave_core::flv::tags - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module tags</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module tags</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-flv-tags" title="The FLV tags">The FLV tags</a><ul><li><a href="#audio" title="`Audio`"><code>Audio</code></a></li><li><a href="#video" title="`Video`"><code>Video</code></a></li><li><a href="#scriptdata" title="`ScriptData`"><code>ScriptData</code></a></li></ul></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In sheave_<wbr>core::<wbr>flv</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">sheave_core</a>::<wbr><a href="../index.html">flv</a></div><h1>Module <span>tags</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/sheave_core/flv/tags.rs.html#1-225">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="the-flv-tags"><a class="doc-anchor" href="#the-flv-tags">§</a>The FLV tags</h2>
+<p>FLV bodies consist of following tags.</p>
+<ul>
+<li><a href="struct.AudioTag.html" title="struct sheave_core::flv::tags::AudioTag"><code>Audio</code></a> tag</li>
+<li><a href="struct.VideoTag.html" title="struct sheave_core::flv::tags::VideoTag"><code>Video</code></a> tag</li>
+<li><a href="struct.ScriptDataTag.html" title="struct sheave_core::flv::tags::ScriptDataTag"><code>ScriptData</code></a> tag</li>
+</ul>
+<p>And any tag has following common header.</p>
+<ol>
+<li>Reserved bits for the Flash Media Server. (2 bits. However this is fiexed to 0.)</li>
+<li>Whether packets are filtered (1 bit)</li>
+<li>Tag type (5 bits. these are same as RTMP’s message types. See <a href="../../messages/headers/enum.MessageType.html" title="enum sheave_core::messages::headers::MessageType"><code>MessageType</code></a>.)</li>
+</ol>
+<ul>
+<li>Audio (8)</li>
+<li>Video (9)</li>
+<li>ScriptData (18)</li>
+</ul>
+<ol start="4">
+<li>Actual tag size (subtracts this header size from the total)</li>
+<li>Timestamp (24 bits)</li>
+<li>Timestamp(extended) (8 bits)</li>
+<li>Message Stream ID (24 bits. However this is fixed to 0.)</li>
+<li>Actual tag data (Same size as the DataSize field)</li>
+</ol>
+<p>Note that currently the RTMP tools aren’t checking whether flv data are encrypted.</p>
+<h3 id="audio"><a class="doc-anchor" href="#audio">§</a><a href="struct.AudioTag.html" title="struct sheave_core::flv::tags::AudioTag"><code>Audio</code></a></h3>
+<p>The audio tag consists of:</p>
+<ol>
+<li>SoundFormat / Audio Codec (4 bits. See <a href="#sound-format">Sound Format</a>)</li>
+<li>SoundRate / Sampling Rate (2 bits)
+<ul>
+<li>5.5 kHz (0)</li>
+<li>11 kHz (1)</li>
+<li>22 kHz (2)</li>
+<li>44 kHz (3)</li>
+</ul>
+</li>
+<li>SoundSize / Sampling bit width (1 bit)
+<ul>
+<li>8 bits (0)</li>
+<li>16 bits (1)</li>
+</ul>
+</li>
+<li>SoundType / Mono or Stereo (1 bit)
+<ul>
+<li>Mono (0)</li>
+<li>Stereo (0)</li>
+</ul>
+</li>
+<li>AACPacketType (8 bits if sound format is the AAC)
+<ul>
+<li>Sequence header (0)</li>
+<li>Raw (1)</li>
+</ul>
+</li>
+<li>AudioData (Arbitrary size)</li>
+</ol>
+<h4 id="sound-format"><a class="doc-anchor" href="#sound-format">§</a>Sound Format</h4>
+<p>The SoundFormat field corresponds to:</p>
+<div><table><thead><tr><th style="text-align: right">Value</th><th style="text-align: left">Sound Format</th></tr></thead><tbody>
+<tr><td style="text-align: right"><code>0</code></td><td style="text-align: left">Linear PCM (Native Endian)</td></tr>
+<tr><td style="text-align: right"><code>1</code></td><td style="text-align: left">ADPCM</td></tr>
+<tr><td style="text-align: right"><code>2</code></td><td style="text-align: left">MP3</td></tr>
+<tr><td style="text-align: right"><code>3</code></td><td style="text-align: left">Linear PCM (Little Endian)</td></tr>
+<tr><td style="text-align: right"><code>4</code></td><td style="text-align: left">Nellymoser (16 kHz, mono)</td></tr>
+<tr><td style="text-align: right"><code>5</code></td><td style="text-align: left">Nellymoser (8 kHz, mono)</td></tr>
+<tr><td style="text-align: right"><code>6</code></td><td style="text-align: left">Nellymoser</td></tr>
+<tr><td style="text-align: right"><code>7</code></td><td style="text-align: left">G.711 (A-law)</td></tr>
+<tr><td style="text-align: right"><code>8</code></td><td style="text-align: left">G.711 (mu-law)</td></tr>
+<tr><td style="text-align: right"><code>9</code></td><td style="text-align: left">reserved</td></tr>
+<tr><td style="text-align: right"><code>10</code></td><td style="text-align: left">AAC</td></tr>
+<tr><td style="text-align: right"><code>11</code></td><td style="text-align: left">Speex</td></tr>
+<tr><td style="text-align: right"><code>14</code></td><td style="text-align: left">MP3 (8 kHz)</td></tr>
+<tr><td style="text-align: right"><code>15</code></td><td style="text-align: left">Device-specific format</td></tr>
+</tbody></table>
+</div><h3 id="video"><a class="doc-anchor" href="#video">§</a><a href="struct.VideoTag.html" title="struct sheave_core::flv::tags::VideoTag"><code>Video</code></a></h3>
+<p>The video tag consists of:</p>
+<ol>
+<li>FrameType (4 bits)
+<ul>
+<li>key frame (1, for AVC which is a seekable frame.)</li>
+<li>inter frame (2, for AVC which is a non-seekable frame.)</li>
+<li>disposable inter frame (3, for H.263.)</li>
+<li>generated key frame (4, reserved for server use.)</li>
+<li>video info/command frame (5)</li>
+</ul>
+</li>
+<li>CodecID / Video Codec (4 bits. See <a href="#video-codec">Video Codec</a>)</li>
+<li>AVCPacketType (8 bits if video codec is the AVC.)
+<ul>
+<li>Sequence header (0)</li>
+<li>NALU (1)</li>
+<li>End of sequence header (2)</li>
+</ul>
+</li>
+<li>CompositionTime (<strong>signed</strong> 24 bits if video codec is the AVC.)</li>
+<li>VideoData (Arbitrary size)</li>
+</ol>
+<h4 id="video-codec"><a class="doc-anchor" href="#video-codec">§</a>Video Codec</h4>
+<p>The CodecID field corresponds to:</p>
+<div><table><thead><tr><th style="text-align: right">Value</th><th style="text-align: left">Codec</th></tr></thead><tbody>
+<tr><td style="text-align: right"><code>2</code></td><td style="text-align: left">H.263</td></tr>
+<tr><td style="text-align: right"><code>3</code></td><td style="text-align: left">Screen Video</td></tr>
+<tr><td style="text-align: right"><code>4</code></td><td style="text-align: left">VP6</td></tr>
+<tr><td style="text-align: right"><code>5</code></td><td style="text-align: left">VP6 with alpha channel</td></tr>
+<tr><td style="text-align: right"><code>6</code></td><td style="text-align: left">Screen Video (v2)</td></tr>
+<tr><td style="text-align: right"><code>7</code></td><td style="text-align: left">AVC</td></tr>
+</tbody></table>
+</div><h3 id="scriptdata"><a class="doc-anchor" href="#scriptdata">§</a><a href="struct.ScriptDataTag.html" title="struct sheave_core::flv::tags::ScriptDataTag"><code>ScriptData</code></a></h3>
+<p>Currently, this is used to contain following pair:</p>
+<div><table><thead><tr><th style="text-align: left">Field</th><th style="text-align: left">AMF Type</th><th style="text-align: left">Value</th></tr></thead><tbody>
+<tr><td style="text-align: left">name</td><td style="text-align: left"><a href="../../messages/amf/v0/struct.AmfString.html" title="struct sheave_core::messages::amf::v0::AmfString"><code>String</code></a></td><td style="text-align: left"><code>"onMetaData"</code></td></tr>
+<tr><td style="text-align: left">value</td><td style="text-align: left"><a href="../../messages/amf/v0/struct.EcmaArray.html" title="struct sheave_core::messages::amf::v0::EcmaArray"><code>EcmaArray</code></a></td><td style="text-align: left">See <a href="#meta-data">Meta Data</a></td></tr>
+</tbody></table>
+</div><h4 id="meta-data"><a class="doc-anchor" href="#meta-data">§</a>Meta Data</h4>
+<p>This contains informations about audio/video configuration in FLV.
+Note all of following pairs aren’t necessarily contained.</p>
+<div><table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">AMF Type</th><th style="text-align: left">Value</th></tr></thead><tbody>
+<tr><td style="text-align: left"><code>audiocodecid</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">See <a href="struct.AudioTag.html" title="struct sheave_core::flv::tags::AudioTag"><code>Audio</code></a>.</td></tr>
+<tr><td style="text-align: left"><code>audiodatarate</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">An audio’s bitrate.</td></tr>
+<tr><td style="text-align: left"><code>audiodelay</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A time to indicate overhead by encoding/decoding in seconds.</td></tr>
+<tr><td style="text-align: left"><code>audiosamplerate</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">An audio’s sampling frequency.</td></tr>
+<tr><td style="text-align: left"><code>audiosamplesize</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">An audio’s sampling bitwidth.</td></tr>
+<tr><td style="text-align: left"><code>canSeekToEnd</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Boolean.html" title="struct sheave_core::messages::amf::v0::Boolean"><code>Boolean</code></a></td><td style="text-align: left">Whether the last video frame is key frame.</td></tr>
+<tr><td style="text-align: left"><code>creationdate</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.AmfString.html" title="struct sheave_core::messages::amf::v0::AmfString"><code>String</code></a></td><td style="text-align: left">A datetime this FLV data is created. (Probably the ISO 8601 format)</td></tr>
+<tr><td style="text-align: left"><code>duration</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A total duration range of this FLV data in seconds.</td></tr>
+<tr><td style="text-align: left"><code>filesize</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A total file size of this FLV data in bytes.</td></tr>
+<tr><td style="text-align: left"><code>framerate</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A video’s framerate.</td></tr>
+<tr><td style="text-align: left"><code>height</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A video frame’s vertical size in pixels.</td></tr>
+<tr><td style="text-align: left"><code>stereo</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Boolean.html" title="struct sheave_core::messages::amf::v0::Boolean"><code>Boolean</code></a></td><td style="text-align: left">Whether audio is sampled as stereo.</td></tr>
+<tr><td style="text-align: left"><code>videocodecid</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">See <a href="struct.VideoTag.html" title="struct sheave_core::flv::tags::VideoTag"><code>Video</code></a></td></tr>
+<tr><td style="text-align: left"><code>videodatarate</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A video’s bitrate.</td></tr>
+<tr><td style="text-align: left"><code>width</code></td><td style="text-align: left"><a href="../../messages/amf/v0/struct.Number.html" title="struct sheave_core::messages::amf::v0::Number"><code>Number</code></a></td><td style="text-align: left">A video frame’s horizonal size in pixels.</td></tr>
+</tbody></table>
+</div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.AudioTag.html" title="struct sheave_core::flv::tags::AudioTag">Audio<wbr>Tag</a></dt><dd>The audio data format.</dd><dt><a class="struct" href="struct.AudioTagHeader.html" title="struct sheave_core::flv::tags::AudioTagHeader">Audio<wbr>TagHeader</a></dt><dd>The header of the AudioTag.</dd><dt><a class="struct" href="struct.FlvTag.html" title="struct sheave_core::flv::tags::FlvTag">FlvTag</a></dt><dd>The FLV tag element.</dd><dt><a class="struct" href="struct.ScriptDataTag.html" title="struct sheave_core::flv::tags::ScriptDataTag">Script<wbr>Data<wbr>Tag</a></dt><dd>The meta data which consists of name-value pairs.</dd><dt><a class="struct" href="struct.VideoTag.html" title="struct sheave_core::flv::tags::VideoTag">Video<wbr>Tag</a></dt><dd>The video data format.</dd><dt><a class="struct" href="struct.VideoTagHeader.html" title="struct sheave_core::flv::tags::VideoTagHeader">Video<wbr>TagHeader</a></dt><dd>The header of the VideoTag.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.AvcPacketType.html" title="enum sheave_core::flv::tags::AvcPacketType">AvcPacket<wbr>Type</a></dt><dd>Packet types of the AVC codec.</dd><dt><a class="enum" href="enum.Codec.html" title="enum sheave_core::flv::tags::Codec">Codec</a></dt><dd>Representation of the CodecID field.</dd><dt><a class="enum" href="enum.FrameType.html" title="enum sheave_core::flv::tags::FrameType">Frame<wbr>Type</a></dt><dd>Representation of the FrameType field.</dd><dt><a class="enum" href="enum.SoundFormat.html" title="enum sheave_core::flv::tags::SoundFormat">Sound<wbr>Format</a></dt><dd>Representation of the SoundFormat field of the AudioTag.</dd><dt><a class="enum" href="enum.SoundRate.html" title="enum sheave_core::flv::tags::SoundRate">Sound<wbr>Rate</a></dt><dd>Representation of the SoundRate field.</dd><dt><a class="enum" href="enum.TagType.html" title="enum sheave_core::flv::tags::TagType">TagType</a></dt><dd>Representation of TagType bits of the FLV tag.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.DEFAULT_MESSAGE_ID.html" title="constant sheave_core::flv::tags::DEFAULT_MESSAGE_ID">DEFAULT_<wbr>MESSAGE_<wbr>ID</a></dt><dd>The Message ID which is written into FLV metadata (however this will never be read).</dd><dt><a class="constant" href="constant.METADATA_LEN.html" title="constant sheave_core::flv::tags::METADATA_LEN">METADATA_<wbr>LEN</a></dt><dd>The length of metadata which are common to every FLV tag.</dd></dl></section></div></main></body></html>

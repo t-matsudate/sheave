@@ -1,0 +1,279 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The extension methods for handlers."><title>AsyncHandlerExt in sheave_core::handlers - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">AsyncHandlerExt</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Async<wbr>Handler<wbr>Ext</a></h2><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.chain" title="chain">chain</a></li><li><a href="#method.map_err" title="map_err">map_err</a></li><li><a href="#method.while_ok" title="while_ok">while_ok</a></li><li><a href="#method.wrap" title="wrap">wrap</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In sheave_<wbr>core::<wbr>handlers</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">sheave_core</a>::<wbr><a href="index.html">handlers</a></div><h1>Trait <span class="trait">Async<wbr>Handler<wbr>Ext</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/sheave_core/handlers.rs.html#132-432">Source</a> </span></div><pre class="rust item-decl"><code>pub trait AsyncHandlerExt: <a class="trait" href="trait.AsyncHandler.html" title="trait sheave_core::handlers::AsyncHandler">AsyncHandler</a> {
+    // Provided methods
+    fn <a href="#method.chain" class="fn">chain</a>&lt;H&gt;(self, next: H) -&gt; Chain&lt;Self, H&gt;
+       <span class="where">where H: <a class="trait" href="trait.AsyncHandler.html" title="trait sheave_core::handlers::AsyncHandler">AsyncHandler</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+             Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a></span> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.wrap" class="fn">wrap</a>&lt;M&gt;(self, middleware: M) -&gt; Wrap&lt;M, Self&gt;
+       <span class="where">where M: <a class="trait" href="trait.Middleware.html" title="trait sheave_core::handlers::Middleware">Middleware</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+             Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a></span> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.while_ok" class="fn">while_ok</a>&lt;H&gt;(self, body: H) -&gt; WhileOk&lt;Self, H&gt;
+       <span class="where">where H: <a class="trait" href="trait.AsyncHandler.html" title="trait sheave_core::handlers::AsyncHandler">AsyncHandler</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+             Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a></span> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.map_err" class="fn">map_err</a>&lt;E&gt;(self, error_handler: E) -&gt; MapErr&lt;Self, E&gt;
+       <span class="where">where E: <a class="trait" href="trait.ErrorHandler.html" title="trait sheave_core::handlers::ErrorHandler">ErrorHandler</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+             Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a></span> { ... }
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The extension methods for handlers.</p>
+<p>Currently following extensions have been implemented.</p>
+<ul>
+<li><a href="trait.AsyncHandlerExt.html#method.chain" title="method sheave_core::handlers::AsyncHandlerExt::chain"><code>chain</code></a></li>
+<li><a href="trait.AsyncHandlerExt.html#method.wrap" title="method sheave_core::handlers::AsyncHandlerExt::wrap"><code>wrap</code></a></li>
+<li><a href="trait.AsyncHandlerExt.html#method.while_ok" title="method sheave_core::handlers::AsyncHandlerExt::while_ok"><code>while_ok</code></a></li>
+<li><a href="trait.AsyncHandlerExt.html#method.map_err" title="method sheave_core::handlers::AsyncHandlerExt::map_err"><code>map_err</code></a></li>
+</ul>
+</div></details><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.chain" class="method"><a class="src rightside" href="../../src/sheave_core/handlers.rs.html#196-202">Source</a><h4 class="code-header">fn <a href="#method.chain" class="fn">chain</a>&lt;H&gt;(self, next: H) -&gt; Chain&lt;Self, H&gt;<div class="where">where
+    H: <a class="trait" href="trait.AsyncHandler.html" title="trait sheave_core::handlers::AsyncHandler">AsyncHandler</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+    Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,</div></h4></section></summary><div class="docblock"><p>Chains this handler with <code>next</code>.</p>
+<h5 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::{
+    io::Result <span class="kw">as </span>IOResult,
+    pin::Pin,
+    sync::Arc,
+    task::{
+        Context <span class="kw">as </span>FutureContext,
+        Poll
+    }
+};
+<span class="kw">use </span>futures::future::poll_fn;
+<span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncWrite
+};
+<span class="kw">use </span>sheave_core::handlers::{
+    AsyncHandler,
+    RtmpContext
+};
+
+<span class="kw">struct </span>HandlerA&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+<span class="kw">struct </span>HandlerB&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>HandlerA&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="comment">// Something to handle.
+
+        </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>HandlerB&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="comment">// Something to handle.
+
+        </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() -&gt; IOResult&lt;()&gt; {
+    poll_fn(
+        |cx| {
+            <span class="kw">use </span>std::pin::pin;
+            <span class="kw">use </span>sheave_core::handlers::{
+                AsyncHandlerExt,
+                StreamWrapper,
+                VecStream
+            };
+
+            <span class="kw">let </span>stream = Arc::new(StreamWrapper::new(VecStream::default()));
+            <span class="macro">pin!</span>(
+                HandlerA(Arc::clone(<span class="kw-2">&amp;</span>stream))
+                    .chain(HandlerB(Arc::clone(<span class="kw-2">&amp;</span>stream)))
+            ).poll_handle(cx, <span class="kw-2">&amp;mut </span>RtmpContext::default())
+        }
+    ).<span class="kw">await
+</span>}</code></pre></div></div></details><details class="toggle method-toggle" open><summary><section id="method.wrap" class="method"><a class="src rightside" href="../../src/sheave_core/handlers.rs.html#274-280">Source</a><h4 class="code-header">fn <a href="#method.wrap" class="fn">wrap</a>&lt;M&gt;(self, middleware: M) -&gt; Wrap&lt;M, Self&gt;<div class="where">where
+    M: <a class="trait" href="trait.Middleware.html" title="trait sheave_core::handlers::Middleware">Middleware</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+    Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,</div></h4></section></summary><div class="docblock"><p>Wraps previous handlers into a middleware.</p>
+<h5 id="examples-1"><a class="doc-anchor" href="#examples-1">§</a>Examples</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::{
+    io::Result <span class="kw">as </span>IOResult,
+    pin::Pin,
+    sync::Arc,
+    task::{
+        Context <span class="kw">as </span>FutureContext,
+        Poll
+    }
+};
+<span class="kw">use </span>futures::{
+    future::poll_fn,
+    ready
+};
+<span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncWrite
+};
+<span class="kw">use </span>sheave_core::handlers::{
+    AsyncHandler,
+    Middleware,
+    RtmpContext
+};
+
+<span class="kw">struct </span>SomethingHandler&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>SomethingHandler&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="comment">// Something to handle.
+
+        </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="kw">struct </span>SomethingMiddleware&lt;<span class="lifetime">'a</span>, W: Unpin&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>W&gt;);
+
+<span class="kw">impl</span>&lt;W: Unpin&gt; Middleware <span class="kw">for </span>SomethingMiddleware&lt;<span class="lifetime">'_</span>, W&gt; {
+    <span class="kw">fn </span>poll_handle_wrapped&lt;H: AsyncHandler + Unpin&gt;(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext, handler: Pin&lt;<span class="kw-2">&amp;mut </span>H&gt;) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="macro">println!</span>(<span class="string">"Starts wrapping."</span>);
+        <span class="macro">ready!</span>(handler.poll_handle(cx, rtmp_context))<span class="question-mark">?</span>;
+        <span class="macro">println!</span>(<span class="string">"Ends wrapping."</span>);
+        Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() {
+    <span class="kw">let </span>result = poll_fn(
+        |cx| {
+            <span class="kw">use </span>std::pin::pin;
+            <span class="kw">use </span>sheave_core::handlers::{
+                AsyncHandlerExt,
+                StreamWrapper,
+                VecStream
+            };
+
+            <span class="kw">let </span>stream = Arc::new(StreamWrapper::new(VecStream::default()));
+            <span class="macro">pin!</span>(
+                SomethingHandler(Arc::clone(<span class="kw-2">&amp;</span>stream))
+                    .wrap(SomethingMiddleware(stream.make_weak_pin()))
+            ).poll_handle(cx, <span class="kw-2">&amp;mut </span>RtmpContext::default())
+        }
+    ).<span class="kw">await</span>;
+    <span class="macro">assert!</span>(result.is_ok())
+}</code></pre></div></div></details><details class="toggle method-toggle" open><summary><section id="method.while_ok" class="method"><a class="src rightside" href="../../src/sheave_core/handlers.rs.html#349-355">Source</a><h4 class="code-header">fn <a href="#method.while_ok" class="fn">while_ok</a>&lt;H&gt;(self, body: H) -&gt; WhileOk&lt;Self, H&gt;<div class="where">where
+    H: <a class="trait" href="trait.AsyncHandler.html" title="trait sheave_core::handlers::AsyncHandler">AsyncHandler</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+    Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,</div></h4></section></summary><div class="docblock"><p>Loops while the body returns <code>Ok(())</code> or <code>Pending</code>.</p>
+<h5 id="examples-2"><a class="doc-anchor" href="#examples-2">§</a>Examples</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::{
+    io::{
+        Error <span class="kw">as </span>IOError,
+        ErrorKind,
+        <span class="prelude-ty">Result</span> <span class="kw">as </span>IOResult
+    },
+    pin::Pin,
+    sync::Arc,
+    task::{
+        Context <span class="kw">as </span>FutureContext,
+        Poll
+    }
+};
+<span class="kw">use </span>futures::future::poll_fn;
+<span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncWrite
+};
+<span class="kw">use </span>sheave_core::handlers::{
+    AsyncHandler,
+    RtmpContext,
+    StreamWrapper
+};
+
+<span class="kw">struct </span>SomethingHandler&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>SomethingHandler&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, _rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="comment">// Something to handle.
+
+        </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="kw">struct </span>AnotherHandler&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>AnotherHandler&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, _rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        Poll::Ready(<span class="prelude-val">Err</span>(IOError::from(ErrorKind::Other)))
+    }
+}
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() {
+    <span class="kw">let </span>result = poll_fn(
+        |cx| {
+            <span class="kw">use </span>std::pin::pin;
+            <span class="kw">use </span>sheave_core::handlers::{
+                AsyncHandlerExt,
+                VecStream
+            };
+
+            <span class="kw">let </span>stream = Arc::new(StreamWrapper::new(VecStream::default()));
+            <span class="macro">pin!</span>(
+                SomethingHandler(Arc::clone(<span class="kw-2">&amp;</span>stream))
+                    .while_ok(AnotherHandler(Arc::clone(<span class="kw-2">&amp;</span>stream)))
+            ).poll_handle(cx, <span class="kw-2">&amp;mut </span>RtmpContext::default())
+        }
+    ).<span class="kw">await</span>;
+    <span class="macro">assert!</span>(result.is_err())
+}</code></pre></div></div></details><details class="toggle method-toggle" open><summary><section id="method.map_err" class="method"><a class="src rightside" href="../../src/sheave_core/handlers.rs.html#425-431">Source</a><h4 class="code-header">fn <a href="#method.map_err" class="fn">map_err</a>&lt;E&gt;(self, error_handler: E) -&gt; MapErr&lt;Self, E&gt;<div class="where">where
+    E: <a class="trait" href="trait.ErrorHandler.html" title="trait sheave_core::handlers::ErrorHandler">ErrorHandler</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,
+    Self: <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a> + <a class="trait" href="https://doc.rust-lang.org/1.91.1/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a>,</div></h4></section></summary><div class="docblock"><p>Handles some error when previous handler returns <code>Err</code>.</p>
+<h5 id="examples-3"><a class="doc-anchor" href="#examples-3">§</a>Examples</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::{
+    io::{
+        Error <span class="kw">as </span>IOError,
+        <span class="prelude-ty">Result</span> <span class="kw">as </span>IOResult
+    },
+    pin::Pin,
+    sync::Arc,
+    task::{
+        Context <span class="kw">as </span>FutureContext,
+        Poll
+    }
+};
+<span class="kw">use </span>futures::future::poll_fn;
+<span class="kw">use </span>tokio::io::{
+    AsyncRead,
+    AsyncWrite
+};
+<span class="kw">use </span>sheave_core::handlers::{
+    AsyncHandler,
+    ErrorHandler,
+    RtmpContext
+};
+
+<span class="kw">struct </span>SomethingHandler&lt;RW: AsyncRead + AsyncWrite + Unpin&gt;(Arc&lt;RW&gt;);
+
+<span class="kw">impl</span>&lt;RW: AsyncRead + AsyncWrite + Unpin&gt; AsyncHandler <span class="kw">for </span>SomethingHandler&lt;RW&gt; {
+    <span class="kw">fn </span>poll_handle(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, _rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        Poll::Ready(<span class="prelude-val">Err</span>(IOError::other(<span class="string">"Something Wrong."</span>)))
+    }
+}
+
+<span class="kw">struct </span>SomethingWrongHandler&lt;<span class="lifetime">'a</span>, RW&gt;(Pin&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>RW&gt;);
+
+<span class="kw">impl</span>&lt;RW&gt; ErrorHandler <span class="kw">for </span>SomethingWrongHandler&lt;<span class="lifetime">'_</span>, RW&gt; {
+    <span class="kw">fn </span>poll_handle_error(<span class="self">self</span>: Pin&lt;<span class="kw-2">&amp;mut </span><span class="self">Self</span>&gt;, _cx: <span class="kw-2">&amp;mut </span>FutureContext&lt;<span class="lifetime">'_</span>&gt;, _rtmp_context: <span class="kw-2">&amp;mut </span>RtmpContext, error: IOError) -&gt; Poll&lt;IOResult&lt;()&gt;&gt; {
+        <span class="macro">println!</span>(<span class="string">"{error}"</span>);
+
+        <span class="comment">// This `Ok` means that handled its error successfully.
+        </span>Poll::Ready(<span class="prelude-val">Ok</span>(()))
+    }
+}
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() {
+    <span class="kw">let </span>result = poll_fn(
+        |cx| {
+            <span class="kw">use </span>std::pin::pin;
+            <span class="kw">use </span>sheave_core::handlers::{
+                AsyncHandlerExt,
+                StreamWrapper,
+                VecStream
+            };
+
+            <span class="kw">let </span>stream = Arc::new(StreamWrapper::new(VecStream::default()));
+            <span class="macro">pin!</span>(
+                SomethingHandler(Arc::clone(<span class="kw-2">&amp;</span>stream))
+                    .map_err(SomethingWrongHandler(stream.make_weak_pin()))
+            ).poll_handle(cx, <span class="kw-2">&amp;mut </span>RtmpContext::default())
+        }
+    ).<span class="kw">await</span>;
+    <span class="macro">assert!</span>(result.is_ok())
+}</code></pre></div></div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-AsyncHandlerExt-for-H" class="impl"><a class="src rightside" href="../../src/sheave_core/handlers.rs.html#434">Source</a><a href="#impl-AsyncHandlerExt-for-H" class="anchor">§</a><h3 class="code-header">impl&lt;H: <a class="trait" href="trait.AsyncHandler.html" title="trait sheave_core::handlers::AsyncHandler">AsyncHandler</a>&gt; <a class="trait" href="trait.AsyncHandlerExt.html" title="trait sheave_core::handlers::AsyncHandlerExt">AsyncHandlerExt</a> for H</h3></section></div><script src="../../trait.impl/sheave_core/handlers/trait.AsyncHandlerExt.js" async></script></section></div></main></body></html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Writes a basic header into streams."><title>write_basic_header in sheave_core::writers - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="sheave_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.1 (ed61e7d7e 2025-11-07)" data-channel="1.91.1" data-search-js="search-e256b49e.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">write_basic_header</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../sheave_core/index.html">sheave_<wbr>core</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">write_<wbr>basic_<wbr>header</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="index.html">In sheave_<wbr>core::<wbr>writers</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">sheave_core</a>::<wbr><a href="index.html">writers</a></div><h1>Function <span class="fn">write_<wbr>basic_<wbr>header</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/sheave_core/writers/basic_header.rs.html#100-102">Source</a> </span></div><pre class="rust item-decl"><code>pub fn write_basic_header&lt;'a, W: AsyncWrite&gt;(
+    writer: <a class="struct" href="https://doc.rust-lang.org/1.91.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.91.1/std/primitive.reference.html">&amp;'a mut W</a>&gt;,
+    basic_header: &amp;'a <a class="struct" href="../messages/headers/struct.BasicHeader.html" title="struct sheave_core::messages::headers::BasicHeader">BasicHeader</a>,
+) -&gt; BasicHeaderWriter&lt;'a, W&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Writes a basic header into streams.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::{
+    io::Result <span class="kw">as </span>IOResult,
+    pin::{
+        Pin,
+        pin
+    }
+};
+<span class="kw">use </span>sheave_core::{
+    messages::headers::{
+        BasicHeader,
+        MessageFormat::*
+    },
+    writers::write_basic_header
+};
+
+<span class="attr">#[tokio::main]
+</span><span class="kw">async fn </span>main() -&gt; IOResult&lt;()&gt; {
+    <span class="comment">// In case of 1 byte.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>writer: Pin&lt;<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;&gt; = <span class="macro">pin!</span>(Vec::new());
+    <span class="kw">let </span>message_format = New;
+    <span class="kw">let </span>chunk_id = <span class="number">2u16</span>;
+    <span class="kw">let </span>basic_header = BasicHeader::new(message_format, chunk_id);
+    <span class="kw">let </span>result = write_basic_header(writer.as_mut(), <span class="kw-2">&amp;</span>basic_header).<span class="kw">await</span>;
+    <span class="macro">assert!</span>(result.is_ok());
+    <span class="macro">assert_eq!</span>(message_format <span class="kw">as </span>u8, writer[<span class="number">0</span>] &gt;&gt; <span class="number">6</span>);
+    <span class="macro">assert_eq!</span>(chunk_id, (writer[<span class="number">0</span>] &lt;&lt; <span class="number">2 </span>&gt;&gt; <span class="number">2</span>) <span class="kw">as </span>u16);
+
+    <span class="comment">// In case of 2 bytes.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>writer: Pin&lt;<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;&gt; = <span class="macro">pin!</span>(Vec::new());
+    <span class="kw">let </span>message_fomrat = New;
+    <span class="kw">let </span>chunk_id = <span class="number">64u16</span>;
+    <span class="kw">let </span>basic_header = BasicHeader::new(message_fomrat, chunk_id);
+    <span class="kw">let </span>result = write_basic_header(writer.as_mut(), <span class="kw-2">&amp;</span>basic_header).<span class="kw">await</span>;
+    <span class="macro">assert!</span>(result.is_ok());
+    <span class="macro">assert_eq!</span>(message_format <span class="kw">as </span>u8, writer[<span class="number">0</span>] &gt;&gt; <span class="number">6</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">0</span>, writer[<span class="number">0</span>] &lt;&lt; <span class="number">2 </span>&gt;&gt; <span class="number">2</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">0</span>, writer[<span class="number">1</span>] <span class="kw">as </span>u16);
+
+    <span class="comment">// In case of 3 bytes.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>writer: Pin&lt;<span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;&gt; = <span class="macro">pin!</span>(Vec::new());
+    <span class="kw">let </span>message_format = New;
+    <span class="kw">let </span>chunk_id = <span class="number">320u16</span>;
+    <span class="kw">let </span>basic_header = BasicHeader::new(message_format, chunk_id);
+    <span class="kw">let </span>result = write_basic_header(writer.as_mut(), <span class="kw-2">&amp;</span>basic_header).<span class="kw">await</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>written: [u8; <span class="number">2</span>] = [<span class="number">0</span>; <span class="number">2</span>];
+    written.copy_from_slice(<span class="kw-2">&amp;</span>writer[<span class="number">1</span>..]);
+    <span class="kw">let </span>written = u16::from_le_bytes(written);
+    <span class="macro">assert!</span>(result.is_ok());
+    <span class="macro">assert_eq!</span>(message_format <span class="kw">as </span>u8, writer[<span class="number">0</span>] &gt;&gt; <span class="number">6</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">1</span>, writer[<span class="number">0</span>] &lt;&lt; <span class="number">2 </span>&gt;&gt; <span class="number">2</span>);
+    <span class="macro">assert_eq!</span>(<span class="number">256</span>, written);
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div></div></details></section></div></main></body></html>

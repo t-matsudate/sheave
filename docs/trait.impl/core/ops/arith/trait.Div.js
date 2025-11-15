@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["sheave_core",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/ops/arith/trait.Div.html\" title=\"trait core::ops::arith::Div\">Div</a> for <a class=\"struct\" href=\"sheave_core/messages/amf/v0/struct.Number.html\" title=\"struct sheave_core::messages::amf::v0::Number\">Number</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/ops/arith/trait.Div.html\" title=\"trait core::ops::arith::Div\">Div</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.91.1/std/primitive.f64.html\">f64</a>&gt; for <a class=\"struct\" href=\"sheave_core/messages/amf/v0/struct.Number.html\" title=\"struct sheave_core::messages::amf::v0::Number\">Number</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/ops/arith/trait.Div.html\" title=\"trait core::ops::arith::Div\">Div</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.91.1/std/primitive.u32.html\">u32</a>&gt; for <a class=\"struct\" href=\"sheave_core/messages/struct.PeerBandwidth.html\" title=\"struct sheave_core::messages::PeerBandwidth\">PeerBandwidth</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.91.1/core/ops/arith/trait.Div.html\" title=\"trait core::ops::arith::Div\">Div</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.91.1/std/primitive.u32.html\">u32</a>&gt; for <a class=\"struct\" href=\"sheave_core/messages/struct.WindowAcknowledgementSize.html\" title=\"struct sheave_core::messages::WindowAcknowledgementSize\">WindowAcknowledgementSize</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1544]}
