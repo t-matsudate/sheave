@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v5
       - id: setup-rust
         name: Setup Rust
-        uses: docker://rust:1.90.0
+        uses: docker://rust:1.91.1
       - id: setup-qemu
         name: Setup QEMU
         uses: docker/setup-qemu-action@v3

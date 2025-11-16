@@ -7,14 +7,6 @@ jobs:
   testing:
     name: Testing
     runs-on: ubuntu-24.04
-    services:
-      mariadb:
-        image: mariadb:12.0.2
-        ports:
-          - 3306:3306
-        env:
-          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
-          MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
     steps:
       - id: checkout
         name: Checkout repository
@@ -26,17 +18,27 @@ jobs:
         name: Test the core crate
         run: |
           cargo update
+          cargo check -p sheave-core
           cargo test -p sheave-core
-      - id: check-server
-        name: Cargo check to the server crate
+      - id: setup-mariadb
+        name: Setup the MariaDB server.
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          distribution: "mariadb"
+          mysql-version: "11.7"
+          auto-start: true
+          root-password: ${{ secrets.DB_PASSWORD }}
+        run: mariadb -u root -e 'CREATE DATABASE sheave'
+      - id: test-server
+        name: Test the server crate
         run: |
           cargo check -p sheave-server
           cargo test -p sheave-server
         env:
           TMPDIR: ${{ vars.TMPDIR }}
-          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
-      - id: check-client
-        name: Cargo check to the client crate
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}:3306/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+      - id: test-client
+        name: Test the client crate
         run: |
           cargo check -p sheave-client
           cargo test -p sheave-client
