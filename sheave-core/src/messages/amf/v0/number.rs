@@ -33,13 +33,17 @@ impl Number {
     }
 
     /// Gets an inner value as an integer.
+    ///
     /// This is prepared for converting any message ID to an integer from an AMF's number.
     pub fn as_integer(&self) -> u64 {
         self.0 as u64
     }
 
     /// Gets an inner value as an **signed** integer.
+    ///
     /// This is prepared for converting [`Play`] command's `start_time` to an signed integer from an AMF's number.
+    ///
+    /// [`Play`]: crate::messages::Play
     pub fn as_signed_integer(&self) -> i64 {
         self.0 as i64
     }

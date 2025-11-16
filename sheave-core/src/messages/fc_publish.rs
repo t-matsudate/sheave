@@ -135,7 +135,7 @@ mod tests {
     fn encode_fc_publish() {
         let mut buffer = ByteBuffer::default();
         let expected_topic_id = "";
-        let expected = FcPublish::new(AmfString::from(expected_topic_path));
+        let expected = FcPublish::new(AmfString::from(expected_topic_id));
         buffer.encode(&expected);
         Decoder::<Null>::decode(&mut buffer).unwrap();
         let actual_topic_id: AmfString = buffer.decode().unwrap();

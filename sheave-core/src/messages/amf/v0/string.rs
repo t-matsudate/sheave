@@ -190,7 +190,7 @@ impl<'a> From<AmfString> for Box<dyn Error + 'a> {
     }
 }
 
-impl<'a> From<AmfString> for Box<dyn Erorr + Send + Sync + 'a> {
+impl<'a> From<AmfString> for Box<dyn Error + Send + Sync + 'a> {
     fn from(str_err: AmfString) -> Self {
         Self::from(str_err.0)
     }

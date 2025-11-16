@@ -6,13 +6,13 @@ pub use self::message_format::MessageFormat;
 ///
 /// This header has 3 types.
 ///
-/// |Total Length|Message Header Format Length|Chunk ID Length|Chunk ID Range|
+/// |Total|Message Header Format|Chunk ID|Chunk ID Range|
 /// | -: | -: | -: | -: |
 /// | 8|2| 6| 0 -    63|
 /// |16|2| 8|64 -   319|
 /// |24|2|16|64 - 65599|
 ///
-/// Unit of every length is bits.
+/// The unit of every length item is bits.
 /// Basic header which is and above 16 bits has a flag bits in first 8 bits.
 /// It means whether chunk ID is 16 bits.
 /// Note if chunk ID is 16 bits, encoding/decoding it as Little Endian is required.

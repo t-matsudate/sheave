@@ -64,6 +64,10 @@ impl<W: AsyncWrite> MessageHeaderWriter<'_, W> {
         ready!(self.write_timestamp(cx, timestamp))?;
         Poll::Ready(Ok(()))
     }
+
+    fn write_continue(&mut self, _cx: &mut FutureContext<'_>) -> Poll<IOResult<()>> {
+        Poll::Ready(Ok(()))
+    }
 }
 
 #[doc(hidden)]
@@ -80,7 +84,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
         } else if fields.0.is_some() {
             self.write_timer_change(cx, fields.0.unwrap())
         } else {
-            Poll::Ready(Ok(()))
+            self.write_continue(cx)
         }
     }
 }
@@ -167,7 +171,7 @@ impl<W: AsyncWrite> Future for MessageHeaderWriter<'_, W> {
 ///
 ///     // In case of 0 bytes. (Continue)
 ///     let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-///     let message_header = MessageHeader::Continue;
+///     let message_header: MessageHeader = ().into();
 ///     write_message_header(writer.as_mut(), &message_header).await?;
 ///     assert!(writer.is_empty());
 ///
@@ -250,7 +254,7 @@ mod tests {
     #[tokio::test]
     async fn write_continue() {
         let mut writer: Pin<&mut Vec<u8>> = pin!(Vec::new());
-        let message_header = MessageHeader::Continue;
+        let message_header: MessageHeader = ().into();
         write_message_header(writer.as_mut(), &message_header).await.unwrap();
         assert!(writer.is_empty())
     }

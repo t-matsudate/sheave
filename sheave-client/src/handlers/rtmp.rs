@@ -244,7 +244,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("releaseStream"));
         buffer.encode(&rtmp_context.get_transaction_id());
-        buffer.encode(&ReleaseStream::new(rtmp_context.get_topic_path().unwrap().clone()));
+        buffer.encode(&ReleaseStream::new(rtmp_context.get_topic_id().unwrap().clone()));
         write_chunk(self.0.as_mut(), rtmp_context, ReleaseStream::CHANNEL.into(), Duration::default(), ReleaseStream::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         info!("releaseStream got sent.");
@@ -257,7 +257,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("FCPublish"));
         buffer.encode(&rtmp_context.get_transaction_id());
-        buffer.encode(&FcPublish::new(rtmp_context.get_topic_path().unwrap().clone()));
+        buffer.encode(&FcPublish::new(rtmp_context.get_topic_id().unwrap().clone()));
         write_chunk(self.0.as_mut(), rtmp_context, FcPublish::CHANNEL.into(), Duration::default(), FcPublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         info!("FCPublish got sent.");
@@ -280,10 +280,10 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn write_fc_subscribe_request(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         rtmp_context.increase_transaction_id();
 
-        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
+        let topic_id = rtmp_context.get_topic_id().unwrap().clone();
 
         let mut buffer = ByteBuffer::default();
-        buffer.encode(&FcSubscribe::new(topic_path));
+        buffer.encode(&FcSubscribe::new(topic_id));
         write_chunk(self.0.as_mut(), rtmp_context, FcSubscribe::CHANNEL.into(), Duration::default(), FcSubscribe::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         rtmp_context.set_subscriber_status(SubscriberStatus::FcSubscribed);
@@ -295,7 +295,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn write_publish_request(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         rtmp_context.increase_transaction_id();
 
-        let publishing_name = rtmp_context.get_topic_path().unwrap().clone();
+        let publishing_name = rtmp_context.get_topic_id().unwrap().clone();
         let publishing_type = "live";
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("publish"));
@@ -311,7 +311,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
     async fn write_play_request(&mut self, rtmp_context: &mut RtmpContext) -> IOResult<()> {
         rtmp_context.increase_transaction_id();
 
-        let stream_name = rtmp_context.get_topic_path().unwrap().clone();
+        let stream_name = rtmp_context.get_topic_id().unwrap().clone();
         let play_mode = rtmp_context.get_play_mode().unwrap();
         let start_time: Number = if let Some(start_time) = rtmp_context.get_start_time() {
             Number::new(start_time.as_millis() as u64 as f64)
@@ -505,7 +505,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> MessageHandler<'_, RW> {
 
     async fn handle_fc_unpublish_request(&mut self, rtmp_context: &mut RtmpContext, mut buffer: ByteBuffer) -> IOResult<()> {
         Decoder::<FcUnpublish>::decode(&mut buffer)?;
-        rtmp_context.reset_topic_path();
+        rtmp_context.reset_topic_id();
 
         info!("FCUnpublish got handled.");
         Ok(())
@@ -748,7 +748,7 @@ impl<RW: AsyncRead + AsyncWrite + Unpin> CloseHandler<'_, RW> {
 
         let mut buffer = ByteBuffer::default();
         buffer.encode(&AmfString::from("FCUnpublish"));
-        buffer.encode(&FcUnpublish::new(rtmp_context.get_topic_path().unwrap().clone()));
+        buffer.encode(&FcUnpublish::new(rtmp_context.get_topic_id().unwrap().clone()));
         write_chunk(self.0.as_mut(), rtmp_context, FcUnpublish::CHANNEL.into(), Duration::default(), FcUnpublish::MESSAGE_TYPE, u32::default(), &Vec::<u8>::from(buffer)).await?;
 
         info!("FCUnpublish got sent.");
@@ -944,7 +944,7 @@ mod tests {
         assert!(handle_message(stream.as_mut()).handle_connect_response(&mut rtmp_context, buffer).await.is_ok());
         assert_eq!(PublisherStatus::Connected, rtmp_context.get_publisher_status().unwrap());
 
-        rtmp_context.set_topic_path(AmfString::new(Uuid::now_v7().to_string()));
+        rtmp_context.set_topic_id(AmfString::new(Uuid::now_v7().to_string()));
         let mut stream = pin!(VecStream::default());
         handle_message(stream.as_mut()).write_release_stream_request(&mut rtmp_context).await.unwrap();
         let mut buffer = ByteBuffer::default();
@@ -974,15 +974,15 @@ mod tests {
         assert!(handle_message(stream.as_mut()).handle_stream_begin(&mut rtmp_context, buffer).await.is_ok());
         assert_eq!(PublisherStatus::Began, rtmp_context.get_publisher_status().unwrap());
 
-        let topic_path = rtmp_context.get_topic_path().unwrap().clone();
+        let topic_id = rtmp_context.get_topic_id().unwrap().clone();
         let mut buffer = ByteBuffer::default();
         buffer.encode(
             &OnStatus::new(
                 object!(
                     "level" => AmfString::from("status"),
                     "code" => AmfString::from("NetStream.Publish.Start"),
-                    "description" => AmfString::new(format!("{topic_path} is now published")),
-                    "details" => topic_path
+                    "description" => AmfString::new(format!("{topic_id} is now published")),
+                    "details" => topic_id
                 )
             )
         );
@@ -1028,7 +1028,7 @@ mod tests {
         assert!(handle_message(stream.as_mut()).handle_create_stream_response(&mut rtmp_context, buffer).await.is_ok());
         assert_eq!(SubscriberStatus::Created, rtmp_context.get_subscriber_status().unwrap());
 
-        rtmp_context.set_topic_path(AmfString::new(Uuid::now_v7().to_string()));
+        rtmp_context.set_topic_id(AmfString::new(Uuid::now_v7().to_string()));
         let mut stream = pin!(VecStream::default());
         handle_message(stream.as_mut()).write_fc_subscribe_request(&mut rtmp_context).await.unwrap();
         assert_eq!(SubscriberStatus::FcSubscribed, rtmp_context.get_subscriber_status().unwrap());

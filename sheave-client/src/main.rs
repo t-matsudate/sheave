@@ -265,22 +265,22 @@ fn split_uri(uri: &str) -> IOResult<(&str, &str, &str, &str)> {
         return Err(invalid_uri(format!("The app part is exceeded two elements: {app}")))
     }
 
-    let topic_path = if rest.len() > 1 {
+    let topic_id = if rest.len() > 1 {
         &rest[1..]
     } else {
         <&str>::default()
     };
 
-    Ok((protocol, addr, app, topic_path))
+    Ok((protocol, addr, app, topic_id))
 }
 
-async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOptions) -> IOResult<()> {
+async fn run_as_rtmp(addr: &str, app: &str, topic_id: &str, options: ClientOptions) -> IOResult<()> {
     let stream = RtmpStream::connect(addr).await?;
 
     let mut rtmp_context = RtmpContext::default();
     rtmp_context.set_signed(options.signed.unwrap_or_default());
     rtmp_context.set_app(app);
-    rtmp_context.set_topic_path(topic_path.into());
+    rtmp_context.set_topic_id(topic_id.into());
     rtmp_context.set_tc_url(&options.uri);
 
     let client_type: CoreClientType = options.client_type.into();
@@ -292,7 +292,7 @@ async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOpt
 
                 rtmp_context.set_await_duration(Duration::from_millis(options.await_duration));
 
-                rtmp_context.set_publishing_name(topic_path.into());
+                rtmp_context.set_publishing_name(topic_id.into());
                 rtmp_context.set_publishing_type(AmfString::new(options.publishing_type.to_string()));
             }
         },
@@ -301,7 +301,7 @@ async fn run_as_rtmp(addr: &str, app: &str, topic_path: &str, options: ClientOpt
                 let topic = Flv::create(&options.output[0])?;
                 rtmp_context.set_topic(topic);
 
-                rtmp_context.set_stream_name(topic_path.into());
+                rtmp_context.set_stream_name(topic_id.into());
                 if options.start_time >= 0 {
                     rtmp_context.set_start_time(Some(Duration::from_secs(options.start_time as u64)));
                 }
@@ -323,10 +323,10 @@ async fn main() -> IOResult<()> {
     builder().filter_level(options.loglevel.into()).try_init().map_err(|e| IOError::other(e))?;
 
     let uri = options.uri.clone();
-    let (protocol, addr, app, topic_path) = split_uri(&uri)?;
+    let (protocol, addr, app, topic_id) = split_uri(&uri)?;
 
     match protocol {
-        "rtmp" => if let Err(e) = run_as_rtmp(addr, app, topic_path, options).await {
+        "rtmp" => if let Err(e) = run_as_rtmp(addr, app, topic_id, options).await {
             error!("Some error got occurred: {e}");
             return Err(e)
         },
@@ -364,7 +364,7 @@ mod tests {
     }
 
     #[test]
-    fn ok_scheme_localhost_port_app_topic_path() {
+    fn ok_scheme_localhost_port_app_topic_id() {
         let result = split_uri("rtmp://localhost:1935/live/stream1");
         assert!(result.is_ok());
         assert_eq!(("rtmp", "localhost:1935", "live", "stream1"), result.unwrap())

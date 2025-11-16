@@ -75,6 +75,10 @@ impl<R: AsyncRead> MessageHeaderReader<'_, R> {
         let timestamp = ready!(self.read_timestamp(cx))?;
         Poll::Ready(Ok(timestamp.into()))
     }
+
+    fn read_continue(&mut self, _cx: &mut FutureContext<'_>) -> Poll<IOResult<MessageHeader>> {
+        Poll::Ready(Ok(().into()))
+    }
 }
 
 #[doc(hidden)]
@@ -86,7 +90,7 @@ impl<R: AsyncRead> Future for MessageHeaderReader<'_, R> {
             MessageFormat::New => self.read_new(cx),
             MessageFormat::SameSource => self.read_same_source(cx),
             MessageFormat::TimerChange => self.read_timer_change(cx),
-            MessageFormat::Continue => Poll::Ready(Ok(MessageHeader::Continue))
+            MessageFormat::Continue => self.read_continue(cx)
         }
     }
 }

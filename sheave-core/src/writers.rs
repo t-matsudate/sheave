@@ -110,11 +110,11 @@ pub async fn write_chunk<'a, W: AsyncWrite>(mut writer: Pin<&'a mut W>, rtmp_con
     } else {
         None
     };
-    let message_header = match message_format {
-        MessageFormat::New => MessageHeader::New((timestamp, data.len() as u32, message_type, message_id).into()),
-        MessageFormat::SameSource => MessageHeader::SameSource((timestamp, data.len() as u32, message_type).into()),
-        MessageFormat::TimerChange => MessageHeader::TimerChange(timestamp.into()),
-        MessageFormat::Continue => MessageHeader::Continue
+    let message_header: MessageHeader = match message_format {
+        MessageFormat::New => (timestamp, data.len() as u32, message_type, message_id).into(),
+        MessageFormat::SameSource => (timestamp, data.len() as u32, message_type).into(),
+        MessageFormat::TimerChange => timestamp.into(),
+        MessageFormat::Continue => ().into()
     };
 
     write_basic_header(writer.as_mut(), &BasicHeader::new(message_format, chunk_id)).await?;

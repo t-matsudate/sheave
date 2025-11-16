@@ -45,13 +45,10 @@ mod message;
 pub use self::{
     basic::{
         BasicHeader,
-        MessageFormat
+        MessageFormat,
     },
     message::{
         MessageType,
         MessageHeader,
-        New,
-        SameSource,
-        TimerChange
     }
 };
