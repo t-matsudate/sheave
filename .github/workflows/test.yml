@@ -15,6 +15,7 @@ jobs:
         env:
           MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
           MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MARIADB_ROOT_HOST: ${{ secrets.DB_HOST }}
     steps:
       - id: checkout
         name: Checkout repository
