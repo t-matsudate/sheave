@@ -15,7 +15,6 @@ jobs:
         env:
           MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
           MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          MARIADB_ROOT_HOST: ${{ secrets.DB_HOST }}
     steps:
       - id: checkout
         name: Checkout repository
@@ -35,7 +34,7 @@ jobs:
           cargo test -p sheave-server
         env:
           TMPDIR: ${{ vars.TMPDIR }}
-          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}:3306/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
       - id: check-client
         name: Cargo check to the client crate
         run: |
