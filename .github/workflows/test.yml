@@ -35,7 +35,7 @@ jobs:
           cargo test -p sheave-server
         env:
           TMPDIR: ${{ vars.TMPDIR }}
-          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}:3306/${{ secrets.DB_DATABASE }}?user=root&password=${{ secrets.DB_PASSWORD }}"
+          DATABASE_URL: "mariadb://${{ secrets.DB_HOST }}:3306/${{ secrets.DB_DATABASE }}?user=root"
       - id: check-client
         name: Cargo check to the client crate
         run: |
