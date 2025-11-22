@@ -13,9 +13,9 @@ jobs:
         ports:
           - 3306:3306
         env:
-          MARIADB_HOST: ${{ secrets.DB_HOST }}
-          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
+          MARIADB_ROOT_HOST: ${{ secrets.DB_HOST }}
           MARIADB_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MARIADB_DATABASE: ${{ secrets.DB_DATABASE }}
     steps:
       - id: checkout
         name: Checkout repository
