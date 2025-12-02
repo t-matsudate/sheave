@@ -11,15 +11,9 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v5
-      - id: setup
+      - id: setup-rust
         name: Setup Rust
         uses: docker://rust:1.91.1
-      - id: test-core
-        name: Test the core crate
-        run: |
-          cargo update
-          cargo check -p sheave-core
-          cargo test -p sheave-core
       - id: setup-mariadb
         name: Setup the MariaDB server.
         uses: shogo82148/actions-setup-mysql@v1
@@ -28,10 +22,16 @@ jobs:
           mysql-version: "11.7"
           auto-start: true
           root-password: ${{ secrets.DB_PASSWORD }}
-        run: mariadb -u root -e 'CREATE DATABASE sheave'
+      - id: test-core
+        name: Test the core crate
+        run: |
+          cargo update
+          cargo check -p sheave-core
+          cargo test -p sheave-core
       - id: test-server
         name: Test the server crate
         run: |
+          mariadb -u root -e 'CREATE DATABASE sheave'
           cargo check -p sheave-server
           cargo test -p sheave-server
         env:

@@ -53,12 +53,6 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
-      - id: update
-        name: Updates Apt caches
-        run: sudo apt update -y
-      - id: install
-        name: Installs FFmpeg
-        run: sudo apt install -y ffmpeg
       - id: setup-mariadb
         name: Setup the MariaDB server.
         uses: shogo82148/actions-setup-mysql@v1
@@ -67,10 +61,17 @@ jobs:
           mysql-version: "11.7"
           auto-start: true
           root-password: ${{ secrets.DB_PASSWORD }}
-        run: mariadb -u root -e 'CREATE DATABASE sheave'
+      - id: update
+        name: Updates Apt caches
+        run: sudo apt update -y
+      - id: install
+        name: Installs FFmpeg
+        run: sudo apt install -y ffmpeg
       - id: run
         name: Runs FFmpeg with examples
-        run: ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}/ondemand/test
+        run: |
+          mariadb -u root -e 'CREATE DATABASE sheave'
+          ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}/ondemand/test
   sheave-client-publisher:
     name: Tests with Sheave client (as a publisher)
     needs: push
@@ -87,12 +88,6 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
-      - id: setup
-        name: Setup Rust
-        uses: docker://rust:1.91.1
-      - id: build
-        name: Builds sheave-client
-        run: cargo update && cargo build -p sheave-client --release --bins
       - id: setup-mariadb
         name: Setup the MariaDB server.
         uses: shogo82148/actions-setup-mysql@v1
@@ -101,10 +96,17 @@ jobs:
           mysql-version: "11.7"
           auto-start: true
           root-password: ${{ secrets.DB_PASSWORD }}
-        run: mariadb -u root -e 'CREATE DATABASE sheave'
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.91.1
+      - id: build
+        name: Builds sheave-client
+        run: cargo update && cargo build -p sheave-client --release --bins
       - id: run
         name: Runs Sheave client with examples
-        run: ./target/release/sheave-client --loglevel info --client-type publisher --publishing-type live -f flv -i ./resources/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}:1935/ondemand/test
+        run: |
+          mariadb -u root -e 'CREATE DATABASE sheave'
+          ./target/release/sheave-client --loglevel info --client-type publisher --publishing-type live -f flv -i ./resources/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}:1935/ondemand/test
   ffmpeg-subscriber:
     name: Tests with FFmpeg (as a subscriber)
     needs: push
@@ -121,12 +123,6 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
-      - id: update
-        name: Updates Apt caches
-        run: sudo apt update -y
-      - id: install
-        name: Installs FFmpeg
-        run: sudo apt install -y ffmpeg
       - id: setup-mariadb
         name: Setup the MariaDB server.
         uses: shogo82148/actions-setup-mysql@v1
@@ -135,10 +131,17 @@ jobs:
           mysql-version: "11.7"
           auto-start: true
           root-password: ${{ secrets.DB_PASSWORD }}
-        run: mariadb -u root -e 'CREATE DATABASE sheave'
+      - id: update
+        name: Updates Apt caches
+        run: sudo apt update -y
+      - id: install
+        name: Installs FFmpeg
+        run: sudo apt install -y ffmpeg
       - id: run
         name: Runs FFmpeg with examples
-        run: ffplay -loglevel info rtmp://${{ secrets.SHEAVE_HOST }}/ondemand/test
+        run: |
+          mariadb -u root -e 'CREATE DATABASE sheave'
+          ffplay -loglevel info rtmp://${{ secrets.SHEAVE_HOST }}/ondemand/test
   sheave-client-subscriber:
     name: Tests with Sheave client (as a subscriber)
     needs: push
@@ -155,12 +158,6 @@ jobs:
       - id: checkout
         name: Checkout repository
         uses: actions/checkout@v4
-      - id: setup
-        name: Setup Rust
-        uses: docker://rust:1.91.1
-      - id: build
-        name: Builds sheave-client
-        run: cargo update && cargo build -p sheave-client --release --bins
       - id: setup-mariadb
         name: Setup the MariaDB server.
         uses: shogo82148/actions-setup-mysql@v1
@@ -169,7 +166,14 @@ jobs:
           mysql-version: "11.7"
           auto-start: true
           root-password: ${{ secrets.DB_PASSWORD }}
-        run: mariadb -u root -e 'CREATE DATABASE sheave'
+      - id: setup
+        name: Setup Rust
+        uses: docker://rust:1.91.1
+      - id: build
+        name: Builds sheave-client
+        run: cargo update && cargo build -p sheave-client --release --bins
       - id: run
         name: Runs Sheave client with examples
-        run: ./target/release/sheave-client --loglevel info --client-type subscriber --start-time -2 -f flv -o /tmp/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}:1935/ondemand/test
+        run: |
+          mariadb -u root -e 'CREATE DATABASE sheave'
+          ./target/release/sheave-client --loglevel info --client-type subscriber --start-time -2 -f flv -o /tmp/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}:1935/ondemand/test
