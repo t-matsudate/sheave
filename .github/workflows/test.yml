@@ -31,7 +31,7 @@ jobs:
       - id: test-server
         name: Test the server crate
         run: |
-          mariadb -u root -e 'CREATE DATABASE sheave'
+          mariadb -u root -p ${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE sheave'
           cargo check -p sheave-server
           cargo test -p sheave-server
         env:

@@ -70,7 +70,7 @@ jobs:
       - id: run
         name: Runs FFmpeg with examples
         run: |
-          mariadb -u root -e 'CREATE DATABASE sheave'
+          mariadb -u root -p ${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE sheave'
           ffmpeg -loglevel info -f flv -i ./resources/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}/ondemand/test
   sheave-client-publisher:
     name: Tests with Sheave client (as a publisher)
@@ -105,7 +105,7 @@ jobs:
       - id: run
         name: Runs Sheave client with examples
         run: |
-          mariadb -u root -e 'CREATE DATABASE sheave'
+          mariadb -u root -p ${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE sheave'
           ./target/release/sheave-client --loglevel info --client-type publisher --publishing-type live -f flv -i ./resources/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}:1935/ondemand/test
   ffmpeg-subscriber:
     name: Tests with FFmpeg (as a subscriber)
@@ -140,7 +140,7 @@ jobs:
       - id: run
         name: Runs FFmpeg with examples
         run: |
-          mariadb -u root -e 'CREATE DATABASE sheave'
+          mariadb -u root -p ${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE sheave'
           ffplay -loglevel info rtmp://${{ secrets.SHEAVE_HOST }}/ondemand/test
   sheave-client-subscriber:
     name: Tests with Sheave client (as a subscriber)
@@ -175,5 +175,5 @@ jobs:
       - id: run
         name: Runs Sheave client with examples
         run: |
-          mariadb -u root -e 'CREATE DATABASE sheave'
+          mariadb -u root -p ${{ secrets.DB_PASSWORD }} -e 'CREATE DATABASE sheave'
           ./target/release/sheave-client --loglevel info --client-type subscriber --start-time -2 -f flv -o /tmp/test.flv -f flv rtmp://${{ secrets.SHEAVE_HOST }}:1935/ondemand/test
